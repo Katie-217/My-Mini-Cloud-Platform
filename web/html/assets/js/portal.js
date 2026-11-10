@@ -35,7 +35,7 @@
       tech: 'Microsoft SQL Server 2022 Developer',
       network: 'cloud-net',
       role: 'Lưu trữ dữ liệu quan hệ bảng dbo.students (database studentdb). Lưu trữ lâu dài qua Docker named volume mycloud_mssql-data.',
-      checkGuide: 'Chạy SELECT trên studentdb.dbo.students hoặc kiểm tra query qua API GET /api/students-db.',
+      checkGuide: 'SSMS: server 127.0.0.1,1433; SQL Server Authentication; database studentdb. Username/password đọc DB_USER và DB_PASSWORD trong .env trên máy. Có thể đối chiếu dữ liệu qua GET /api/students-db.',
       testCommand: 'curl -s http://localhost/api/students-db'
     },
     auth: {
@@ -66,12 +66,12 @@
       network: 'cloud-net',
       role: 'Dịch vụ phân giải tên miền nội bộ zone cloud.local cho các dịch vụ (app-backend, minio, keycloak). Host port ánh xạ 1053 TCP/UDP.',
       checkGuide: 'Dùng lệnh dig truy vấn qua cổng 1053 để xác minh phân giải bản ghi A.',
-      testCommand: 'dig @127.0.0.1 -p 1053 app-backend.cloud.local'
+      testCommand: "docker compose exec -T internal-dns-server dig '@127.0.0.1' app-backend.cloud.local +short"
     },
     monitoring: {
       groupNum: 7,
       name: 'Monitoring Prometheus Server',
-      service: 'monitoring-prometheus-server, monitoring-node-exporter, monitoring-http-exporter',
+      service: 'monitoring-prometheus-server, monitoring-node-exporter-server, monitoring-http-exporter-server',
       tech: 'Prometheus 3.2.1 / Node Exporter / Blackbox Exporter',
       network: 'cloud-net',
       role: 'Chủ động thu thập (scrape) số liệu tài nguyên từ Node Exporter và kiểm tra trạng thái HTTP từ 2 Web Server qua Blackbox Exporter.',
@@ -102,6 +102,23 @@
 
   // Trạng thái live thu được từ /api/status
   let currentStatusData = null;
+  let statusPending = false;
+  let metricsPending = false;
+  const GROUP_PROBES = {
+    web: ['web1', 'web2'], app: ['app'], database: ['db'], auth: ['auth'],
+    storage: ['storage'], dns: ['dns'], monitoring: ['prometheus', 'node', 'http'],
+    visualization: ['grafana'], proxy: ['proxy']
+  };
+
+  function groupMembers(key, services) {
+    return (GROUP_PROBES[key] || []).map(id => services.find(service => service.id === id));
+  }
+
+  function groupStatus(key, services) {
+    const members = groupMembers(key, services);
+    if (members.some(service => service && service.status === 'unhealthy')) return 'unhealthy';
+    return members.length && members.every(service => service && service.status === 'healthy') ? 'healthy' : 'unknown';
+  }
 
   // Khởi tạo dynamic links cho các công cụ quản trị (sử dụng location.hostname thực tế)
   function setupDynamicAdminLinks() {
@@ -126,6 +143,8 @@
 
   // Lấy trạng thái hệ thống từ GET /api/status
   async function fetchSystemStatus() {
+    if (statusPending) return;
+    statusPending = true;
     const pulseDot = document.getElementById('status-pulse');
     const overallText = document.getElementById('status-overall-text');
     const overallSub = document.getElementById('status-overall-sub');
@@ -148,15 +167,18 @@
       }
 
       const data = await response.json();
+      if (!Array.isArray(data.services) || !Number.isFinite(data.services_checked)) {
+        throw new Error('Phản hồi trạng thái chưa đúng định dạng');
+      }
       currentStatusData = data;
 
       // Cập nhật giao diện khi thành công
       if (pulseDot) {
-        pulseDot.className = 'status-pulse-dot ' + (data.overall === 'healthy' ? 'healthy' : (data.overall === 'unhealthy' ? 'unhealthy' : 'unknown'));
+        pulseDot.className = 'status-pulse-dot ' + (data.overall === 'healthy' ? 'healthy' : 'unhealthy');
       }
       if (overallText) {
         overallText.textContent = data.overall === 'healthy' ? 'Hệ thống hoạt động (Healthy)' :
-                                  data.overall === 'unhealthy' ? 'Có dịch vụ lỗi (Unhealthy)' : 'Trạng thái Unknown';
+                                  'Có dịch vụ chưa sẵn sàng (Degraded)';
       }
       if (overallSub) {
         overallSub.textContent = `Đã kiểm tra ${data.services_checked || 0} dịch vụ`;
@@ -178,7 +200,7 @@
           const d = new Date(data.checked_at);
           checkedAtEl.textContent = isNaN(d.getTime()) ? String(data.checked_at) : d.toLocaleTimeString('vi-VN') + ' ' + d.toLocaleDateString('vi-VN');
         } else {
-          checkedAtEl.textContent = 'Vừa xong';
+          checkedAtEl.textContent = 'Chưa cập nhật';
         }
       }
 
@@ -213,6 +235,8 @@
       }
 
       resetServiceCardsStatus();
+    } finally {
+      statusPending = false;
     }
   }
 
@@ -230,24 +254,22 @@
       const badgeEl = document.getElementById(`badge-srv-${key}`);
       if (!badgeEl) continue;
 
-      let matchedService = null;
-      if (key === 'web') matchedService = serviceMap['web1'] || serviceMap['web-frontend-server1'];
-      else if (key === 'app') matchedService = serviceMap['app'] || serviceMap['application-backend-server'];
-      else if (key === 'database') matchedService = serviceMap['db'] || serviceMap['relational-database-server'];
-      else if (key === 'auth') matchedService = serviceMap['auth'] || serviceMap['authentication-identity-server'];
-      else if (key === 'storage') matchedService = serviceMap['storage'] || serviceMap['object-storage-server'];
-      else if (key === 'dns') matchedService = serviceMap['dns'] || serviceMap['internal-dns-server'];
-      else if (key === 'monitoring') matchedService = serviceMap['prometheus'] || serviceMap['monitoring-prometheus-server'];
-      else if (key === 'visualization') matchedService = serviceMap['grafana'] || serviceMap['monitoring-grafana-dashboard-server'];
-      else if (key === 'proxy') matchedService = serviceMap['proxy'] || serviceMap['api-gateway-proxy-server'];
-
-      if (matchedService && matchedService.status) {
-        const st = matchedService.status.toLowerCase();
+      const members = groupMembers(key, servicesList).filter(Boolean);
+      if (members.length) {
+        const st = groupStatus(key, servicesList);
         badgeEl.className = 'badge ' + (st === 'healthy' ? 'badge-healthy' : (st === 'unhealthy' ? 'badge-unhealthy' : 'badge-unknown'));
         badgeEl.textContent = st === 'healthy' ? 'Healthy' : (st === 'unhealthy' ? 'Unhealthy' : 'Unknown');
       } else {
         badgeEl.className = 'badge badge-unknown';
         badgeEl.textContent = 'Chưa probe';
+      }
+      const line = document.getElementById(`probe-${key}`);
+      if (line) {
+        const latencies = members.map(s => s.latency_ms).filter(Number.isFinite);
+        const timestamps = members.map(s => s.checked_at).filter(Boolean).sort();
+        line.textContent = latencies.length
+          ? `Phản hồi tối đa: ${Math.max(...latencies).toLocaleString('vi-VN')} ms · Kiểm tra: ${timestamps.length ? new Date(timestamps.at(-1)).toLocaleTimeString('vi-VN') : 'Chưa biết'}`
+          : 'Chưa có dữ liệu kiểm tra';
       }
     }
   }
@@ -259,6 +281,8 @@
         badgeEl.className = 'badge badge-unknown';
         badgeEl.textContent = 'Chưa kết nối';
       }
+      const line = document.getElementById(`probe-${key}`);
+      if (line) line.textContent = 'Chưa có dữ liệu kiểm tra';
     }
   }
 
@@ -280,15 +304,11 @@
     let liveDetail = 'Backend chưa chạy hoặc service chưa được probe.';
 
     if (currentStatusData && Array.isArray(currentStatusData.services)) {
-      const found = currentStatusData.services.find(s => 
-        (s.id && s.id.toLowerCase().includes(serviceKey)) ||
-        (s.service && s.service.toLowerCase().includes(serviceKey)) ||
-        (s.group && s.group.toLowerCase().includes(meta.name.toLowerCase()))
-      );
-      if (found) {
-        liveStatusText = found.status || 'unknown';
+      const members = groupMembers(serviceKey, currentStatusData.services).filter(Boolean);
+      if (members.length) {
+        liveStatusText = groupStatus(serviceKey, currentStatusData.services);
         liveStatusClass = liveStatusText === 'healthy' ? 'badge-healthy' : (liveStatusText === 'unhealthy' ? 'badge-unhealthy' : 'badge-unknown');
-        liveDetail = found.detail || 'Không có mô tả chi tiết';
+        liveDetail = members.map(service => `${service.service}: ${service.status} — ${service.detail || ''}`).join('; ');
       }
     }
 
@@ -356,16 +376,97 @@
       .replace(/'/g, '&#039;');
   }
 
+  function setupServiceLinks() {
+    const admin = port => `${location.protocol}//${location.hostname}:${port}`;
+    const links = {web: '/blog/', app: '/app/', auth: '/auth/', storage: admin(9001),
+      monitoring: admin(9090) + '/targets', visualization: admin(3000) + '/d/mycloud-system', proxy: '/'};
+    for (const key of Object.keys(SERVICE_METADATA)) {
+      const card = document.getElementById(`badge-srv-${key}`)?.closest('.service-card');
+      if (!card) continue;
+      const containerLabel = card.querySelector('.service-card-bottom > span');
+      if (containerLabel) containerLabel.textContent = SERVICE_METADATA[key].service;
+      const address = document.createElement('p');
+      address.className = 'service-address';
+      address.textContent = links[key] ? new URL(links[key], location.origin).href
+        : key === 'database' ? 'SSMS · 127.0.0.1,1433' : 'Bind9 · 127.0.0.1:1053';
+      card.insertBefore(address, card.querySelector('.service-card-bottom'));
+      const line = document.createElement('p');
+      line.id = `probe-${key}`;
+      line.className = 'service-probe-meta';
+      line.textContent = 'Chưa có dữ liệu kiểm tra';
+      card.insertBefore(line, card.querySelector('.service-card-bottom'));
+      const actions = document.createElement('div');
+      actions.className = 'service-extra-actions';
+      const open = document.createElement(links[key] ? 'a' : 'button');
+      open.className = 'btn btn-secondary btn-sm';
+      if (links[key]) {
+        open.href = links[key];
+        open.textContent = 'Mở giao diện';
+      } else {
+        open.type = 'button';
+        open.textContent = key === 'database' ? 'Hướng dẫn SSMS' : 'Hướng dẫn DNS';
+        open.addEventListener('click', () => openServiceModal(key));
+      }
+      const refresh = document.createElement('button');
+      refresh.type = 'button';
+      refresh.className = 'btn btn-secondary btn-sm';
+      refresh.textContent = 'Kiểm tra lại';
+      refresh.addEventListener('click', fetchSystemStatus);
+      actions.append(open, refresh);
+      card.append(actions);
+    }
+  }
+
+  async function fetchMetrics() {
+    if (metricsPending) return;
+    metricsPending = true;
+    const elements = document.querySelectorAll('.metrics-list .metric-item');
+    const labels = ['CPU — Linux VM', 'Bộ nhớ — Linux kernel', 'Mạng — Node Exporter namespace'];
+    elements.forEach((element, index) => {
+      element.querySelector('.metric-name').textContent = labels[index];
+      if (!element.querySelector('.metric-value')) {
+        const value = document.createElement('strong');
+        value.className = 'metric-value';
+        value.textContent = 'Đang tải…';
+        element.insertBefore(value, element.querySelector('.metric-desc'));
+      }
+    });
+    try {
+      const response = await fetch('/api/metrics-summary', {cache: 'no-store'});
+      const data = await response.json();
+      if (!response.ok || data.status !== 'healthy' || !['cpu_percent', 'memory_used_bytes', 'memory_total_bytes', 'memory_percent', 'network_rx_bytes_per_second', 'network_tx_bytes_per_second'].every(key => Number.isFinite(data[key]))) throw new Error('Nguồn metric chưa sẵn sàng');
+      const format = value => Number(value).toLocaleString('vi-VN', {maximumFractionDigits: 2});
+      const values = [
+        `${format(data.cpu_percent)} %`,
+        `${format(data.memory_used_bytes / 1073741824)} / ${format(data.memory_total_bytes / 1073741824)} GiB (${format(data.memory_percent)} %)`,
+        `↓ ${format(data.network_rx_bytes_per_second / 1024)} · ↑ ${format(data.network_tx_bytes_per_second / 1024)} KiB/s`
+      ];
+      elements.forEach((element, index) => { element.querySelector('.metric-value').textContent = values[index]; });
+      const note = document.querySelector('#monitoring .alert-info');
+      if (note) note.textContent = `Nguồn Prometheus / Node Exporter · Cập nhật ${new Date(data.checked_at).toLocaleTimeString('vi-VN')}. CPU/RAM: Linux VM/kernel; mạng: namespace Node Exporter.`;
+    } catch (error) {
+      elements.forEach(element => { element.querySelector('.metric-value').textContent = 'Chưa có dữ liệu'; });
+    } finally {
+      metricsPending = false;
+    }
+  }
+
   // Khởi chạy khi DOM sẵn sàng
   document.addEventListener('DOMContentLoaded', () => {
     setupDynamicAdminLinks();
+    setupServiceLinks();
     fetchSystemStatus();
+    fetchMetrics();
+    setInterval(() => {
+      if (!document.hidden) { fetchSystemStatus(); fetchMetrics(); }
+    }, 15000);
 
     // Nút làm mới trạng thái
     const refreshBtn = document.getElementById('btn-refresh-status');
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => {
         fetchSystemStatus();
+        fetchMetrics();
       });
     }
 

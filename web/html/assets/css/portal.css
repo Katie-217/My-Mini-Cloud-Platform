@@ -373,6 +373,13 @@
 }
 
 /* Monitoring Panel */
+.service-probe-meta { font-size: .8rem; color: var(--color-text-muted); margin-bottom: .8rem; }
+.service-address { font-size: .82rem; color: var(--color-blue-600); overflow-wrap: anywhere; margin-bottom: .7rem; }
+.service-extra-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; }
+.service-card-bottom { flex-wrap: wrap; gap: .6rem; }
+.service-card-bottom > span { overflow-wrap: anywhere; }
+.metric-value { display: block; margin: .8rem 0; font-size: 1.35rem; color: var(--color-text-main); }
+
 .monitoring-card {
   background-color: var(--color-surface);
   border-radius: var(--radius-lg);

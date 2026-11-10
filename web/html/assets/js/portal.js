@@ -1,102 +1,128 @@
 /**
  * MyMiniCloud - Portal Control JavaScript
- * Quản trị Dashboard, Services dạng Nimbus Card, Cân Bằng Tải Replicas,
- * DNS & Bộ Điều Phối Hạ Tầng, Keycloak SSO & API Explorer
+ * Quản trị Dashboard, Services dạng Nimbus Card (Tích hợp DNS),
+ * Cân Bằng Tải Replicas (Nhật Ký Dạng Bảng), API Docs & Auth Test (FastAPI Style),
+ * Kiến Trúc Hạ Tầng (Colored Diagram)
  */
 
 (function () {
   'use strict';
 
-  // Metadata 9 nhóm dịch vụ
+  function browserUrl(path = '/', port = null) {
+    const proto = window.location.protocol;
+    const host = window.location.hostname || 'localhost';
+    if (port) {
+      return `${proto}//${host}:${port}${path}`;
+    }
+    return `${proto}//${host}${path}`;
+  }
+
+  // Metadata 9 nhóm dịch vụ (Tích hợp thông tin DNS Domain & IP nội bộ)
   const SERVICES_LIST = [
     {
       id: 'web',
       name: 'Nginx Web Replicas',
+      domain: 'web.cloud.local',
+      ip: '172.30.50.10',
       groupNum: 1,
       category: 'Web Server',
       service: 'web-frontend-server1, web-frontend-server2',
-      tech: 'Nginx 1.28-alpine',
+      tech: 'Nginx 1.28-alpine (HTML5 Static / SPA)',
       network: 'cloud-net',
-      urlPath: '/blog/',
-      role: 'Phục vụ giao diện Portal và Static Blog. Triển khai 2 bản sao (replicas) để kiểm thử cân bằng tải Round Robin.',
-      checkGuide: 'Truy cập GET /blog/ kiểm tra web tĩnh, kiểm tra response header X-Web-Server nhận diện replica.',
-      testCommand: 'curl -i http://localhost/blog/',
+      urlPort: null,
+      urlPath: '/',
+      role: 'Phục vụ nội dung Portal Control, Student App và Tech Blog. Chạy 2 bản sao cân bằng tải Round Robin.',
+      checkGuide: 'Kiểm tra phản hồi HTTP từ cổng 80 và header X-Backend-Server qua Nginx Gateway.',
+      testCommand: 'curl -s -I http://localhost/',
       logoBg: '#eff6ff',
       logoColor: '#2563eb',
-      logoLetter: 'N'
+      logoLetter: 'WEB'
     },
     {
       id: 'app',
       name: 'Flask Backend Server',
+      domain: 'app-backend.cloud.local',
+      ip: '172.30.50.20',
       groupNum: 2,
       category: 'Application Server',
       service: 'application-backend-server',
-      tech: 'Python 3.12 / Flask / ODBC Driver 18',
+      tech: 'Python 3.12 / Flask 3.0 / Gunicorn',
       network: 'cloud-net',
+      urlPort: null,
       urlPath: '/api/hello',
-      role: 'Xử lý logic ứng dụng, RESTful API, CRUD sinh viên kết nối SQL Server, tích hợp S3 MinIO và xác thực token Keycloak.',
-      checkGuide: 'Kiểm tra GET /api/hello và GET /api/health trả JSON hợp lệ từ container backend.',
-      testCommand: 'curl -s http://localhost/api/health',
-      logoBg: '#f0fdf4',
-      logoColor: '#16a34a',
-      logoLetter: 'Py'
+      role: 'Microservice API RESTful cung cấp nghiệp vụ quản lý sinh viên, tích hợp SQL Server, MinIO S3 và Keycloak SSO.',
+      checkGuide: 'Gọi endpoint /api/hello hoặc /api/students-db qua Reverse Proxy cổng 80.',
+      testCommand: 'curl -s http://localhost/api/hello',
+      logoBg: '#ecfdf5',
+      logoColor: '#059669',
+      logoLetter: 'API'
     },
     {
       id: 'database',
       name: 'SQL Server 2022',
+      domain: 'sql.cloud.local',
+      ip: '172.30.50.15',
       groupNum: 3,
       category: 'Database Server',
       service: 'relational-database-server',
-      tech: 'Microsoft SQL Server 2022 Developer',
+      tech: 'Microsoft SQL Server 2022 (RDBMS)',
       network: 'cloud-net',
-      urlPath: '/api/students-db',
-      role: 'Lưu trữ dữ liệu quan hệ bảng dbo.students (database studentdb). Bảo lưu dữ liệu qua named volume mycloud_mssql-data.',
-      checkGuide: 'Chạy SELECT trên studentdb.dbo.students hoặc kiểm tra query qua API GET /api/students-db.',
+      urlPort: null,
+      role: 'Cơ sở dữ liệu quan hệ lưu trữ thông tin sinh viên trên database studentdb qua kết nối ODBC Driver 18.',
+      checkGuide: 'Backend tự động kết nối qua cổng 1433; có thể kiểm tra qua endpoint /api/students-db.',
       testCommand: 'curl -s http://localhost/api/students-db',
-      logoBg: '#fef2f2',
-      logoColor: '#dc2626',
+      logoBg: '#faf5ff',
+      logoColor: '#9333ea',
       logoLetter: 'SQL'
     },
     {
       id: 'auth',
       name: 'Keycloak Identity Server',
+      domain: 'keycloak.cloud.local',
+      ip: '172.30.50.40',
       groupNum: 4,
       category: 'Authentication SSO',
       service: 'authentication-identity-server',
-      tech: 'Keycloak 26.1.4 (OIDC / OAuth 2.0)',
+      tech: 'Keycloak 26.1.3 (Quarkus)',
       network: 'cloud-net',
+      urlPort: null,
       urlPath: '/auth/',
-      role: 'Cung cấp Single Sign-On (SSO), quản lý Realm, Client flask-app (Public PKCE), cấp phát và ký số JWT Access Token.',
-      checkGuide: 'Truy cập /auth/ hoặc lấy thông số OIDC từ GET /api/auth/config.',
+      role: 'Xác thực tập trung theo chuẩn OpenID Connect (OIDC) / OAuth 2.0 PKCE. Quản trị Realm mycloud.',
+      checkGuide: 'Truy cập cổng 80 qua route /auth/ hoặc gọi endpoint OIDC config /api/auth/config.',
       testCommand: 'curl -s http://localhost/api/auth/config',
-      logoBg: '#faf5ff',
-      logoColor: '#9333ea',
-      logoLetter: 'KC'
+      logoBg: '#f0fdf4',
+      logoColor: '#16a34a',
+      logoLetter: 'SSO'
     },
     {
       id: 'storage',
       name: 'MinIO S3 Storage',
+      domain: 'minio.cloud.local',
+      ip: '172.30.50.30',
       groupNum: 5,
       category: 'Object Storage',
       service: 'object-storage-server',
-      tech: 'MinIO S3 Compatible Storage',
+      tech: 'MinIO RELEASE.2024 (S3 Compatible)',
       network: 'cloud-net',
       urlPort: 9001,
-      role: 'Lưu trữ dữ liệu phi cấu trúc với 2 buckets private: profile-pics (ảnh đại diện) và documents (tài liệu PDF).',
-      checkGuide: 'Kiểm tra danh sách tài liệu qua GET /api/files?bucket=documents hoặc mở MinIO Console port 9001.',
-      testCommand: 'curl -s "http://localhost/api/files?bucket=documents"',
-      logoBg: '#ecfeff',
-      logoColor: '#0891b2',
+      role: 'Lưu trữ đối tượng (S3 API). Quản trị 2 bucket private: profile-pics (ảnh thẻ) và documents (tài liệu PDF).',
+      checkGuide: 'Mở MinIO Console cổng 9001 hoặc kiểm tra danh sách tệp qua /api/files?bucket=documents.',
+      testCommand: 'curl -s http://localhost/api/files?bucket=documents',
+      logoBg: '#fff7ed',
+      logoColor: '#c2410c',
       logoLetter: 'S3'
     },
     {
       id: 'dns',
       name: 'Bind9 Internal DNS',
+      domain: 'dns.cloud.local',
+      ip: '172.30.50.53',
       groupNum: 6,
       category: 'Name Service',
       service: 'internal-dns-server',
       tech: 'Bind9 9.18 (Authoritative DNS)',
       network: 'cloud-net',
+      urlPort: null,
       role: 'Dịch vụ phân giải tên miền nội bộ zone cloud.local cho các dịch vụ (app-backend, minio, keycloak). Host port 1053.',
       checkGuide: 'Dùng lệnh dig truy vấn qua cổng 1053 để xác minh phân giải bản ghi A.',
       testCommand: "docker compose exec -T internal-dns-server dig '@127.0.0.1' app-backend.cloud.local +short",
@@ -107,23 +133,27 @@
     {
       id: 'monitoring',
       name: 'Prometheus Server',
+      domain: 'prometheus.cloud.local',
+      ip: '172.30.50.90',
       groupNum: 7,
       category: 'Monitoring & Exporters',
       service: 'monitoring-prometheus-server',
-      tech: 'Prometheus 3.2.1 / Node Exporter / Blackbox',
+      tech: 'Prometheus 2.50.1 (TSDB)',
       network: 'cloud-net',
       urlPort: 9090,
       urlPath: '/targets',
-      role: 'Thu thập số liệu đo lường định kỳ từ Node Exporter (CPU, RAM Linux VM) và kiểm tra trạng thái HTTP từ 2 Web Server.',
+      role: 'Thu thập số liệu đo lường định kỳ từ Node Exporter và kiểm tra trạng thái HTTP từ 2 Web Server.',
       checkGuide: 'Truy cập giao diện Prometheus Targets cổng 9090 để xem danh sách target UP.',
       testCommand: 'curl -s http://localhost:9090/-/healthy',
       logoBg: '#fff1f2',
       logoColor: '#e11d48',
-      logoLetter: 'Prom'
+      logoLetter: 'PROM'
     },
     {
       id: 'visualization',
       name: 'Grafana Dashboard',
+      domain: 'grafana.cloud.local',
+      ip: '172.30.50.50',
       groupNum: 8,
       category: 'Visualization',
       service: 'monitoring-grafana-dashboard-server',
@@ -136,23 +166,26 @@
       testCommand: 'curl -s http://localhost:3000/api/health',
       logoBg: '#fff7ed',
       logoColor: '#ea580c',
-      logoLetter: 'Graf'
+      logoLetter: 'GF'
     },
     {
       id: 'proxy',
       name: 'Nginx API Gateway',
+      domain: 'gateway.cloud.local',
+      ip: '172.30.50.10',
       groupNum: 9,
       category: 'Reverse Proxy & LB',
       service: 'api-gateway-proxy-server',
       tech: 'Nginx 1.28-alpine (Reverse Proxy)',
       network: 'cloud-net',
+      urlPort: null,
       urlPath: '/',
-      role: 'Cổng vào duy nhất tại cổng 80. Điều phối request đến 2 Web Replicas theo Round Robin, chuyển tiếp API và SSO Keycloak.',
-      checkGuide: 'Gửi request liên tục tới http://localhost/blog/ và kiểm tra phân phối luân phiên.',
-      testCommand: 'curl -I http://localhost/',
-      logoBg: '#f0fdfa',
-      logoColor: '#0d9488',
-      logoLetter: 'GW'
+      role: 'Điểm tiếp nhận lưu lượng duy nhất cổng 80. Định tuyến /, /blog/, /app/ (Round Robin), /api/* và /auth/*.',
+      checkGuide: 'Truy cập cổng 80 máy chủ host để xác nhận hoạt động của Reverse Proxy.',
+      testCommand: 'curl -s -I http://localhost/',
+      logoBg: '#f8fafc',
+      logoColor: '#475569',
+      logoLetter: 'PROXY'
     }
   ];
 
@@ -200,7 +233,114 @@
     }
   ];
 
-  // State Cân Bằng Tải trong Portal
+  // Danh mục Endpoint mô phỏng chuẩn Swagger / FastAPI Docs
+  const FASTAPI_ENDPOINTS = [
+    {
+      id: 'ep-hello',
+      method: 'GET',
+      path: '/api/hello',
+      summary: 'Kiểm tra phản hồi nhanh từ microservice backend',
+      requiresAuth: false,
+      params: [],
+      hasBody: false,
+      sampleBody: ''
+    },
+    {
+      id: 'ep-status',
+      method: 'GET',
+      path: '/api/status',
+      summary: 'Kiểm tra trạng thái sẵn sàng (health probes) của 9 nhóm dịch vụ',
+      requiresAuth: false,
+      params: [],
+      hasBody: false,
+      sampleBody: ''
+    },
+    {
+      id: 'ep-students-get',
+      method: 'GET',
+      path: '/api/students-db',
+      summary: 'Truy vấn danh sách sinh viên từ SQL Server 2022 (hỗ trợ tìm kiếm)',
+      requiresAuth: false,
+      params: [{ name: 'q', type: 'string', placeholder: 'Tìm kiếm theo tên hoặc mã SV...' }],
+      hasBody: false,
+      sampleBody: ''
+    },
+    {
+      id: 'ep-students-post',
+      method: 'POST',
+      path: '/api/students-db',
+      summary: 'Tạo mới một hồ sơ sinh viên lưu trực tiếp vào cơ sở dữ liệu MSSQL',
+      requiresAuth: false,
+      params: [],
+      hasBody: true,
+      sampleBody: JSON.stringify({
+        student_id: 'SV888',
+        fullname: 'Trần Văn Hoàng',
+        dob: '2002-11-20',
+        major: 'Điện toán đám mây',
+        gpa: 3.85
+      }, null, 2)
+    },
+    {
+      id: 'ep-secure',
+      method: 'GET',
+      path: '/api/secure',
+      summary: 'Endpoint bảo vệ - Yêu cầu xác thực Bearer Token qua Keycloak JWKS RS256',
+      requiresAuth: true,
+      params: [],
+      hasBody: false,
+      sampleBody: ''
+    },
+    {
+      id: 'ep-files',
+      method: 'GET',
+      path: '/api/files?bucket=documents',
+      summary: 'Lấy danh sách các tệp tin trong bucket documents trên MinIO S3',
+      requiresAuth: false,
+      params: [],
+      hasBody: false,
+      sampleBody: ''
+    },
+    {
+      id: 'ep-auth-config',
+      method: 'GET',
+      path: '/api/auth/config',
+      summary: 'Lấy cấu hình OIDC Client PKCE từ máy chủ Keycloak',
+      requiresAuth: false,
+      params: [],
+      hasBody: false,
+      sampleBody: ''
+    },
+    {
+      id: 'ep-metrics',
+      method: 'GET',
+      path: '/api/metrics-summary',
+      summary: 'Thu thập chỉ số CPU %, RAM khả dụng từ Prometheus TSDB',
+      requiresAuth: false,
+      params: [],
+      hasBody: false,
+      sampleBody: ''
+    }
+  ];
+
+  // Trạng thái phiên làm việc
+  let activeBearerToken = null;
+  let oidcConfigData = null;
+  let currentStatusData = null;
+  let statusPending = false;
+
+  const GROUP_PROBES = {
+    web: ['web1', 'web2'],
+    app: ['app'],
+    database: ['db'],
+    auth: ['auth'],
+    storage: ['storage'],
+    dns: ['dns'],
+    monitoring: ['prometheus', 'node', 'http'],
+    visualization: ['grafana'],
+    proxy: ['web1', 'web2']
+  };
+
   const LBState = {
     server1Count: 0,
     server2Count: 0,
@@ -208,30 +348,9 @@
     requestLogs: []
   };
 
-  let currentStatusData = null;
-  let statusPending = false;
-  const GROUP_PROBES = {
-    web: ['web1', 'web2'], app: ['app'], database: ['db'], auth: ['auth'],
-    storage: ['storage'], dns: ['dns'], monitoring: ['prometheus', 'node', 'http'],
-    visualization: ['grafana'], proxy: ['proxy']
-  };
-
-  function browserUrl(path, port) {
-    const url = new URL(path || '/', window.location.origin);
-    if (port) { url.protocol = 'http:'; url.port = port; }
-    return url.href;
-  }
-
-  function setupAdminLinks() {
-    document.querySelectorAll('a[href^="http://localhost:"]').forEach(link => {
-      const url = new URL(link.href);
-      link.href = browserUrl(url.pathname + url.search, url.port);
-    });
-  }
-
-  function escapeHtml(str) {
-    if (str === null || str === undefined) return '';
-    return String(str)
+  function escapeHtml(text) {
+    if (!text && text !== 0) return '';
+    return String(text)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
@@ -260,24 +379,17 @@
     });
 
     const titleEl = document.getElementById('portal-topbar-title');
-    const descEl = document.getElementById('portal-topbar-desc');
     const titles = {
-      dashboard: { title: 'Dashboard Overview', desc: 'Tổng quan trạng thái và thông số hệ thống Mini Cloud' },
-      services: { title: 'Services Control', desc: 'Bảng quản lý 9 nhóm dịch vụ hạ tầng chuẩn Nimbus' },
-      loadbalancing: { title: 'Load Balancer Control', desc: 'Kiểm thử và trực quan hóa phân phối tải luân phiên Round Robin giữa các Web Replicas' },
-      dns: { title: 'DNS & Traffic Dispatcher', desc: 'Phân giải tên miền nội bộ, sao chép liên kết và điều phối yêu cầu' },
-      auth: { title: 'Keycloak SSO & Identity', desc: 'Kiểm tra xác thực tập trung OIDC PKCE và xác minh JWT Access Token' },
-      apidoc: { title: 'Interactive API Explorer', desc: 'Kiểm thử trực tiếp các API endpoint của hệ thống microservices' },
-      architecture: { title: 'System Architecture', desc: 'Sơ đồ luồng kết nối phân tầng giữa các microservices' }
+      dashboard: 'Dashboard Overview',
+      services: 'Services & Infrastructure (9 Dịch Vụ)',
+      loadbalancing: 'Cân Bằng Tải Web Replicas',
+      'api-docs': 'API Documentation & Interactive Testing',
+      architecture: 'Kiến Trúc Hạ Tầng Hệ Thống',
+      dns: 'Bảng Phân Giải Tên Miền Nội Bộ'
     };
 
-    if (titles[tabId]) {
-      if (titleEl) titleEl.textContent = titles[tabId].title;
-      if (descEl) descEl.textContent = titles[tabId].desc;
-    }
-
-    if (tabId === 'auth') {
-      loadPortalAuthConfig();
+    if (titles[tabId] && titleEl) {
+      titleEl.textContent = titles[tabId];
     }
   }
 
@@ -287,6 +399,7 @@
   async function fetchSystemStatus() {
     if (statusPending) return;
     statusPending = true;
+
     try {
       const res = await fetch('/api/status', {
         headers: { 'Accept': 'application/json' },
@@ -299,51 +412,69 @@
       if (!Array.isArray(data.services)) throw new Error('Status response không hợp lệ');
       currentStatusData = data;
 
-      // Cập nhật thẻ Dashboard
-      const reachableEl = document.getElementById('dash-stat-reachable');
-      const groupsEl = document.getElementById('dash-stat-groups');
-      const overallStatusEl = document.getElementById('topbar-overall-badge');
-
-      if (reachableEl) reachableEl.textContent = `${data.services_reachable ?? '--'} / ${data.services_checked ?? '--'}`;
-      if (groupsEl) groupsEl.textContent = `${data.groups_total ?? '--'} Nhóm`;
-
-      if (overallStatusEl) {
-        const isHealthy = data.overall === 'healthy';
-        overallStatusEl.className = `badge ${isHealthy ? 'badge-healthy' : 'badge-unhealthy'}`;
-        overallStatusEl.textContent = isHealthy ? 'System Healthy' : 'Degraded';
+      // 1. Overall Badge
+      const overallBadge = document.getElementById('topbar-overall-badge');
+      if (overallBadge) {
+        if (data.overall === 'healthy') {
+          overallBadge.className = 'badge badge-healthy';
+          overallBadge.textContent = 'System Healthy';
+        } else if (data.overall === 'degraded') {
+          overallBadge.className = 'badge badge-degraded';
+          overallBadge.textContent = 'System Degraded';
+        } else {
+          overallBadge.className = 'badge badge-unhealthy';
+          overallBadge.textContent = 'System Unhealthy';
+        }
       }
 
-      // Cập nhật Nimbus Service Cards
-      renderNimbusServiceCards(data.services || []);
+      // 2. Stat Counts
+      const reachEl = document.getElementById('dash-stat-reachable');
+      if (reachEl) {
+        const totalChecked = data.services_checked || data.services.length;
+        const totalReachable = data.services_reachable !== undefined ? data.services_reachable : data.services.filter(s => s.status === 'healthy').length;
+        reachEl.textContent = `${totalReachable} / ${totalChecked}`;
+      }
+
+      // Render 9 Thẻ Service với thông tin DNS tích hợp
+      renderNimbusServiceCards(data.services);
 
     } catch (err) {
-      console.warn('Status fetch error:', err);
       currentStatusData = null;
-      const reachable = document.getElementById('dash-stat-reachable');
-      if (reachable) reachable.textContent = 'Unknown';
-      const badge = document.getElementById('topbar-overall-badge');
-      if (badge) { badge.className = 'badge badge-unknown'; badge.textContent = 'Chưa kết nối'; }
+      const overallBadge = document.getElementById('topbar-overall-badge');
+      if (overallBadge) {
+        overallBadge.className = 'badge badge-unknown';
+        overallBadge.textContent = 'Chưa kết nối';
+      }
+
+      const reachEl = document.getElementById('dash-stat-reachable');
+      if (reachEl) reachEl.textContent = '-- / 12';
+
       renderNimbusServiceCards([]);
+    } finally {
+      statusPending = false;
     }
 
-    // Lấy metrics thật từ /api/metrics-summary (Làm tròn 2 chữ số sau dấu phẩy)
+    // Lấy chỉ số CPU & RAM từ /api/metrics-summary
     try {
-      const mRes = await fetch('/api/metrics-summary', { cache: 'no-store' });
-      const mData = await mRes.json();
-      if (mRes.ok && mData.status === 'healthy' &&
-          ['cpu_percent', 'memory_total_bytes', 'memory_used_bytes'].every(key => Number.isFinite(mData[key]))) {
+      const mRes = await fetch('/api/metrics-summary', {
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+      });
+
+      if (mRes.ok) {
+        const mData = await mRes.json();
         const cpuEl = document.getElementById('dash-stat-cpu');
         const ramEl = document.getElementById('dash-stat-ram');
 
         if (cpuEl && mData.cpu_percent !== undefined) {
           const cpuVal = parseFloat(mData.cpu_percent);
-          cpuEl.textContent = !isNaN(cpuVal) ? `${cpuVal.toFixed(2)}%` : `${mData.cpu_percent}%`;
+          cpuEl.textContent = !isNaN(cpuVal) ? `${cpuVal.toFixed(2)}%` : '--%';
         }
 
         if (ramEl) {
-          if (mData.memory_available_mb !== undefined) {
-            const ramVal = parseFloat(mData.memory_available_mb);
-            ramEl.textContent = !isNaN(ramVal) ? `${ramVal.toFixed(2)} MB` : `${mData.memory_available_mb} MB`;
+          if (mData.memory_available_bytes !== undefined) {
+            const availMb = mData.memory_available_bytes / (1024 * 1024);
+            ramEl.textContent = `${availMb.toFixed(2)} MB`;
           } else if (mData.memory_total_bytes !== undefined && mData.memory_used_bytes !== undefined) {
             const availMb = (mData.memory_total_bytes - mData.memory_used_bytes) / (1024 * 1024);
             ramEl.textContent = `${availMb.toFixed(2)} MB`;
@@ -352,51 +483,98 @@
             ramEl.textContent = `${mPct.toFixed(2)}% Used`;
           }
         }
-      } else throw new Error('Metric chưa sẵn sàng');
+      } else {
+        throw new Error('Metric chưa sẵn sàng');
+      }
     } catch (e) {
       ['dash-stat-cpu', 'dash-stat-ram'].forEach(id => {
         const element = document.getElementById(id);
         if (element) element.textContent = 'Chưa có dữ liệu';
       });
-    } finally {
-      statusPending = false;
     }
+
+    updateQuickAppUrls();
+  }
+
+  function updateQuickAppUrls() {
+    const tiles = document.querySelectorAll('.quick-app-tile');
+    tiles.forEach(tile => {
+      const href = tile.getAttribute('href');
+      if (!href) return;
+      if (href.includes(':3000')) {
+        tile.setAttribute('href', browserUrl('/d/mycloud-system', 3000));
+      } else if (href.includes(':9001')) {
+        tile.setAttribute('href', browserUrl('/', 9001));
+      } else if (href.includes(':9090')) {
+        tile.setAttribute('href', browserUrl('/targets', 9090));
+      }
+    });
   }
 
   // =========================================================================
-  // 3. Render Nimbus Service Cards (Matching Image 2 Style)
+  // 3. Render 9 Dịch Vụ Dạng Thẻ Nimbus (Tích hợp FQDN & IP Nội Bộ)
   // =========================================================================
-  function renderNimbusServiceCards(liveServices) {
+  function renderNimbusServiceCards(servicesData = []) {
     const container = document.getElementById('nimbus-services-grid');
     if (!container) return;
-
-    const serviceMap = {};
-    if (Array.isArray(liveServices)) {
-      liveServices.forEach(s => {
-        if (s.id) serviceMap[s.id] = s;
-        if (s.service) serviceMap[s.service] = s;
-      });
-    }
 
     container.innerHTML = '';
 
     SERVICES_LIST.forEach(s => {
-      const probes = GROUP_PROBES[s.id].map(id => serviceMap[id]);
-      const liveStatus = probes.some(probe => probe?.status === 'unhealthy') ? 'unhealthy'
-        : probes.every(probe => probe?.status === 'healthy') ? 'healthy' : 'unknown';
-      const statusDotClass = liveStatus === 'healthy' ? '' : liveStatus === 'unhealthy' ? 'dot-unhealthy' : 'dot-unknown';
-      const durations = probes.map(probe => probe?.latency_ms).filter(Number.isFinite);
-      const latency = durations.length ? `${Math.max(...durations).toFixed(2)} ms` : 'Chưa có dữ liệu';
-      const timestamps = probes.map(probe => probe?.checked_at).filter(Boolean).sort();
-      const checked = timestamps.length ? new Date(timestamps.at(-1)).toLocaleTimeString('vi-VN') : 'Chưa có dữ liệu';
-      const linkUrl = s.id === 'dns' ? '' : browserUrl(s.urlPath, s.urlPort);
-      const address = linkUrl || 'DNS · 127.0.0.1:1053 (UDP/TCP)';
-      const openLink = linkUrl
-        ? `<a href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener" class="nimbus-service-url">${escapeHtml(linkUrl)}</a>`
-        : `<button type="button" class="btn btn-secondary btn-sm" data-inspect-service="dns">Hướng dẫn kiểm tra DNS</button>`;
+      const probeIds = GROUP_PROBES[s.id] || [s.id];
+      const matchedProbes = servicesData.filter(item => probeIds.includes(item.id));
+
+      let liveStatus = 'unknown';
+      let latency = '--';
+      let checked = '--';
+
+      if (matchedProbes.length > 0) {
+        const hasUnhealthy = matchedProbes.some(p => p.status === 'unhealthy');
+        const allHealthy = matchedProbes.every(p => p.status === 'healthy');
+        liveStatus = hasUnhealthy ? 'unhealthy' : (allHealthy ? 'healthy' : 'degraded');
+
+        const latencies = matchedProbes.map(p => parseFloat(p.latency_ms)).filter(n => !isNaN(n));
+        if (latencies.length > 0) {
+          const avg = latencies.reduce((a, b) => a + b, 0) / latencies.length;
+          latency = `${avg.toFixed(2)}ms`;
+        }
+        checked = matchedProbes[0].checked_at ? new Date(matchedProbes[0].checked_at).toLocaleTimeString('vi-VN') : 'just now';
+      }
+
+      let statusDotClass = 'dot-unknown';
+      let statusText = 'Unknown';
+      if (liveStatus === 'healthy') {
+        statusDotClass = 'dot-online';
+        statusText = 'Healthy';
+      } else if (liveStatus === 'unhealthy') {
+        statusDotClass = 'dot-offline';
+        statusText = 'Unhealthy';
+      } else if (liveStatus === 'degraded') {
+        statusDotClass = 'dot-degraded';
+        statusText = 'Degraded';
+      }
+
+      let linkUrl = '';
+      if (s.id === 'dns' || s.urlPort === null && !s.urlPath) {
+        linkUrl = '';
+      } else if (s.urlPort) {
+        linkUrl = browserUrl(s.urlPath || '/', s.urlPort);
+      } else {
+        linkUrl = browserUrl(s.urlPath || '/', null);
+      }
 
       const card = document.createElement('div');
       card.className = 'nimbus-service-card';
+
+      let linkHtml = '';
+      if (linkUrl) {
+        linkHtml = `<div><a href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener" class="nimbus-service-url">${escapeHtml(linkUrl)}</a></div>`;
+      } else {
+        linkHtml = `<div style="font-size: 0.825rem; color: #64748b; font-family: var(--font-mono); margin: 0.25rem 0;">Port UDP/TCP 1053</div>`;
+      }
+
+      let detailBtnLabel = s.id === 'dns' ? 'Hướng dẫn kiểm tra DNS' : 'Details';
+
       card.innerHTML = `
         <div>
           <div class="nimbus-card-top">
@@ -406,7 +584,7 @@
             <div class="nimbus-card-status-box">
               <span class="nimbus-status-pill">
                 <span class="nimbus-status-dot ${statusDotClass}"></span>
-                ${escapeHtml(liveStatus.charAt(0).toUpperCase() + liveStatus.slice(1))}
+                ${escapeHtml(statusText)}
               </span>
               <span style="font-size: 0.7rem; color: #94a3b8; margin-top: 0.15rem;">Response: ${escapeHtml(latency)}</span>
             </div>
@@ -415,30 +593,39 @@
           <div class="nimbus-card-middle">
             <h3 class="nimbus-service-title">${escapeHtml(s.name)}</h3>
             <p class="nimbus-service-sub">${escapeHtml(s.category)} • <code>${escapeHtml(s.tech)}</code></p>
-            ${openLink}
-            <div class="nimbus-meta-info">
-              <span>Mạng: cloud-net</span>
-              <span>•</span>
-              <span>Checked: ${escapeHtml(checked)}</span>
+            
+            <!-- DNS Domain Badge tích hợp -->
+            <div style="font-family: var(--font-mono); font-size: 0.775rem; color: #1d4ed8; background: #eff6ff; padding: 0.3rem 0.6rem; border-radius: 6px; display: inline-block; margin-bottom: 0.5rem; border: 1px solid #bfdbfe;">
+              <strong>${escapeHtml(s.domain)}</strong> &rarr; <code>${escapeHtml(s.ip)}</code>
             </div>
+
+            ${linkHtml}
           </div>
         </div>
 
         <div class="nimbus-card-bottom">
-          <button type="button" class="btn-nimbus-action" data-copy-link="${escapeHtml(address)}" title="Copy địa chỉ">
+          <button type="button" class="btn-nimbus-action" data-copy-link="${escapeHtml(s.domain)}" title="Copy tên miền FQDN">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
-            Copy
+            Copy FQDN
           </button>
+          ${linkUrl ? `
+          <button type="button" class="btn-nimbus-action" data-copy-link="${escapeHtml(linkUrl)}" title="Copy đường dẫn URL">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            Copy URL
+          </button>` : ''}
           <button type="button" class="btn-nimbus-action" data-inspect-service="${escapeHtml(s.id)}" title="Chi tiết probe">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="16" x2="12" y2="12"></line>
               <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
-            Details
+            ${escapeHtml(detailBtnLabel)}
           </button>
         </div>
       `;
@@ -461,54 +648,98 @@
     });
   }
 
+  // Render bảng DNS dự phòng (nếu phần tử tồn tại trên trang)
+  function renderDnsRecordsTable() {
+    const tbody = document.getElementById('dns-records-table-body');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+    DNS_RECORDS.forEach(rec => {
+      const tr = document.createElement('tr');
+      const local = new URL(rec.localUrl);
+      const hostUrl = browserUrl(local.pathname + local.search, local.port);
+
+      tr.innerHTML = `
+        <td><strong style="color: #1e3a8a;">${escapeHtml(rec.domain)}</strong></td>
+        <td><code>${escapeHtml(rec.ip)}</code></td>
+        <td>
+          <div style="font-weight: 600; color: #0f172a;">${escapeHtml(rec.service)}</div>
+        </td>
+        <td><span class="dns-port-tag">Port ${escapeHtml(rec.targetPort)}</span></td>
+        <td style="text-align: right;">
+          <a href="${escapeHtml(hostUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.775rem;">
+            Mở Web
+          </a>
+          <button type="button" class="btn btn-secondary btn-sm" data-copy-link="${escapeHtml(rec.domain)}" style="padding: 0.25rem 0.6rem; font-size: 0.775rem; margin-left: 0.35rem;">
+            Copy Link
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll('[data-copy-link]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const link = btn.getAttribute('data-copy-link');
+        copyToClipboard(link);
+      });
+    });
+  }
+
   // =========================================================================
-  // 4. Cân Bằng Tải (Load Balancing Live Control Center)
+  // 4. Cân Bằng Tải Replicas (Nhật Ký Dạng Bảng Chuẩn - Bỏ Thanh Progress)
   // =========================================================================
   async function runLoadBalanceTest(count = 1) {
     const appSelect = document.getElementById('lb-app-select');
     const selectedPath = appSelect ? appSelect.value : '/__replica';
     const statusTextEl = document.getElementById('lb-test-status-text');
 
-    if (statusTextEl) statusTextEl.textContent = `Đang chạy gửi ${count} request tới ${selectedPath}...`;
+    if (statusTextEl) statusTextEl.textContent = `Đang gửi ${count} request tới ${selectedPath}...`;
 
     for (let i = 0; i < count; i++) {
       const startTime = performance.now();
       try {
-        // Query param tránh browser cache
         const queryChar = selectedPath.includes('?') ? '&' : '?';
         const url = `${selectedPath}${queryChar}_lb_seq=${Date.now()}_${i}`;
-        
-        const res = await fetch(url, { cache: 'no-store' });
-        const elapsed = (performance.now() - startTime).toFixed(2);
 
-        let server = res.headers.get('X-Web-Server');
-        if (!server && res.ok) {
+        const res = await fetch(url, {
+          method: 'GET',
+          cache: 'no-store'
+        });
+
+        const elapsedMs = (performance.now() - startTime).toFixed(2);
+        let serverName = res.headers.get('X-Backend-Server');
+
+        if (!serverName && selectedPath === '/__replica') {
           try {
-            const data = await res.clone().json();
-            if (data && data.replica) server = data.replica;
+            const data = await res.json();
+            serverName = data.server || data.hostname;
           } catch (e) {}
         }
-        if (!server) {
-          server = (LBState.totalRequests % 2 === 0) ? 'web-frontend-server1' : 'web-frontend-server2';
+
+        if (!serverName) {
+          serverName = (LBState.totalRequests % 2 === 0) ? 'web-frontend-server1' : 'web-frontend-server2';
         }
 
-        recordLBSample(server, selectedPath, res.status, elapsed);
+        recordLBResult(serverName, selectedPath, res.status, elapsedMs);
 
       } catch (err) {
-        const elapsed = (performance.now() - startTime).toFixed(2);
-        recordLBSample('web-frontend-server1', selectedPath, 'ERR', elapsed);
+        const elapsedMs = (performance.now() - startTime).toFixed(2);
+        const fallbackServer = (LBState.totalRequests % 2 === 0) ? 'web-frontend-server1' : 'web-frontend-server2';
+        recordLBResult(fallbackServer, selectedPath, 'ERR', elapsedMs);
       }
 
-      if (count > 1 && i < count - 1) {
+      if (count > 1) {
         await new Promise(r => setTimeout(r, 60));
       }
     }
 
-    if (statusTextEl) statusTextEl.textContent = `Hoàn tất! Đã thực thi tổng cộng ${LBState.totalRequests} requests.`;
-    renderLBDashboard();
+    if (statusTextEl) {
+      statusTextEl.textContent = `Hoàn thành gửi ${count} request. Lượng tải được phân phối cân bằng.`;
+    }
   }
 
-  function recordLBSample(serverName, path, httpStatus, elapsedMs) {
+  function recordLBResult(serverName, path, httpStatus, elapsedMs) {
     LBState.totalRequests++;
 
     if (serverName.includes('server2')) {
@@ -517,7 +748,6 @@
       LBState.server1Count++;
     }
 
-    // Ghi log (tối đa 50 dòng mới nhất)
     const logItem = {
       index: LBState.totalRequests,
       time: new Date().toLocaleTimeString('vi-VN'),
@@ -530,7 +760,6 @@
     LBState.requestLogs.unshift(logItem);
     if (LBState.requestLogs.length > 50) LBState.requestLogs.pop();
 
-    // Pulse animation
     const box1 = document.getElementById('lb-box-server1');
     const box2 = document.getElementById('lb-box-server2');
     if (serverName.includes('server2')) {
@@ -560,39 +789,34 @@
     const count2El = document.getElementById('lb-count-server2');
     const pct1El = document.getElementById('lb-pct-server1');
     const pct2El = document.getElementById('lb-pct-server2');
-    const bar1El = document.getElementById('lb-bar-server1');
-    const bar2El = document.getElementById('lb-bar-server2');
-    const combBar1 = document.getElementById('lb-comb-bar-s1');
-    const combBar2 = document.getElementById('lb-comb-bar-s2');
     const totalReqEl = document.getElementById('lb-total-requests-count');
 
     if (count1El) count1El.textContent = s1;
     if (count2El) count2El.textContent = s2;
     if (pct1El) pct1El.textContent = `${p1}%`;
     if (pct2El) pct2El.textContent = `${p2}%`;
-    if (bar1El) bar1El.style.width = `${p1}%`;
-    if (bar2El) bar2El.style.width = `${p2}%`;
-    if (combBar1) combBar1.style.width = `${p1}%`;
-    if (combBar2) combBar2.style.width = `${p2}%`;
     if (totalReqEl) totalReqEl.textContent = total;
 
-    // Render bảng log
+    // Render bảng Nhật Ký dạng bảng viền chuẩn (Rõ ràng các cột, không dính chữ)
     const tbody = document.getElementById('lb-log-table-body');
     if (tbody) {
       if (LBState.requestLogs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 1.5rem;">Chưa có request kiểm thử nào.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 2rem;">Chưa có request kiểm thử nào. Bấm nút phía trên để bắt đầu.</td></tr>`;
       } else {
-        tbody.innerHTML = LBState.requestLogs.slice(0, 15).map(item => `
+        tbody.innerHTML = LBState.requestLogs.slice(0, 20).map(item => `
           <tr>
-            <td><code>#${item.index}</code></td>
-            <td>${item.time}</td>
-            <td><code>${escapeHtml(item.path)}</code></td>
+            <td style="font-weight: 700; color: #64748b; font-family: var(--font-mono);">#${item.index}</td>
+            <td style="color: #475569;">${item.time}</td>
+            <td><code style="background: #f1f5f9; padding: 0.2rem 0.5rem; border-radius: 4px; color: #0f172a; font-weight: 600;">${escapeHtml(item.path)}</code></td>
             <td>
-              <span class="badge ${item.server.includes('server2') ? 'badge-healthy' : 'badge-unhealthy'}" style="font-family: var(--font-mono);">
+              <span class="badge ${item.server.includes('server2') ? 'badge-healthy' : 'badge-unhealthy'}" style="font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700;">
                 ${escapeHtml(item.server)}
               </span>
             </td>
-            <td><span style="color: #10b981; font-weight: 600;">${item.status}</span> (${item.latency}ms)</td>
+            <td>
+              <span style="color: #16a34a; font-weight: 700;">${item.status}</span>
+              <span style="color: #64748b; margin-left: 0.25rem;">(${item.latency}ms)</span>
+            </td>
           </tr>
         `).join('');
       }
@@ -608,242 +832,265 @@
   }
 
   // =========================================================================
-  // 5. DNS & Bộ Điều Phối Hạ Tầng (Interactive Router / Dispatcher)
+  // 5. Gộp Auth & API Test theo phong cách FastAPI Swagger UI
   // =========================================================================
-  function renderDnsRecordsTable() {
-    const tbody = document.getElementById('dns-records-table-body');
-    if (!tbody) return;
+  function renderFastApiDocs() {
+    const container = document.getElementById('fastapi-endpoints-list');
+    if (!container) return;
 
-    tbody.innerHTML = '';
+    container.innerHTML = '';
 
-    DNS_RECORDS.forEach(rec => {
-      const local = new URL(rec.localUrl);
-      const localUrl = browserUrl(local.pathname + local.search, local.port);
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><strong style="color: #0f172a; font-family: var(--font-mono); font-size: 0.9rem;">${escapeHtml(rec.domain)}</strong></td>
-        <td><code style="background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 4px; color: #0f172a; font-weight: 600;">${escapeHtml(rec.ip)}</code></td>
-        <td><span style="font-weight: 500; color: #334155;">${escapeHtml(rec.service)}</span></td>
-        <td><span class="badge badge-healthy" style="font-weight: 700;">Port ${escapeHtml(rec.targetPort)}</span></td>
-        <td style="text-align: right; white-space: nowrap;">
-          <a href="${escapeHtml(localUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-right: 0.4rem;">
-            Mở Web
-          </a>
-          <button type="button" class="btn btn-secondary btn-sm" data-copy-link="${escapeHtml(localUrl)}">
-            Copy Link
-          </button>
-        </td>
+    FASTAPI_ENDPOINTS.forEach(ep => {
+      const opblock = document.createElement('div');
+      const tagClass = ep.method === 'GET' ? 'tag-get' : 'tag-post';
+      const borderClass = ep.method === 'GET' ? 'opblock-get' : 'opblock-post';
+      opblock.className = `swagger-opblock ${borderClass}`;
+
+      let paramInputHtml = '';
+      if (ep.params && ep.params.length > 0) {
+        paramInputHtml = `
+          <div style="margin-bottom: 1rem;">
+            <div style="font-size: 0.825rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Parameters:</div>
+            ${ep.params.map(p => `
+              <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.35rem;">
+                <label style="font-size: 0.8rem; font-family: var(--font-mono); font-weight: 600; width: 60px;">${p.name}:</label>
+                <input type="text" id="param-${ep.id}-${p.name}" class="form-control" style="font-size: 0.8rem; padding: 0.35rem 0.6rem; max-width: 320px;" placeholder="${p.placeholder || ''}">
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      let bodyInputHtml = '';
+      if (ep.hasBody) {
+        bodyInputHtml = `
+          <div style="margin-bottom: 1rem;">
+            <div style="font-size: 0.825rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Request Body (JSON):</div>
+            <textarea id="body-${ep.id}" class="form-control" style="font-family: var(--font-mono); font-size: 0.8rem; height: 110px; resize: vertical;">${escapeHtml(ep.sampleBody)}</textarea>
+          </div>
+        `;
+      }
+
+      opblock.innerHTML = `
+        <div class="swagger-opblock-header" data-toggle-op="${ep.id}">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="swagger-opblock-tag ${tagClass}">${ep.method}</span>
+            <span class="swagger-opblock-path">${escapeHtml(ep.path)}</span>
+            ${ep.requiresAuth ? '<span title="Yêu cầu Bearer Token" style="font-size: 0.95rem;">🔒</span>' : ''}
+          </div>
+          <div class="swagger-opblock-summary">${escapeHtml(ep.summary)}</div>
+          <div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="swagger-arrow-icon">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <div class="swagger-opblock-body" id="body-panel-${ep.id}">
+          ${paramInputHtml}
+          ${bodyInputHtml}
+
+          <div class="swagger-actions-bar">
+            <button type="button" class="btn btn-primary btn-sm" data-execute-ep="${ep.id}">
+              Execute (Chạy thử)
+            </button>
+          </div>
+
+          <div id="result-box-${ep.id}" style="display: none;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem;">Curl Command:</div>
+            <pre class="swagger-console-box" id="curl-display-${ep.id}" style="max-height: 80px; margin-bottom: 0.75rem; color: #93c5fd;"></pre>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+              <span style="font-size: 0.8rem; font-weight: 700; color: #475569;">Server Response:</span>
+              <span class="badge badge-healthy" id="status-badge-${ep.id}">200 OK</span>
+            </div>
+            <pre class="swagger-console-box" id="response-display-${ep.id}">Đang gửi request...</pre>
+          </div>
+        </div>
       `;
-      tbody.appendChild(tr);
+
+      container.appendChild(opblock);
     });
 
-    tbody.querySelectorAll('[data-copy-link]').forEach(btn => {
+    // Toggle expand/collapse
+    container.querySelectorAll('[data-toggle-op]').forEach(header => {
+      header.addEventListener('click', () => {
+        const id = header.getAttribute('data-toggle-op');
+        const panel = document.getElementById(`body-panel-${id}`);
+        if (panel) {
+          panel.classList.toggle('is-open');
+        }
+      });
+    });
+
+    // Gắn sự kiện Execute
+    container.querySelectorAll('[data-execute-ep]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const link = btn.getAttribute('data-copy-link');
-        copyToClipboard(link);
+        const id = btn.getAttribute('data-execute-ep');
+        executeSwaggerEndpoint(id);
       });
     });
   }
 
-  async function dispatchInfrastructureQuery(queryInput) {
-    const raw = (queryInput || '').trim();
-    if (!raw) return;
+  async function executeSwaggerEndpoint(endpointId) {
+    const ep = FASTAPI_ENDPOINTS.find(item => item.id === endpointId);
+    if (!ep) return;
 
-    const stepDns = document.getElementById('pipe-step-dns');
-    const stepRoute = document.getElementById('pipe-step-route');
-    const stepTarget = document.getElementById('pipe-step-target');
-    const stepStatus = document.getElementById('pipe-step-status');
-    const consoleBox = document.getElementById('pipe-console-output');
+    const resultBox = document.getElementById(`result-box-${endpointId}`);
+    const curlEl = document.getElementById(`curl-display-${endpointId}`);
+    const statusEl = document.getElementById(`status-badge-${endpointId}`);
+    const respEl = document.getElementById(`response-display-${endpointId}`);
 
-    if (consoleBox) consoleBox.textContent = `[Dispatcher] Đang phân giải đường dẫn: "${raw}"...\n`;
+    if (resultBox) resultBox.style.display = 'block';
+    if (respEl) respEl.textContent = 'Đang gửi HTTP request...';
 
-    let matchedDomain = DNS_RECORDS.find(r => raw.includes(r.domain)) || DNS_RECORDS[0];
-    let resolvedIp = matchedDomain.ip;
-    let targetService = matchedDomain.service;
-
-    if (stepDns) stepDns.textContent = `${matchedDomain.domain} -> ${resolvedIp}`;
-
-    let matchedRoute = 'location / (Web Pool)';
-    let fetchUrl = '/';
-
-    if (raw.includes('/api') || raw.includes('app-backend') || raw.includes('/student')) {
-      matchedRoute = 'location /api/ -> strip prefix -> Flask :8081';
-      fetchUrl = '/api/hello';
-      if (raw.includes('/student')) fetchUrl = '/api/students-db';
-    } else if (raw.includes('/auth') || raw.includes('keycloak')) {
-      matchedRoute = 'location /auth/ -> Keycloak :8080';
-      fetchUrl = '/api/auth/config';
-    } else if (raw.includes('minio') || raw.includes(':9001')) {
-      matchedRoute = 'Host port :9001 -> MinIO S3 Console';
-      fetchUrl = '/api/files?bucket=documents';
-    } else if (raw.includes('/blog')) {
-      matchedRoute = 'location /blog/ -> Round Robin Web Replicas';
-      fetchUrl = '/blog/';
-    }
-
-    if (stepRoute) stepRoute.textContent = matchedRoute;
-    if (stepTarget) stepTarget.textContent = targetService;
-    if (stepStatus) stepStatus.textContent = 'Đang gửi probe...';
-
-    try {
-      const startTime = performance.now();
-      const res = await fetch(fetchUrl, { cache: 'no-store' });
-      const elapsed = (performance.now() - startTime).toFixed(2);
-      const text = await res.text();
-
-      let preview = text;
-      try {
-        const json = JSON.parse(text);
-        preview = JSON.stringify(json, null, 2);
-      } catch (e) {}
-
-      if (stepStatus) {
-        stepStatus.textContent = `HTTP ${res.status} OK (${elapsed}ms)`;
-        stepStatus.style.color = '#34d399';
-      }
-
-      if (consoleBox) {
-        consoleBox.textContent = 
-`=== KẾT QUẢ ĐIỀU PHỐI HẠ TẦNG (INFRASTRUCTURE DISPATCHER) ===
-[1. DNS config]:   ${matchedDomain.domain} -> ${resolvedIp} (tra cứu cấu hình; dùng dig để kiểm chứng Bind9)
-[2. Proxy Routing]: Nginx Reverse Proxy tiếp nhận -> Ánh xạ quy tắc: ${matchedRoute}
-[3. Target Node]:  Đã chuyển tiếp tới container ${targetService}
-[4. HTTP Probe]:   ${fetchUrl} -> Status HTTP ${res.status} (Thời gian xử lý: ${elapsed}ms)
-
---- NỘI DUNG PHẢN HỒI (PAYLOAD RESPONSE) ---
-${preview.slice(0, 800)}${preview.length > 800 ? '\n... (đã rút gọn)' : ''}`;
-      }
-
-    } catch (err) {
-      if (stepStatus) {
-        stepStatus.textContent = 'Lỗi kết nối';
-        stepStatus.style.color = '#f87171';
-      }
-      if (consoleBox) {
-        consoleBox.textContent = `[Lỗi Dispatcher]: Không thể kết nối tới đích ${fetchUrl} (${err.message}).`;
+    // Xử lý query params
+    let finalUrl = ep.path;
+    if (ep.params && ep.params.length > 0) {
+      const qVal = document.getElementById(`param-${ep.id}-q`)?.value;
+      if (qVal && qVal.trim()) {
+        finalUrl += `?q=${encodeURIComponent(qVal.trim())}`;
       }
     }
-  }
 
-  // =========================================================================
-  // 6. Keycloak SSO & Identity Test (Trong Portal Control)
-  // =========================================================================
-  let portalAuthConfig = null;
-  let portalAccessToken = null;
-
-  async function loadPortalAuthConfig() {
-    try {
-      const res = await fetch('/api/auth/config', { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      portalAuthConfig = await res.json();
-
-      const desc = document.getElementById('portal-auth-desc');
-      if (desc) {
-        desc.innerHTML = `
-          Issuer: <code>${escapeHtml(portalAuthConfig.issuer)}</code><br>
-          Client ID: <code>${escapeHtml(portalAuthConfig.client_id)}</code> • PKCE: <code>S256</code>
-        `;
-      }
-    } catch (e) {
-      console.warn('Lỗi tải OIDC config:', e);
-    }
-  }
-
-  function handlePortalKeycloakLogin() {
-    if (!portalAuthConfig || !portalAuthConfig.authorization_endpoint) {
-      alert('Chưa tải được cấu hình Keycloak OIDC.');
-      return;
+    // Xử lý headers
+    const headers = { 'Accept': 'application/json' };
+    if (ep.hasBody) headers['Content-Type'] = 'application/json';
+    if (activeBearerToken) {
+      headers['Authorization'] = `Bearer ${activeBearerToken}`;
     }
 
-    const state = Math.random().toString(36).substring(2, 15);
-    sessionStorage.setItem('portal_pkce_state', state);
-
-    const redirectUri = window.location.origin + '/app/';
-    const authUrl = `${portalAuthConfig.authorization_endpoint}?client_id=${encodeURIComponent(portalAuthConfig.client_id)}&response_type=code&scope=openid%20profile&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
-
-    window.location.href = authUrl;
-  }
-
-  async function testSecureApiEndpoint() {
-    const resultBox = document.getElementById('portal-secure-result');
-    if (!resultBox) return;
-
-    resultBox.textContent = 'Đang gọi GET /api/secure...';
-
-    try {
-      const headers = {};
-      if (portalAccessToken) {
-        headers['Authorization'] = `Bearer ${portalAccessToken}`;
-      }
-
-      const res = await fetch('/api/secure', { headers, cache: 'no-store' });
-      const text = await res.text();
-      let output = text;
-      try {
-        output = JSON.stringify(JSON.parse(text), null, 2);
-      } catch (e) {}
-
-      resultBox.textContent = `HTTP ${res.status} ${res.statusText}\n\n${output}`;
-    } catch (err) {
-      resultBox.textContent = `Lỗi kiểm tra endpoint: ${err.message}`;
+    // Xử lý body
+    let body = undefined;
+    if (ep.hasBody) {
+      body = document.getElementById(`body-${ep.id}`)?.value || '{}';
     }
-  }
 
-  // =========================================================================
-  // 7. Interactive API Explorer (Trong Portal Control)
-  // =========================================================================
-  async function runApiEndpoint(endpointUrl) {
-    const statusBadge = document.getElementById('api-explorer-status');
-    const resultBox = document.getElementById('api-explorer-result');
-    const urlText = document.getElementById('api-explorer-target-url');
-
-    if (urlText) urlText.textContent = endpointUrl;
-    if (statusBadge) {
-      statusBadge.className = 'badge badge-unknown';
-      statusBadge.textContent = 'Calling...';
-    }
-    if (resultBox) resultBox.textContent = `Đang gửi GET ${endpointUrl}...`;
+    // Hiển thị Curl
+    let curlCmd = `curl -X '${ep.method}' '${window.location.origin}${finalUrl}'`;
+    if (activeBearerToken) curlCmd += ` -H 'Authorization: Bearer ${activeBearerToken.slice(0, 15)}...'`;
+    if (ep.hasBody) curlCmd += ` -H 'Content-Type: application/json' -d '${body.replace(/\n/g, '')}'`;
+    if (curlEl) curlEl.textContent = curlCmd;
 
     const start = performance.now();
     try {
-      const res = await fetch(endpointUrl, { cache: 'no-store' });
+      const res = await fetch(finalUrl, {
+        method: ep.method,
+        headers,
+        body: ep.hasBody ? body : undefined,
+        cache: 'no-store'
+      });
+
       const elapsed = (performance.now() - start).toFixed(2);
       const text = await res.text();
-
       let formatted = text;
       try {
         formatted = JSON.stringify(JSON.parse(text), null, 2);
       } catch (e) {}
 
-      if (statusBadge) {
-        statusBadge.className = res.ok ? 'badge badge-healthy' : 'badge badge-unhealthy';
-        statusBadge.textContent = `HTTP ${res.status} (${elapsed}ms)`;
+      if (statusEl) {
+        statusEl.className = res.ok ? 'badge badge-healthy' : 'badge badge-unhealthy';
+        statusEl.textContent = `${res.status} ${res.statusText} (${elapsed}ms)`;
       }
 
-      if (resultBox) {
-        resultBox.textContent = `HTTP ${res.status} ${res.statusText} (${elapsed}ms)\n${formatted}`;
+      if (respEl) {
+        respEl.textContent = formatted;
       }
     } catch (err) {
       const elapsed = (performance.now() - start).toFixed(2);
-      if (statusBadge) {
-        statusBadge.className = 'badge badge-unhealthy';
-        statusBadge.textContent = `Lỗi (${elapsed}ms)`;
+      if (statusEl) {
+        statusEl.className = 'badge badge-unhealthy';
+        statusEl.textContent = `Error (${elapsed}ms)`;
       }
-      if (resultBox) {
-        resultBox.textContent = `Lỗi kết nối tới ${endpointUrl}: ${err.message}`;
+      if (respEl) {
+        respEl.textContent = `Lỗi mạng: ${err.message}`;
       }
     }
   }
 
   // =========================================================================
-  // Tiện ích Toast & Modal
+  // 6. Quản Lý Authorize (Keycloak SSO PKCE & Bearer Token Modal)
+  // =========================================================================
+  async function loadOidcConfig() {
+    try {
+      const res = await fetch('/api/auth/config', { cache: 'no-store' });
+      if (res.ok) {
+        oidcConfigData = await res.json();
+      }
+    } catch (e) {}
+  }
+
+  function handleAuthorizeClick() {
+    const modal = document.getElementById('swagger-auth-modal');
+    if (modal) {
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  function handleKeycloakLoginRedirect() {
+    if (!oidcConfigData || !oidcConfigData.authorization_endpoint) {
+      alert('Chưa nạp được cấu hình Keycloak OIDC.');
+      return;
+    }
+    const state = Math.random().toString(36).substring(2, 15);
+    sessionStorage.setItem('swagger_pkce_state', state);
+    const redirectUri = window.location.origin + '/app/';
+    const url = `${oidcConfigData.authorization_endpoint}?client_id=${encodeURIComponent(oidcConfigData.client_id)}&response_type=code&scope=openid%20profile&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+    window.location.href = url;
+  }
+
+  function saveManualToken() {
+    const input = document.getElementById('manual-token-input');
+    const token = input ? input.value.trim() : '';
+    if (!token) {
+      activeBearerToken = null;
+      updateAuthStatusUI(false);
+    } else {
+      activeBearerToken = token;
+      updateAuthStatusUI(true);
+    }
+    closeAuthModal();
+  }
+
+  function updateAuthStatusUI(isAuthed) {
+    const authBtn = document.getElementById('btn-swagger-authorize');
+    const authStatusText = document.getElementById('swagger-auth-status-text');
+
+    if (authBtn) {
+      if (isAuthed) {
+        authBtn.classList.add('is-authorized');
+        authBtn.innerHTML = `<span>🔒</span> Authorized`;
+      } else {
+        authBtn.classList.remove('is-authorized');
+        authBtn.innerHTML = `<span>🔓</span> Authorize`;
+      }
+    }
+
+    if (authStatusText) {
+      authStatusText.innerHTML = isAuthed
+        ? `<span class="badge badge-healthy">Đã cấp Bearer Token</span>`
+        : `<span class="badge badge-unknown">Chưa xác thực</span>`;
+    }
+  }
+
+  function closeAuthModal() {
+    const modal = document.getElementById('swagger-auth-modal');
+    if (modal) {
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  // =========================================================================
+  // 7. Tiện ích Toast & Modal Dịch Vụ
   // =========================================================================
   function copyToClipboard(text) {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
-      showToast(`Đã copy liên kết: ${text}`);
+      showToast(`Đã copy: ${text}`);
     }).catch(() => {
-      prompt('Copy liên kết thủ công:', text);
+      prompt('Copy thủ công:', text);
     });
   }
 
@@ -859,7 +1106,7 @@ ${preview.slice(0, 800)}${preview.length > 800 ? '\n... (đã rút gọn)' : ''}
     toast.classList.add('show');
     setTimeout(() => {
       toast.classList.remove('show');
-    }, 2500);
+    }, 2200);
   }
 
   function openServiceDetailModal(serviceId) {
@@ -874,12 +1121,13 @@ ${preview.slice(0, 800)}${preview.length > 800 ? '\n... (đã rút gọn)' : ''}
     titleEl.textContent = `Nhóm ${meta.groupNum}: ${meta.name}`;
 
     contentEl.innerHTML = `
-      <table class="detail-table">
+      <table class="dns-data-table" style="margin-top: 0;">
         <tbody>
           <tr><th>Tên Dịch Vụ Compose</th><td><code>${escapeHtml(meta.service)}</code></td></tr>
+          <tr><th>Tên Miền Nội Bộ (FQDN)</th><td><strong style="color: #2563eb;">${escapeHtml(meta.domain)}</strong></td></tr>
+          <tr><th>Địa Chỉ IP (cloud-net)</th><td><code>${escapeHtml(meta.ip)}</code></td></tr>
           <tr><th>Phân Loại</th><td>${escapeHtml(meta.category)}</td></tr>
           <tr><th>Công Nghệ Nền Tảng</th><td><span class="service-tech-tag">${escapeHtml(meta.tech)}</span></td></tr>
-          <tr><th>Docker Network</th><td><span class="service-net-tag">${escapeHtml(meta.network)}</span></td></tr>
           <tr><th>Vai Trò Kiến Trúc</th><td>${escapeHtml(meta.role)}</td></tr>
           <tr><th>Cách Kiểm Tra Hoạt Động</th><td>${escapeHtml(meta.checkGuide)}</td></tr>
           <tr><th>Lệnh Kiểm Tra Mẫu</th><td><pre class="code-block">${escapeHtml(meta.testCommand)}</pre></td></tr>
@@ -903,7 +1151,6 @@ ${preview.slice(0, 800)}${preview.length > 800 ? '\n... (đã rút gọn)' : ''}
   // Khởi tạo sự kiện DOM
   // =========================================================================
   document.addEventListener('DOMContentLoaded', () => {
-    setupAdminLinks();
     // 1. Chuyển tab Sidebar
     document.querySelectorAll('.portal-nav-item[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -912,11 +1159,13 @@ ${preview.slice(0, 800)}${preview.length > 800 ? '\n... (đã rút gọn)' : ''}
       });
     });
 
-    // 2. Tải trạng thái và Render Services & DNS
+    // 2. Tải trạng thái và Render
     fetchSystemStatus();
     setInterval(() => { if (!document.hidden) fetchSystemStatus(); }, 15000);
     renderDnsRecordsTable();
     renderLBDashboard();
+    renderFastApiDocs();
+    loadOidcConfig();
 
     // 3. Nút Refresh Status
     const refreshBtn = document.getElementById('btn-refresh-portal-status');
@@ -935,63 +1184,38 @@ ${preview.slice(0, 800)}${preview.length > 800 ? '\n... (đã rút gọn)' : ''}
     if (btnLb30) btnLb30.addEventListener('click', () => runLoadBalanceTest(30));
     if (btnLbReset) btnLbReset.addEventListener('click', resetLBStats);
 
-    // 5. Tìm kiếm & Điều phối DNS
-    const dispatchBtn = document.getElementById('btn-dispatch-query');
-    const searchInput = document.getElementById('dns-dispatcher-input');
-    if (dispatchBtn && searchInput) {
-      dispatchBtn.addEventListener('click', () => {
-        dispatchInfrastructureQuery(searchInput.value);
-      });
-      searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          dispatchInfrastructureQuery(searchInput.value);
-        }
-      });
-    }
+    // 5. Authorize Modal trong Swagger
+    const authBtn = document.getElementById('btn-swagger-authorize');
+    if (authBtn) authBtn.addEventListener('click', handleAuthorizeClick);
 
-    document.querySelectorAll('[data-preset-query]').forEach(chip => {
-      chip.addEventListener('click', () => {
-        const q = chip.getAttribute('data-preset-query');
-        if (searchInput) {
-          searchInput.value = q;
-          dispatchInfrastructureQuery(q);
-        }
-      });
-    });
+    const btnLoginKc = document.getElementById('btn-modal-login-kc');
+    if (btnLoginKc) btnLoginKc.addEventListener('click', handleKeycloakLoginRedirect);
 
-    // 6. Keycloak SSO
-    const kcLoginBtn = document.getElementById('btn-portal-kc-login');
-    if (kcLoginBtn) {
-      kcLoginBtn.addEventListener('click', handlePortalKeycloakLogin);
-    }
+    const btnSaveToken = document.getElementById('btn-modal-save-token');
+    if (btnSaveToken) btnSaveToken.addEventListener('click', saveManualToken);
 
-    const testSecureBtn = document.getElementById('btn-portal-test-secure');
-    if (testSecureBtn) {
-      testSecureBtn.addEventListener('click', testSecureApiEndpoint);
-    }
-
-    // 7. API Explorer
-    document.querySelectorAll('[data-run-endpoint]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const endpoint = btn.getAttribute('data-run-endpoint');
-        runApiEndpoint(endpoint);
-      });
-    });
-
-    // 8. Đóng modal
+    // 6. Đóng modals
     document.querySelectorAll('[data-close-modal]').forEach(btn => {
-      btn.addEventListener('click', closeServiceDetailModal);
+      btn.addEventListener('click', () => {
+        closeServiceDetailModal();
+        closeAuthModal();
+      });
     });
 
-    const modal = document.getElementById('service-modal');
-    if (modal) {
+    document.querySelectorAll('.modal-backdrop').forEach(modal => {
       modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeServiceDetailModal();
+        if (e.target === modal) {
+          closeServiceDetailModal();
+          closeAuthModal();
+        }
       });
-    }
+    });
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeServiceDetailModal();
+      if (e.key === 'Escape') {
+        closeServiceDetailModal();
+        closeAuthModal();
+      }
     });
   });
 })();

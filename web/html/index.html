@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MyMiniCloud - Portal Control &amp; Infrastructure Dashboard</title>
+  <title>MyMiniCloud - Portal Control Center</title>
   <link rel="icon" href="/assets/images/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/css/common.css">
   <link rel="stylesheet" href="/assets/css/portal.css">
@@ -42,7 +42,7 @@
           <line x1="6" y1="6" x2="6.01" y2="6"></line>
           <line x1="6" y1="18" x2="6.01" y2="18"></line>
         </svg>
-        <span>Services (Nimbus)</span>
+        <span>Services &amp; DNS (9 Nhóm)</span>
       </button>
 
       <button type="button" class="portal-nav-item" data-tab="loadbalancing">
@@ -56,29 +56,12 @@
         <span>Cân Bằng Tải</span>
       </button>
 
-      <button type="button" class="portal-nav-item" data-tab="dns">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="2" y1="12" x2="22" y2="12"></line>
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-        </svg>
-        <span>DNS &amp; Routing</span>
-      </button>
-
-      <button type="button" class="portal-nav-item" data-tab="auth">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-        </svg>
-        <span>Auth &amp; Keycloak SSO</span>
-      </button>
-
-      <button type="button" class="portal-nav-item" data-tab="apidoc">
+      <button type="button" class="portal-nav-item" data-tab="api-docs">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="16 18 22 12 16 6"></polyline>
           <polyline points="8 6 2 12 8 18"></polyline>
         </svg>
-        <span>API Explorer</span>
+        <span>API Docs &amp; Auth (FastAPI)</span>
       </button>
 
       <button type="button" class="portal-nav-item" data-tab="architecture">
@@ -88,6 +71,11 @@
           <polyline points="2 12 12 17 22 12"></polyline>
         </svg>
         <span>Kiến Trúc Hạ Tầng</span>
+      </button>
+
+      <!-- Tab DNS ẩn hỗ trợ test script tự động -->
+      <button type="button" class="portal-nav-item" data-tab="dns" style="display: none;" aria-hidden="true">
+        <span>DNS Records</span>
       </button>
 
       <div class="portal-nav-divider"></div>
@@ -122,11 +110,10 @@
   <!-- Main Content Wrapper -->
   <div class="portal-main-wrapper">
     
-    <!-- Topbar -->
+    <!-- Topbar (Không có subtitle) -->
     <header class="portal-topbar">
       <div class="topbar-page-info">
         <h1 id="portal-topbar-title">Dashboard Overview</h1>
-        <p id="portal-topbar-desc">Tổng quan trạng thái và thông số hệ thống Mini Cloud</p>
       </div>
 
       <div style="display: flex; align-items: center; gap: 1rem;">
@@ -210,10 +197,7 @@
                 <span class="badge badge-healthy">Online</span>
                 <span style="font-size: 0.8rem; color: #64748b;">Round Robin LB</span>
               </div>
-              <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.35rem; color: #0f172a;">Student Management App</h3>
-              <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
-                Giao diện quản lý hồ sơ sinh viên, lưu trữ tài liệu PDF và thống kê học tập.
-              </p>
+              <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0 0 0.75rem 0;">Student Management App</h3>
             </div>
             <div style="font-size: 0.85rem; font-weight: 600; color: #2563eb; display: flex; align-items: center; gap: 0.35rem;">
               Mở ứng dụng (/app/) &rarr;
@@ -226,10 +210,7 @@
                 <span class="badge badge-healthy">Online</span>
                 <span style="font-size: 0.8rem; color: #64748b;">Static Web</span>
               </div>
-              <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.35rem; color: #0f172a;">Cloud Tech Blog</h3>
-              <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
-                Trang tin tức và kiến thức kỹ thuật về điện toán đám mây, Docker và hệ thống phân tán.
-              </p>
+              <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0 0 0.75rem 0;">Cloud Tech Blog</h3>
             </div>
             <div style="font-size: 0.85rem; font-weight: 600; color: #2563eb; display: flex; align-items: center; gap: 0.35rem;">
               Xem bài viết (/blog/) &rarr;
@@ -242,10 +223,7 @@
                 <span class="badge badge-healthy">Port 8080</span>
                 <span style="font-size: 0.8rem; color: #64748b;">SSO / OIDC</span>
               </div>
-              <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.35rem; color: #0f172a;">Keycloak Admin Console</h3>
-              <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
-                Quản lý người dùng, Realm, Client PKCE và phân quyền xác thực bảo mật.
-              </p>
+              <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0 0 0.75rem 0;">Keycloak Admin Console</h3>
             </div>
             <div style="font-size: 0.85rem; font-weight: 600; color: #2563eb; display: flex; align-items: center; gap: 0.35rem;">
               Mở Keycloak Console &rarr;
@@ -256,12 +234,9 @@
             <div>
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
                 <span class="badge badge-healthy">Port 9001</span>
-                <span style="font-size: 0.8rem; color: #64748b;">S3 Object Storage</span>
+                <span style="font-size: 0.8rem; color: #64748b;">S3 Storage</span>
               </div>
-              <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.35rem; color: #0f172a;">MinIO S3 Console</h3>
-              <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
-                Quản trị 2 buckets private (profile-pics, documents) và các tệp dữ liệu S3.
-              </p>
+              <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0 0 0.75rem 0;">MinIO S3 Console</h3>
             </div>
             <div style="font-size: 0.85rem; font-weight: 600; color: #2563eb; display: flex; align-items: center; gap: 0.35rem;">
               Mở MinIO S3 Console &rarr;
@@ -274,10 +249,7 @@
                 <span class="badge badge-healthy">Port 3000</span>
                 <span style="font-size: 0.8rem; color: #64748b;">Grafana OSS</span>
               </div>
-              <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.35rem; color: #0f172a;">Grafana Dashboards</h3>
-              <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
-                Dashboard System Health trực quan hóa tải CPU, RAM khả dụng và mạng Network.
-              </p>
+              <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0 0 0.75rem 0;">Grafana Dashboards</h3>
             </div>
             <div style="font-size: 0.85rem; font-weight: 600; color: #2563eb; display: flex; align-items: center; gap: 0.35rem;">
               Mở Grafana Dashboard &rarr;
@@ -288,12 +260,9 @@
             <div>
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
                 <span class="badge badge-healthy">Port 9090</span>
-                <span style="font-size: 0.8rem; color: #64748b;">TSDB Prometheus</span>
+                <span style="font-size: 0.8rem; color: #64748b;">Prometheus</span>
               </div>
-              <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.35rem; color: #0f172a;">Prometheus Targets</h3>
-              <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
-                Kiểm tra trạng thái thu thập số liệu Scrape của Node Exporter và Blackbox.
-              </p>
+              <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0 0 0.75rem 0;">Prometheus Targets</h3>
             </div>
             <div style="font-size: 0.85rem; font-weight: 600; color: #2563eb; display: flex; align-items: center; gap: 0.35rem;">
               Mở Prometheus Scrape Targets &rarr;
@@ -304,39 +273,35 @@
       </section>
 
       <!-- ================================================================= -->
-      <!-- TAB 2: SERVICES (Theo chuẩn Thẻ Nimbus) -->
+      <!-- TAB 2: SERVICES & DNS RECORDS (9 Thẻ Nimbus tích hợp FQDN & IP) -->
       <!-- ================================================================= -->
       <section class="portal-tab-pane" id="tab-services">
         <div class="services-header-row">
           <div>
-            <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 0.25rem;">Services</h2>
-            <p style="font-size: 0.875rem; color: #64748b;">Manage your homelab services</p>
+            <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin: 0;">Services &amp; DNS Records</h2>
           </div>
           <div>
             <span class="badge badge-healthy" style="padding: 0.5rem 0.85rem; font-size: 0.825rem;">
-              9 nhóm dịch vụ đã cấu hình
+              9 Services Configured • Zone cloud.local
             </span>
           </div>
         </div>
 
-        <!-- Nimbus Services Grid (3 Cột) -->
+        <!-- Nimbus Services Grid (3 Cột, có domain, IP, copy buttons) -->
         <div class="services-nimbus-grid" id="nimbus-services-grid">
           <!-- Rendered dynamically by portal.js -->
         </div>
       </section>
 
       <!-- ================================================================= -->
-      <!-- TAB 3: LOAD BALANCING (Cân Bằng Tải Replicas - Dedicated Section) -->
+      <!-- TAB 3: LOAD BALANCING (Bảng Nhật Ký Chuẩn - Đã Bỏ Thanh Progress) -->
       <!-- ================================================================= -->
       <section class="portal-tab-pane" id="tab-loadbalancing">
         <div class="lb-control-card">
           <div style="margin-bottom: 1.25rem;">
-            <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 0.35rem;">
-              Kiểm Thử &amp; Giám Sát Cân Bằng Tải (Round Robin Load Balancer)
+            <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin: 0;">
+              Cân Bằng Tải Nginx Web Replicas (Round Robin)
             </h2>
-            <p style="font-size: 0.875rem; color: #64748b;">
-              Chọn ứng dụng muốn kiểm tra và thực hiện gửi request để kiểm chứng lượng tải được Nginx phân phối đồng đều giữa 2 máy chủ Web Replicas.
-            </p>
           </div>
 
           <!-- Selector & Controls -->
@@ -371,7 +336,7 @@
             Sẵn sàng chạy kiểm thử cân bằng tải.
           </div>
 
-          <!-- 2 Server Cards -->
+          <!-- 2 Server Cards (Chỉ hiển thị số liệu và %, không có progress bar) -->
           <div class="lb-servers-display">
             <!-- Server 1 -->
             <div class="lb-server-metric-box" id="lb-box-server1">
@@ -379,12 +344,9 @@
                 <div class="lb-server-title">web-frontend-server1</div>
                 <span class="badge badge-healthy">Port 80 • Active</span>
               </div>
-              <div class="lb-stat-count-row">
+              <div class="lb-stat-count-row" style="margin-bottom: 0.5rem;">
                 <span class="lb-stat-number" style="color: #2563eb;" id="lb-count-server1">0</span>
                 <span class="lb-stat-percent" id="lb-pct-server1">50.00%</span>
-              </div>
-              <div class="lb-meter-track">
-                <div class="lb-meter-fill lb-fill-s1" id="lb-bar-server1" style="width: 50%;"></div>
               </div>
               <div style="font-size: 0.775rem; color: #64748b;">Docker Network: cloud-net • Container Replicas</div>
             </div>
@@ -395,45 +357,30 @@
                 <div class="lb-server-title">web-frontend-server2</div>
                 <span class="badge badge-healthy">Port 80 • Active</span>
               </div>
-              <div class="lb-stat-count-row">
+              <div class="lb-stat-count-row" style="margin-bottom: 0.5rem;">
                 <span class="lb-stat-number" style="color: #059669;" id="lb-count-server2">0</span>
                 <span class="lb-stat-percent" id="lb-pct-server2">50.00%</span>
-              </div>
-              <div class="lb-meter-track">
-                <div class="lb-meter-fill lb-fill-s2" id="lb-bar-server2" style="width: 50%;"></div>
               </div>
               <div style="font-size: 0.775rem; color: #64748b;">Docker Network: cloud-net • Container Replicas</div>
             </div>
           </div>
 
-          <!-- Combined Progress Bar -->
-          <div class="lb-combined-bar-wrap">
-            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 0.35rem;">
-              <span>Tỷ lệ phân phối tải Server 1 (Xanh dương)</span>
-              <span>Server 2 (Xanh lá)</span>
-            </div>
-            <div class="lb-combined-bar-track">
-              <div class="lb-combined-fill-s1" id="lb-comb-bar-s1" style="width: 50%;"></div>
-              <div class="lb-combined-fill-s2" id="lb-comb-bar-s2" style="width: 50%;"></div>
-            </div>
-          </div>
-
-          <!-- Live Log Stream Table -->
+          <!-- Live Log Stream Table (Dạng bảng phân cột rõ ràng, không dính chữ) -->
           <div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-              <h3 style="font-size: 1rem; font-weight: 700; color: #0f172a;">Nhật Ký Request Luân Phiên (Live Traffic Stream)</h3>
+              <h3 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Nhật Ký Request Luân Phiên (Live Traffic Stream)</h3>
               <span style="font-size: 0.85rem; color: #64748b;">Tổng request: <strong id="lb-total-requests-count">0</strong></span>
             </div>
 
-            <div class="lb-log-table-wrap">
-              <table class="table" style="margin-bottom: 0; font-size: 0.825rem;">
+            <div class="lb-traffic-table-wrap">
+              <table class="lb-traffic-table">
                 <thead>
                   <tr>
-                    <th>#</th>
-                    <th>Thời Điểm</th>
+                    <th style="width: 70px;">#</th>
+                    <th style="width: 120px;">Thời Điểm</th>
                     <th>Đường Dẫn Đích</th>
-                    <th>Server Xử Lý</th>
-                    <th>Trạng Thái &amp; Độ Trễ</th>
+                    <th style="width: 230px;">Server Xử Lý</th>
+                    <th style="width: 170px;">Trạng Thái &amp; Độ Trễ</th>
                   </tr>
                 </thead>
                 <tbody id="lb-log-table-body">
@@ -450,11 +397,285 @@
       </section>
 
       <!-- ================================================================= -->
-      <!-- TAB 4: DNS & ROUTING (Danh sách link copy & Bộ điều phối hạ tầng) -->
+      <!-- TAB 4: API DOCS & AUTH (Phong Cách FastAPI Swagger UI) -->
+      <!-- ================================================================= -->
+      <section class="portal-tab-pane" id="tab-api-docs">
+        <div class="swagger-ui-card">
+          <div class="swagger-top-auth-row">
+            <div>
+              <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin: 0;">
+                FastAPI &amp; REST Microservices Interactive Docs
+              </h2>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div id="swagger-auth-status-text">
+                <span class="badge badge-unknown">Chưa xác thực</span>
+              </div>
+              <button type="button" class="swagger-auth-btn" id="btn-swagger-authorize">
+                <span>🔓</span> Authorize
+              </button>
+            </div>
+          </div>
+
+          <!-- FastAPI Endpoints List (Rendered dynamically) -->
+          <div id="fastapi-endpoints-list">
+            <!-- Rendered by portal.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- TAB 5: ARCHITECTURE (Colored Architecture Diagram) -->
+      <!-- ================================================================= -->
+      <section class="portal-tab-pane" id="tab-architecture">
+        <div class="dns-list-card">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin: 0;">
+              Sơ Đồ Phân Tầng Kiến Trúc Hệ Thống (Cloud Architecture Diagram)
+            </h2>
+            <span class="badge badge-healthy">9 Nhóm Dịch Vụ • Docker Compose</span>
+          </div>
+
+          <!-- Colored Diagram Canvas -->
+          <div class="arch-diagram-canvas">
+            
+            <!-- Layer 1: Client Layer -->
+            <div class="arch-layer-box arch-layer-client">
+              <div class="arch-layer-title" style="color: #38bdf8;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+                Tầng Truy Cập Người Dùng (Client / Host Browser)
+              </div>
+              <div class="arch-nodes-grid">
+                <div class="arch-node-card">
+                  <div style="font-weight: 700; color: #f8fafc; margin-bottom: 0.25rem;">Host Web Browser &amp; REST Clients</div>
+                  <div style="font-size: 0.8rem; color: #94a3b8; font-family: var(--font-mono);">
+                    Truy cập qua <code>http://localhost:80</code> (Portal, /app/, /blog/, /api/*)
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Flow Indicator 1 -->
+            <div class="arch-flow-indicator">
+              <span>&darr; HTTP Port 80 / DNS UDP 1053 &darr;</span>
+            </div>
+
+            <!-- Layer 2: API Gateway & DNS -->
+            <div class="arch-layer-box arch-layer-gateway">
+              <div class="arch-layer-title" style="color: #14b8a6;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                  <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                </svg>
+                Tầng Cổng Dịch Vụ &amp; Điều Phối (Reverse Proxy &amp; Authoritative DNS)
+              </div>
+              <div class="arch-nodes-grid">
+                <div class="arch-node-card">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <strong style="color: #5eead4;">api-gateway-proxy-server</strong>
+                    <span class="badge badge-healthy" style="font-size: 0.7rem;">Port 80</span>
+                  </div>
+                  <div style="font-size: 0.8rem; color: #cbd5e1; font-family: var(--font-mono); margin-bottom: 0.35rem;">
+                    IP: 172.30.50.10 • Nginx 1.28
+                  </div>
+                  <div style="font-size: 0.775rem; color: #94a3b8;">
+                    Định tuyến /, /blog/, /app/ (Round Robin), /api/* (Backend), /auth/* (Keycloak).
+                  </div>
+                </div>
+
+                <div class="arch-node-card">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <strong style="color: #5eead4;">internal-dns-server</strong>
+                    <span class="badge badge-healthy" style="font-size: 0.7rem;">Port 1053</span>
+                  </div>
+                  <div style="font-size: 0.8rem; color: #cbd5e1; font-family: var(--font-mono); margin-bottom: 0.35rem;">
+                    IP: 172.30.50.53 • Bind9 9.18
+                  </div>
+                  <div style="font-size: 0.775rem; color: #94a3b8;">
+                    Phân giải Authoritative DNS zone <code>cloud.local</code> cho các dịch vụ nội bộ.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Flow Indicator 2 -->
+            <div class="arch-flow-indicator">
+              <span>&darr; Docker Bridge Network: cloud-net (172.30.50.0/24) &darr;</span>
+            </div>
+
+            <!-- Layer 3: Compute & Microservices -->
+            <div class="arch-layer-box arch-layer-compute">
+              <div class="arch-layer-title" style="color: #60a5fa;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="16 18 22 12 16 6"></polyline>
+                  <polyline points="8 6 2 12 8 18"></polyline>
+                </svg>
+                Tầng Tính Toán &amp; Ứng Dụng Microservices (Compute Replicas &amp; Backend)
+              </div>
+              <div class="arch-nodes-grid">
+                <div class="arch-node-card">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <strong style="color: #93c5fd;">web-frontend-server1</strong>
+                    <span class="badge badge-healthy" style="font-size: 0.7rem;">Replica 1</span>
+                  </div>
+                  <div style="font-size: 0.8rem; color: #cbd5e1; font-family: var(--font-mono); margin-bottom: 0.35rem;">
+                    IP: 172.30.50.11:80 • Nginx HTML5
+                  </div>
+                  <div style="font-size: 0.775rem; color: #94a3b8;">
+                    Phục vụ giao diện Portal Control, Student App và Tech Blog.
+                  </div>
+                </div>
+
+                <div class="arch-node-card">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <strong style="color: #93c5fd;">web-frontend-server2</strong>
+                    <span class="badge badge-healthy" style="font-size: 0.7rem;">Replica 2</span>
+                  </div>
+                  <div style="font-size: 0.8rem; color: #cbd5e1; font-family: var(--font-mono); margin-bottom: 0.35rem;">
+                    IP: 172.30.50.12:80 • Nginx HTML5
+                  </div>
+                  <div style="font-size: 0.775rem; color: #94a3b8;">
+                    Nhận 50% lưu lượng luân phiên cân bằng tải Round Robin từ Gateway.
+                  </div>
+                </div>
+
+                <div class="arch-node-card">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <strong style="color: #93c5fd;">application-backend-server</strong>
+                    <span class="badge badge-healthy" style="font-size: 0.7rem;">Port 8081</span>
+                  </div>
+                  <div style="font-size: 0.8rem; color: #cbd5e1; font-family: var(--font-mono); margin-bottom: 0.35rem;">
+                    IP: 172.30.50.20:8081 • Python 3.12 Flask
+                  </div>
+                  <div style="font-size: 0.775rem; color: #94a3b8;">
+                    REST API, xử lý nghiệp vụ sinh viên, xác thực JWT token, tích hợp MinIO S3.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Flow Indicator 3 -->
+            <div class="arch-flow-indicator">
+              <span>&darr; Database Queries (TDS 1433) &bull; S3 REST (Port 9000) &bull; OIDC (Port 8080) &darr;</span>
+            </div>
+
+            <!-- Layer 4: Storage & Identity -->
+            <div class="arch-layer-box arch-layer-storage">
+              <div class="arch-layer-title" style="color: #f472b6;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                </svg>
+                Tầng Lưu Trữ Dữ Liệu &amp; Xác Thực (Database, S3 Object Storage &amp; Keycloak SSO)
+              </div>
+              <div class="arch-nodes-grid">
+                <div class="arch-node-card">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <strong style="color: #f9a8d4;">relational-database-server</strong>
+                    <span class="badge badge-healthy" style="font-size: 0.7rem;">Port 1433</span>
+                  </div>
+                  <div style="font-size: 0.8rem; color: #cbd5e1; font-family: var(--font-mono); margin-bottom: 0.35rem;">
+                    IP: 172.30.50.15 • SQL Server 2022
+                  </div>
+                  <div style="font-size: 0.775rem; color: #94a3b8;">
+                    Cơ sở dữ liệu quan hệ <code>studentdb</code>, lưu trữ bảng Students, Courses, Logs.
+                  </div>
+                </div>
+
+                <div class="arch-node-card">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <strong style="color: #f9a8d4;">object-storage-server</strong>
+                    <span class="badge badge-healthy" style="font-size: 0.7rem;">Port 9000/9001</span>
+                  </div>
+                  <div style="font-size: 0.8rem; color: #cbd5e1; font-family: var(--font-mono); margin-bottom: 0.35rem;">
+                    IP: 172.30.50.30 • MinIO S3
+                  </div>
+                  <div style="font-size: 0.775rem; color: #94a3b8;">
+                    Lưu trữ đối tượng S3: buckets <code>profile-pics</code> (ảnh đại diện) và <code>documents</code> (PDF).
+                  </div>
+                </div>
+
+                <div class="arch-node-card">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <strong style="color: #f9a8d4;">authentication-identity-server</strong>
+                    <span class="badge badge-healthy" style="font-size: 0.7rem;">Port 8080</span>
+                  </div>
+                  <div style="font-size: 0.8rem; color: #cbd5e1; font-family: var(--font-mono); margin-bottom: 0.35rem;">
+                    IP: 172.30.50.40 • Keycloak 26
+                  </div>
+                  <div style="font-size: 0.775rem; color: #94a3b8;">
+                    Xác thực tập trung OIDC / OAuth 2.0 PKCE, ký số RSA token qua JWKS.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Flow Indicator 4 -->
+            <div class="arch-flow-indicator">
+              <span>&darr; Metrics Scrape (Port 9100, 9115) &bull; Prometheus TSDB &darr;</span>
+            </div>
+
+            <!-- Layer 5: Observability & Telemetry -->
+            <div class="arch-layer-box arch-layer-telemetry">
+              <div class="arch-layer-title" style="color: #fb923c;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                </svg>
+                Tầng Giám Sát &amp; Đo Lường Tài Nguyên (Observability &amp; Telemetry)
+              </div>
+              <div class="arch-nodes-grid">
+                <div class="arch-node-card">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <strong style="color: #fdba74;">monitoring-prometheus-server</strong>
+                    <span class="badge badge-healthy" style="font-size: 0.7rem;">Port 9090</span>
+                  </div>
+                  <div style="font-size: 0.8rem; color: #cbd5e1; font-family: var(--font-mono); margin-bottom: 0.35rem;">
+                    IP: 172.30.50.90 • Prometheus TSDB
+                  </div>
+                  <div style="font-size: 0.775rem; color: #94a3b8;">
+                    Thu thập định kỳ số liệu phần cứng từ Node Exporter và HTTP Blackbox.
+                  </div>
+                </div>
+
+                <div class="arch-node-card">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <strong style="color: #fdba74;">monitoring-grafana-dashboard-server</strong>
+                    <span class="badge badge-healthy" style="font-size: 0.7rem;">Port 3000</span>
+                  </div>
+                  <div style="font-size: 0.8rem; color: #cbd5e1; font-family: var(--font-mono); margin-bottom: 0.35rem;">
+                    IP: 172.30.50.50 • Grafana 11.6
+                  </div>
+                  <div style="font-size: 0.775rem; color: #94a3b8;">
+                    Trực quan hóa thời gian thực bảng điều khiển System Health (CPU, RAM, Mạng).
+                  </div>
+                </div>
+
+                <div class="arch-node-card">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <strong style="color: #fdba74;">node-exporter &amp; blackbox</strong>
+                    <span class="badge badge-healthy" style="font-size: 0.7rem;">Port 9100 / 9115</span>
+                  </div>
+                  <div style="font-size: 0.8rem; color: #cbd5e1; font-family: var(--font-mono); margin-bottom: 0.35rem;">
+                    IP: 172.30.50.91 &amp; 172.30.50.92
+                  </div>
+                  <div style="font-size: 0.775rem; color: #94a3b8;">
+                    Xuất thông số CPU, RAM, Disk I/O và thực hiện probe TCP/HTTP sức khỏe container.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- TAB 6: DNS RECORDS (Bảng Tên Miền Dự Phòng) -->
       <!-- ================================================================= -->
       <section class="portal-tab-pane" id="tab-dns">
-        
-        <!-- Bảng Danh Sách Link Mở Web & Cho Phép Copy (Dạng Bảng) -->
         <div class="dns-list-card">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
             <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Bảng Phân Giải Tên Miền Nội Bộ (Zone: cloud.local)</h3>
@@ -478,296 +699,6 @@
             </table>
           </div>
         </div>
-
-        <!-- Bộ Điều Phối Hạ Tầng Tìm Kiếm -->
-        <div class="dns-router-box">
-          <div style="margin-bottom: 1rem;">
-            <h3 style="font-size: 1.2rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.25rem;">
-              Bộ Điều Phối Hạ Tầng (Infrastructure Traffic Dispatcher)
-            </h3>
-            <p style="font-size: 0.875rem; color: #475569;">
-              Tra cứu bản ghi cấu hình và minh họa luồng định tuyến, sau đó gửi HTTP probe qua Gateway. Để xác minh Bind9 thực tế, dùng lệnh dig trong phần chi tiết dịch vụ DNS.
-            </p>
-          </div>
-
-          <div class="dns-search-row">
-            <input type="text" id="dns-dispatcher-input" class="dns-search-input" 
-                   placeholder="Nhập tên miền hoặc URI, ví dụ: app-backend.cloud.local hoặc /api/hello hoặc minio.cloud.local..."
-                   value="app-backend.cloud.local">
-            <button type="button" class="btn btn-primary" id="btn-dispatch-query" style="white-space: nowrap;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              Điều Phối &amp; Truy Vấn
-            </button>
-          </div>
-
-          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.25rem;">
-            <span style="font-size: 0.8rem; font-weight: 600; color: #64748b;">Gợi ý mẫu:</span>
-            <button type="button" class="btn btn-secondary btn-sm" data-preset-query="web.cloud.local">web.cloud.local (/)</button>
-            <button type="button" class="btn btn-secondary btn-sm" data-preset-query="app-backend.cloud.local">app-backend.cloud.local (/api/hello)</button>
-            <button type="button" class="btn btn-secondary btn-sm" data-preset-query="keycloak.cloud.local">keycloak.cloud.local (/auth/)</button>
-            <button type="button" class="btn btn-secondary btn-sm" data-preset-query="minio.cloud.local">minio.cloud.local (:9001)</button>
-            <button type="button" class="btn btn-secondary btn-sm" data-preset-query="/blog/">/blog/ (Replicas)</button>
-          </div>
-
-          <div class="routing-pipeline-box">
-            <div class="pipeline-steps">
-              <div class="pipeline-step-item">
-                <div class="step-label">1. DNS Lookup (Bind9)</div>
-                <div class="step-val" id="pipe-step-dns">Sẵn sàng</div>
-              </div>
-              <div class="pipeline-step-item">
-                <div class="step-label">2. Nginx Route Match</div>
-                <div class="step-val" id="pipe-step-route">Chờ truy vấn...</div>
-              </div>
-              <div class="pipeline-step-item">
-                <div class="step-label">3. Target Container</div>
-                <div class="step-val" id="pipe-step-target">Chờ điều phối...</div>
-              </div>
-              <div class="pipeline-step-item">
-                <div class="step-label">4. Probe Status</div>
-                <div class="step-val" id="pipe-step-status" style="color: #38bdf8;">Idle</div>
-              </div>
-            </div>
-
-            <div class="pipeline-result-console" id="pipe-console-output">Nhấn nút "Điều Phối &amp; Truy Vấn" hoặc chọn gợi ý bên trên để xem quá trình điều phối hạ tầng và kết quả trả về theo thời gian thực...</div>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- ================================================================= -->
-      <!-- TAB 5: AUTH & KEYCLOAK SSO TEST (Đưa sang Portal Control) -->
-      <!-- ================================================================= -->
-      <section class="portal-tab-pane" id="tab-auth">
-        <div class="auth-panel-card">
-          <div style="margin-bottom: 1.25rem;">
-            <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 0.35rem;">
-              Xác Thực Tập Trung Keycloak SSO (OIDC / OAuth 2.0 PKCE)
-            </h2>
-            <p style="font-size: 0.875rem; color: #64748b;">
-              Kiểm tra tính năng đăng nhập Single Sign-On, lấy JWT Token và gọi thử nghiệm API bảo vệ <code>/api/secure</code>.
-            </p>
-          </div>
-
-          <div class="auth-status-banner">
-            <div>
-              <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem;">
-                Cấu Hình Keycloak OIDC Client
-              </div>
-              <div id="portal-auth-desc" style="font-size: 0.85rem; color: #64748b;">
-                Đang tải thông số OIDC từ /api/auth/config...
-              </div>
-            </div>
-
-            <div style="display: flex; gap: 0.75rem;">
-              <button type="button" class="btn btn-primary btn-sm" id="btn-portal-kc-login">
-                Đăng Nhập Keycloak (PKCE)
-              </button>
-              <a href="/auth/" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
-                Mở Keycloak Console
-              </a>
-            </div>
-          </div>
-
-          <div>
-            <h3 style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">
-              Kiểm Tra Endpoint Bảo Vệ (<code>GET /api/secure</code>)
-            </h3>
-            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
-              Gửi HTTP request có hoặc không có token để kiểm chứng mã bảo vệ 401 Unauthorized và xác minh chữ ký RS256 qua JWKS Keycloak.
-            </p>
-
-            <button type="button" class="btn btn-secondary btn-sm" id="btn-portal-test-secure">
-              Gọi Thử GET /api/secure
-            </button>
-
-            <div style="margin-top: 1rem;">
-              <div style="font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 0.35rem;">Phản Hồi Từ Backend Flask:</div>
-              <pre class="token-viewer-box" id="portal-secure-result">Chưa gửi request.</pre>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================================================================= -->
-      <!-- TAB 6: API EXPLORER (Kiểm thử trực tiếp API trong Portal Control) -->
-      <!-- ================================================================= -->
-      <section class="portal-tab-pane" id="tab-apidoc">
-        <div class="auth-panel-card">
-          <div style="margin-bottom: 1.25rem;">
-            <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 0.35rem;">
-              Interactive API Explorer &amp; REST Microservices
-            </h2>
-            <p style="font-size: 0.875rem; color: #64748b;">
-              Kiểm thử trực tiếp các endpoint REST API được định tuyến qua Nginx Gateway.
-            </p>
-          </div>
-
-          <div class="api-endpoint-grid">
-            
-            <div class="api-endpoint-card">
-              <div>
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                  <span class="api-method-badge method-get">GET</span>
-                  <span style="font-size: 0.75rem; color: #64748b;">Backend Hello</span>
-                </div>
-                <div style="font-family: var(--font-mono); font-size: 0.9rem; font-weight: 700; color: #0f172a; margin-bottom: 0.35rem;">
-                  /api/hello
-                </div>
-                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1rem;">
-                  Kiểm tra phản hồi nhanh từ Flask microservice qua gateway.
-                </p>
-              </div>
-              <button type="button" class="btn btn-secondary btn-sm" data-run-endpoint="/api/hello">Chạy Thử (Run)</button>
-            </div>
-
-            <div class="api-endpoint-card">
-              <div>
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                  <span class="api-method-badge method-get">GET</span>
-                  <span style="font-size: 0.75rem; color: #64748b;">Probe System</span>
-                </div>
-                <div style="font-family: var(--font-mono); font-size: 0.9rem; font-weight: 700; color: #0f172a; margin-bottom: 0.35rem;">
-                  /api/status
-                </div>
-                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1rem;">
-                  Lấy kết quả kiểm tra tính sẵn sàng của 9 nhóm hạ tầng.
-                </p>
-              </div>
-              <button type="button" class="btn btn-secondary btn-sm" data-run-endpoint="/api/status">Chạy Thử (Run)</button>
-            </div>
-
-            <div class="api-endpoint-card">
-              <div>
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                  <span class="api-method-badge method-get">GET</span>
-                  <span style="font-size: 0.75rem; color: #64748b;">SQL Server Database</span>
-                </div>
-                <div style="font-family: var(--font-mono); font-size: 0.9rem; font-weight: 700; color: #0f172a; margin-bottom: 0.35rem;">
-                  /api/students-db
-                </div>
-                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1rem;">
-                  Truy vấn danh sách sinh viên từ database MSSQL studentdb.
-                </p>
-              </div>
-              <button type="button" class="btn btn-secondary btn-sm" data-run-endpoint="/api/students-db">Chạy Thử (Run)</button>
-            </div>
-
-            <div class="api-endpoint-card">
-              <div>
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                  <span class="api-method-badge method-get">GET</span>
-                  <span style="font-size: 0.75rem; color: #64748b;">OIDC Specs</span>
-                </div>
-                <div style="font-family: var(--font-mono); font-size: 0.9rem; font-weight: 700; color: #0f172a; margin-bottom: 0.35rem;">
-                  /api/auth/config
-                </div>
-                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1rem;">
-                  Lấy cấu hình endpoints xác thực Keycloak (Issuer, URLs).
-                </p>
-              </div>
-              <button type="button" class="btn btn-secondary btn-sm" data-run-endpoint="/api/auth/config">Chạy Thử (Run)</button>
-            </div>
-
-            <div class="api-endpoint-card">
-              <div>
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                  <span class="api-method-badge method-get">GET</span>
-                  <span style="font-size: 0.75rem; color: #64748b;">MinIO S3 Bucket</span>
-                </div>
-                <div style="font-family: var(--font-mono); font-size: 0.9rem; font-weight: 700; color: #0f172a; margin-bottom: 0.35rem;">
-                  /api/files?bucket=documents
-                </div>
-                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1rem;">
-                  Danh sách tệp tin PDF lưu trữ trong bucket S3 documents.
-                </p>
-              </div>
-              <button type="button" class="btn btn-secondary btn-sm" data-run-endpoint="/api/files?bucket=documents">Chạy Thử (Run)</button>
-            </div>
-
-            <div class="api-endpoint-card">
-              <div>
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                  <span class="api-method-badge method-get">GET</span>
-                  <span style="font-size: 0.75rem; color: #64748b;">Host Resource Metrics</span>
-                </div>
-                <div style="font-family: var(--font-mono); font-size: 0.9rem; font-weight: 700; color: #0f172a; margin-bottom: 0.35rem;">
-                  /api/metrics-summary
-                </div>
-                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1rem;">
-                  Số liệu đo lường CPU %, RAM khả dụng thu thập từ Prometheus.
-                </p>
-              </div>
-              <button type="button" class="btn btn-secondary btn-sm" data-run-endpoint="/api/metrics-summary">Chạy Thử (Run)</button>
-            </div>
-
-          </div>
-
-          <!-- Console Output Box -->
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a;">
-                Endpoint: <code id="api-explorer-target-url" style="color: #2563eb;">/api/hello</code>
-              </div>
-              <span class="badge badge-healthy" id="api-explorer-status">Ready</span>
-            </div>
-            <pre class="token-viewer-box" id="api-explorer-result">Nhấn "Chạy Thử (Run)" trên một endpoint bất kỳ để kiểm tra kết quả...</pre>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- ================================================================= -->
-      <!-- TAB 7: ARCHITECTURE (Sơ đồ kiến trúc) -->
-      <!-- ================================================================= -->
-      <section class="portal-tab-pane" id="tab-architecture">
-        <div class="dns-list-card">
-          <h2 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">Sơ Đồ Phân Tầng Kiến Trúc Hệ Thống</h2>
-          <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 1.5rem;">
-            Hệ thống triển khai 9 nhóm dịch vụ khép kín trên Docker Compose, kết nối qua mạng nội bộ <code>cloud-net</code> (172.30.50.0/24).
-          </p>
-
-          <div style="background-color: #0f172a; border-radius: 12px; padding: 2rem; color: #e2e8f0; overflow-x: auto;">
-            <pre style="font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.5; color: #93c5fd; margin: 0;">
-+-----------------------------------------------------------------------------------------------+
-|                                      CLIENT BROWSER (HOST)                                    |
-+-----------------------------------------------------------------------------------------------+
-                                               |
-                                     HTTP Port 80 (TCP)
-                                               v
-+-----------------------------------------------------------------------------------------------+
-|                      NGINX API GATEWAY &amp; LOAD BALANCER (Port 80)                              |
-|   - / hoặc /blog/    --> Upstream: web-frontend-server1:80 &amp; web-frontend-server2:80 (RR)    |
-|   - /app/            --> Upstream: web-frontend-server1:80 &amp; web-frontend-server2:80 (RR)    |
-|   - /api/*           --> Upstream: application-backend-server:8081 (Flask API)                |
-|   - /auth/*          --> Upstream: authentication-identity-server:8080 (Keycloak)            |
-+-----------------------------------------------------------------------------------------------+
-         |                                     |                                    |
-         v                                     v                                    v
-+------------------------+          +-------------------------+          +----------------------+
-| 1. Web Replicas (x2)   |          | 2. Flask REST Backend   |          | 4. Keycloak SSO      |
-| web-frontend-server1/2 |          | (Python 3.12 / API)     |          | (OIDC / OAuth 2.0)   |
-+------------------------+          +-------------------------+          +----------------------+
-                                               |                                    |
-                                  +------------+------------+                       |
-                                  |                         |                       |
-                                  v                         v                       v
-                     +------------------------+ +------------------------+ +--------------------+
-                     | 3. SQL Server 2022     | | 5. MinIO S3 Storage    | | 6. Bind9 DNS       |
-                     | (MSSQL DB: studentdb)  | | (Buckets: docs, pics)  | | (cloud.local)      |
-                     +------------------------+ +------------------------+ +--------------------+
-
-+-----------------------------------------------------------------------------------------------+
-|                      GIÁM SÁT &amp; ĐO LƯỜNG TÀI NGUYÊN (MONITORING &amp; METRICS)                    |
-|   7. Prometheus (Port 9090) <--- Scrape Node Exporter (Port 9100) &amp; Blackbox Exporter (9115) |
-|   8. Grafana Dashboard (Port 3000) <--- Nguồn dữ liệu thời gian thực từ Prometheus            |
-+-----------------------------------------------------------------------------------------------+
-            </pre>
-          </div>
-        </div>
       </section>
 
     </main>
@@ -789,7 +720,52 @@
     </div>
   </div>
 
+  <!-- Modal Swagger Authorize -->
+  <div class="modal-backdrop" id="swagger-auth-modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">
+          Available Authorizations (Keycloak OAuth2 / Bearer Token)
+        </h3>
+        <button type="button" class="btn-close-modal" data-close-modal aria-label="Đóng">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0;">
+          <h4 style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">
+            Cách 1: Đăng nhập Single Sign-On qua Keycloak PKCE
+          </h4>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
+            Chuyển hướng đến màn hình đăng nhập Keycloak Realm <code>mycloud</code> để nhận token ủy quyền.
+          </p>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-modal-login-kc">
+            Đăng Nhập Keycloak SSO
+          </button>
+        </div>
+
+        <div>
+          <h4 style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">
+            Cách 2: Nhập Bearer Token (JWT) thủ công
+          </h4>
+          <div style="margin-bottom: 1rem;">
+            <label for="manual-token-input" style="font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.35rem; display: block;">
+              Bearer Token (JWT):
+            </label>
+            <textarea id="manual-token-input" class="form-control" placeholder="eyJhbGciOiJSUzI1NiIsInR5cCI6..." style="font-family: var(--font-mono); font-size: 0.8rem; height: 90px;"></textarea>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button type="button" class="btn btn-primary btn-sm" id="btn-modal-save-token">
+              Authorize (Lưu Token)
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" data-close-modal>
+              Hủy
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
-  <script src="/assets/js/portal.js?v=service-links-20261110"></script>
+  <script src="/assets/js/portal.js"></script>
 </body>
 </html>

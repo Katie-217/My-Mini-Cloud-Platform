@@ -268,7 +268,7 @@
             </div>
           </a>
 
-          <a href="http://localhost:3000" target="_blank" rel="noopener" class="quick-app-tile">
+          <a href="http://localhost:3000/d/mycloud-system" target="_blank" rel="noopener" class="quick-app-tile">
             <div>
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
                 <span class="badge badge-healthy">Port 3000</span>
@@ -314,7 +314,7 @@
           </div>
           <div>
             <span class="badge badge-healthy" style="padding: 0.5rem 0.85rem; font-size: 0.825rem;">
-              9 Services Configured &amp; Active
+              9 nhóm dịch vụ đã cấu hình
             </span>
           </div>
         </div>
@@ -486,7 +486,7 @@
               Bộ Điều Phối Hạ Tầng (Infrastructure Traffic Dispatcher)
             </h3>
             <p style="font-size: 0.875rem; color: #475569;">
-              Khi nhập đường dẫn được cấp bên trên, hạ tầng bên dưới sẽ tự động phân giải DNS nội bộ Bind9, xác định luồng định tuyến Nginx Gateway, định vị container đích và gửi probe kiểm tra trực tiếp.
+              Tra cứu bản ghi cấu hình và minh họa luồng định tuyến, sau đó gửi HTTP probe qua Gateway. Để xác minh Bind9 thực tế, dùng lệnh dig trong phần chi tiết dịch vụ DNS.
             </p>
           </div>
 
@@ -790,6 +790,6 @@
   </div>
 
   <!-- Scripts -->
-  <script src="/assets/js/portal.js"></script>
+  <script src="/assets/js/portal.js?v=service-links-20261110"></script>
 </body>
 </html>

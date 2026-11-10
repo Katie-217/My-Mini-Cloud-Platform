@@ -2,6 +2,27 @@
 
 Ngày thực hiện: 10/11/2026. Đây là trạng thái hiện hành, sau các khảo sát ban đầu.
 
+## Kiểm tra lại liên kết sau các lần chỉnh giao diện
+
+`python scripts/test-portal-navigation.py`: **29 checks PASS** trên Edge, sau
+khi khởi động lại Docker Desktop và cập nhật hai web replica. Script kiểm tra:
+
+- Click Blog từ sidebar, ba bài viết, tám link card HTTP, DNS modal/Escape và
+  năm link trong bảng DNS. Grafana giữ redirect tới dashboard khi cần login.
+- Đăng nhập Grafana thật, ba panel render canvas, không No data. Portal không
+  có JavaScript pageerror. Hai replica có cùng SHA256 file portal.js.
+- DNS không mở URL HTTP1053; không còn link HTTP9115 nội bộ. Bảng DNS bỏ record
+  Prometheus .90 không tồn tại trong zone; Grafana trỏ đúng dashboard.
+- Status web2 lỗi làm nhóm Web unhealthy; nguồn status/metrics503 không tạo
+  Online/latency/số liệu mẫu. Hai fault test chỉ intercept response trong browser.
+- Hostname127.0.0.1 được dùng đúng cho quick links khi truy cập qua địa chỉ đó.
+
+Ảnh/report mới lưu tại `.runtime/portal-navigation/`, Git ignore và không chứa
+credential. Readiness PASS: 12/12 probe, Portal/Blog/Student HTTP200. Lần này chỉ
+kiểm thử navigation và dashboard; 27 checks Student CRUD/PKCE đầy đủ bên dưới
+là kết quả của bản tích hợp trước các lần Gemini chỉnh UI, chưa chạy lại toàn
+bộ trên UI mới. Không suy navigation PASS thành toàn bộ nghiệp vụ UI đã retest.
+
 ## Backend và SQL Server đã chạy thật
 
 - Docker Compose project: `mycloud`.

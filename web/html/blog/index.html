@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyMiniCloud - Engineering Blog</title>
+  <link rel="icon" href="/assets/images/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/common.css">
+  <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="container navbar">
+      <a href="/" class="brand">
+        <div class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+          </svg>
+        </div>
+        <span>MyMiniCloud</span>
+        <span class="brand-badge">Blog</span>
+      </a>
+
+      <nav aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link">Về Portal</a></li>
+          <li><a href="/blog/" class="nav-link active">Tất cả Bài viết</a></li>
+          <li><a href="/app/" class="nav-link">Student App</a></li>
+        </ul>
+      </nav>
+
+      <div class="env-tag">
+        <span class="env-dot"></span>
+        <span>Local Nginx Static Web</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Blog Hero -->
+  <section class="blog-hero">
+    <div class="container">
+      <h1 class="blog-hero-title">MyMiniCloud Engineering Blog</h1>
+      <p class="blog-hero-desc">
+        Chuyên mục chia sẻ kiến trúc điện toán đám mây, công nghệ ảo hóa container và kinh nghiệm xây dựng hệ thống phân tán nội bộ.
+      </p>
+    </div>
+  </section>
+
+  <!-- Main Content: Articles Grid -->
+  <main class="blog-main">
+    <div class="container">
+      <div class="blog-grid">
+
+        <!-- Article 1 -->
+        <article class="blog-card">
+          <a href="/blog/blog1.html" class="blog-card-img-wrap" aria-label="Đọc bài viết về Điện toán đám mây">
+            <img src="/assets/images/cloud-computing.svg" alt="Minh họa Điện toán đám mây" class="blog-card-img">
+          </a>
+          <div class="blog-card-body">
+            <div class="blog-card-meta">
+              <span class="blog-tag">Cloud Architecture</span>
+              <time datetime="2026-11-10">10/11/2026</time>
+              <span>• 7 phút đọc</span>
+            </div>
+            <h2 class="blog-card-title">
+              <a href="/blog/blog1.html" style="text-decoration: none; color: inherit;">
+                Điện Toán Đám Mây &amp; Xu Hướng Xây Dựng Private / Mini Cloud Trong Doanh Nghiệp
+              </a>
+            </h2>
+            <p class="blog-card-excerpt">
+              Khám phá các mô hình dịch vụ đám mây (IaaS, PaaS, SaaS) và lý do các tổ chức hiện đại triển khai Private Mini Cloud cục bộ nhằm kiểm soát dữ liệu, tối ưu chi phí và tăng tốc độ phát triển.
+            </p>
+            <div class="blog-card-footer">
+              <a href="/blog/blog1.html" style="text-decoration: none; color: var(--color-blue-600); font-weight: 600;">Đọc chi tiết &rarr;</a>
+              <span>Chuyên đề 01</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Article 2 -->
+        <article class="blog-card">
+          <a href="/blog/blog2.html" class="blog-card-img-wrap" aria-label="Đọc bài viết về Docker và Containers">
+            <img src="/assets/images/docker-containers.svg" alt="Minh họa Docker và Containers" class="blog-card-img">
+          </a>
+          <div class="blog-card-body">
+            <div class="blog-card-meta">
+              <span class="blog-tag">DevOps &amp; Docker</span>
+              <time datetime="2026-11-10">10/11/2026</time>
+              <span>• 8 phút đọc</span>
+            </div>
+            <h2 class="blog-card-title">
+              <a href="/blog/blog2.html" style="text-decoration: none; color: inherit;">
+                Docker &amp; Containers: Ảo Hóa Tầng Hệ Điều Hành &amp; Đóng Gói Microservices
+              </a>
+            </h2>
+            <p class="blog-card-excerpt">
+              Phân tích cơ chế hoạt động của Linux Namespaces và Cgroups trong Docker, so sánh chi tiết giữa Virtual Machines và Containers, cùng giải pháp quản trị mạng và lưu trữ dữ liệu bền vững.
+            </p>
+            <div class="blog-card-footer">
+              <a href="/blog/blog2.html" style="text-decoration: none; color: var(--color-blue-600); font-weight: 600;">Đọc chi tiết &rarr;</a>
+              <span>Chuyên đề 02</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Article 3 -->
+        <article class="blog-card">
+          <a href="/blog/blog3.html" class="blog-card-img-wrap" aria-label="Đọc bài viết về Kiến trúc MyMiniCloud">
+            <img src="/assets/images/mini-cloud-arch.svg" alt="Minh họa Kiến trúc MyMiniCloud" class="blog-card-img">
+          </a>
+          <div class="blog-card-body">
+            <div class="blog-card-meta">
+              <span class="blog-tag">Distributed Systems</span>
+              <time datetime="2026-11-10">10/11/2026</time>
+              <span>• 10 phút đọc</span>
+            </div>
+            <h2 class="blog-card-title">
+              <a href="/blog/blog3.html" style="text-decoration: none; color: inherit;">
+                Bên Trong MyMiniCloud: Cách Một Hệ Thống 9 Dịch Vụ Vận Hành Thực Tế
+              </a>
+            </h2>
+            <p class="blog-card-excerpt">
+              Giải mã luồng xử lý toàn diện: Từ Reverse Proxy cân bằng tải Round Robin, REST API Flask kết nối SQL Server 2022, MinIO S3 Object Storage, xác thực Keycloak PKCE đến vòng lặp giám sát Prometheus &amp; Grafana.
+            </p>
+            <div class="blog-card-footer">
+              <a href="/blog/blog3.html" style="text-decoration: none; color: var(--color-blue-600); font-weight: 600;">Đọc chi tiết &rarr;</a>
+              <span>Chuyên đề 03</span>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <div>
+        <p><strong>MyMiniCloud Blog</strong> &copy; 2026. Website tĩnh phục vụ qua Nginx Web Replicas.</p>
+        <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Nội dung xây dựng phục vụ báo cáo đồ án Điện toán đám mây.</p>
+      </div>
+      <div class="footer-links">
+        <a href="/" class="footer-link">Về Trang Chủ Portal</a>
+        <a href="/blog/" class="footer-link">Danh Sách Blog</a>
+        <a href="/app/" class="footer-link">Student Management</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

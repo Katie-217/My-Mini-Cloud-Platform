@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%" fill="none">
+  <!-- Background -->
+  <rect width="800" height="450" rx="16" fill="#0F172A"/>
+  <defs>
+    <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#1E3A8A" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Grid pattern -->
+  <g opacity="0.08" stroke="#FFFFFF" stroke-width="1">
+    <path d="M 0,50 L 800,50 M 0,100 L 800,100 M 0,150 L 800,150 M 0,200 L 800,200 M 0,250 L 800,250 M 0,300 L 800,300 M 0,350 L 800,350 M 0,400 L 800,400"/>
+    <path d="M 50,0 L 50,450 M 100,0 L 100,450 M 150,0 L 150,450 M 200,0 L 200,450 M 250,0 L 250,450 M 300,0 L 300,450 M 350,0 L 350,450 M 400,0 L 400,450 M 450,0 L 450,450 M 500,0 L 500,450 M 550,0 L 550,450 M 600,0 L 600,450 M 650,0 L 650,450 M 700,0 L 700,450 M 750,0 L 750,450"/>
+  </g>
+
+  <!-- Big Central Cloud Shape -->
+  <g filter="url(#shadow)">
+    <path d="M 310,230 
+             A 60,60 0 0,1 410,160 
+             A 75,75 0 0,1 540,190 
+             A 55,55 0 0,1 550,290 
+             L 280,290 
+             A 50,50 0 0,1 310,230 Z" 
+          fill="url(#cloudGrad)"/>
+  </g>
+
+  <!-- Connecting Node Lines -->
+  <g stroke="#38BDF8" stroke-width="2" stroke-dasharray="4 4" opacity="0.6">
+    <line x1="160" y1="360" x2="310" y2="280"/>
+    <line x1="400" y1="380" x2="415" y2="290"/>
+    <line x1="640" y1="360" x2="520" y2="280"/>
+    <line x1="200" y1="120" x2="330" y2="180"/>
+    <line x1="600" y1="110" x2="500" y2="170"/>
+  </g>
+
+  <!-- Client Devices / Sub-systems -->
+  <!-- Left Node: Storage -->
+  <g filter="url(#shadow)">
+    <rect x="90" y="320" width="130" height="65" rx="8" fill="#1E293B" stroke="#334155" stroke-width="2"/>
+    <rect x="105" y="335" width="20" height="6" rx="2" fill="#38BDF8"/>
+    <rect x="105" y="347" width="20" height="6" rx="2" fill="#38BDF8"/>
+    <rect x="105" y="359" width="20" height="6" rx="2" fill="#38BDF8"/>
+    <text x="135" y="355" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">Object S3</text>
+  </g>
+
+  <!-- Center Node: Database -->
+  <g filter="url(#shadow)">
+    <rect x="335" y="345" width="130" height="65" rx="8" fill="#1E293B" stroke="#334155" stroke-width="2"/>
+    <ellipse cx="400" cy="365" rx="28" ry="8" fill="#3B82F6" opacity="0.8"/>
+    <path d="M 372,365 v 18 a 28,8 0 0,0 56,0 v -18" fill="none" stroke="#60A5FA" stroke-width="2"/>
+    <text x="400" y="400" text-anchor="middle" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">SQL Server</text>
+  </g>
+
+  <!-- Right Node: Monitoring -->
+  <g filter="url(#shadow)">
+    <rect x="580" y="320" width="130" height="65" rx="8" fill="#1E293B" stroke="#334155" stroke-width="2"/>
+    <circle cx="610" cy="352" r="14" fill="#0284C7"/>
+    <path d="M 605,352 L 608,357 L 616,346" fill="none" stroke="#FFF" stroke-width="2"/>
+    <text x="635" y="356" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">Prometheus</text>
+  </g>
+
+  <!-- Top Left: Web Portal -->
+  <g filter="url(#shadow)">
+    <rect x="130" y="85" width="140" height="60" rx="8" fill="#1E293B" stroke="#334155" stroke-width="2"/>
+    <rect x="145" y="100" width="110" height="8" rx="2" fill="#64748B"/>
+    <rect x="145" y="115" width="70" height="6" rx="2" fill="#38BDF8"/>
+    <text x="145" y="133" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="11">Nginx Web Replicas</text>
+  </g>
+
+  <!-- Top Right: Keycloak OIDC -->
+  <g filter="url(#shadow)">
+    <rect x="530" y="80" width="140" height="60" rx="8" fill="#1E293B" stroke="#334155" stroke-width="2"/>
+    <circle cx="555" cy="110" r="12" fill="#10B981"/>
+    <path d="M 552,108 h 6 v 5 h -6 z" fill="#FFF"/>
+    <text x="575" y="114" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">Keycloak SSO</text>
+  </g>
+
+  <!-- Title overlay on SVG -->
+  <text x="400" y="55" text-anchor="middle" fill="#93C5FD" font-family="system-ui, sans-serif" font-size="18" font-weight="bold" letter-spacing="2">PRIVATE &amp; MINI CLOUD ARCHITECTURE</text>
+</svg>

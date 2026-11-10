@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" width="100%" height="100%" fill="none">
+  <defs>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0F172A" flood-opacity="0.25"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#3B82F6"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#10B981"/>
+    </marker>
+    <marker id="arrowOrange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#F59E0B"/>
+    </marker>
+    <marker id="arrowPurple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#8B5CF6"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1000" height="620" rx="16" fill="#0F172A"/>
+
+  <!-- Network boundary 'cloud-net' -->
+  <rect x="180" y="70" width="790" height="520" rx="14" fill="#1E293B" fill-opacity="0.6" stroke="#334155" stroke-width="2" stroke-dasharray="6 6"/>
+  <text x="200" y="98" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Docker Network: cloud-net (Bridge 172.30.50.0/24)</text>
+
+  <!-- Node 0: Browser / Client (Host) -->
+  <g filter="url(#cardShadow)">
+    <rect x="25" y="240" width="120" height="90" rx="8" fill="#1E293B" stroke="#64748B" stroke-width="2"/>
+    <rect x="35" y="250" width="100" height="50" rx="4" fill="#334155"/>
+    <circle cx="85" cy="275" r="14" fill="#38BDF8"/>
+    <text x="85" y="318" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">Trình duyệt Web</text>
+    <text x="85" y="328" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="9">Client :80/:3000</text>
+  </g>
+
+  <!-- Arrow: Browser -> Proxy -->
+  <path d="M 145 285 L 210 285" stroke="#3B82F6" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="175" y="278" text-anchor="middle" fill="#93C5FD" font-family="system-ui, sans-serif" font-size="10" font-weight="600">HTTP :80</text>
+
+  <!-- Node 9: API Gateway / Reverse Proxy (Nginx) -->
+  <g filter="url(#cardShadow)">
+    <rect x="215" y="215" width="140" height="140" rx="10" fill="#0F172A" stroke="#3B82F6" stroke-width="2.5"/>
+    <rect x="225" y="225" width="120" height="26" rx="4" fill="#1E3A8A"/>
+    <text x="285" y="243" text-anchor="middle" fill="#93C5FD" font-family="system-ui, sans-serif" font-size="11" font-weight="bold">api-gateway-proxy</text>
+    <text x="285" y="275" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">Nginx Gateway</text>
+    <text x="285" y="295" text-anchor="middle" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="10">Round Robin / LB</text>
+    <text x="285" y="315" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="9">Host :80 -> cloud-net</text>
+    <text x="285" y="335" text-anchor="middle" fill="#FDE047" font-family="system-ui, sans-serif" font-size="9">Path: /, /blog, /api, /auth</text>
+  </g>
+
+  <!-- Routing Lines from Proxy -->
+  <!-- Proxy -> Web Replicas -->
+  <path d="M 355 250 L 430 160" stroke="#10B981" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <text x="380" y="195" fill="#6EE7B7" font-family="system-ui, sans-serif" font-size="9" font-weight="600">/, /blog/</text>
+
+  <!-- Proxy -> Flask App -->
+  <path d="M 355 285 L 430 285" stroke="#3B82F6" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="390" y="278" fill="#93C5FD" font-family="system-ui, sans-serif" font-size="9" font-weight="600">/api/*</text>
+
+  <!-- Proxy -> Keycloak -->
+  <path d="M 355 320 L 430 400" stroke="#F59E0B" stroke-width="2" marker-end="url(#arrowOrange)"/>
+  <text x="380" y="375" fill="#FCD34D" font-family="system-ui, sans-serif" font-size="9" font-weight="600">/auth/*</text>
+
+  <!-- Group 1: Web Frontend Server (Replicas 1 & 2) -->
+  <g filter="url(#cardShadow)">
+    <rect x="435" y="115" width="170" height="95" rx="8" fill="#0F172A" stroke="#10B981" stroke-width="2"/>
+    <text x="520" y="135" text-anchor="middle" fill="#6EE7B7" font-family="system-ui, sans-serif" font-size="11" font-weight="bold">web-frontend-server</text>
+    <text x="520" y="155" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">Nginx Replicas (x2)</text>
+    <text x="520" y="175" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="10">web1 :80 &amp; web2 :80</text>
+    <text x="520" y="195" text-anchor="middle" fill="#A7F3D0" font-family="system-ui, sans-serif" font-size="9">Static Portal &amp; Blog</text>
+  </g>
+
+  <!-- Group 2: Application Backend Server (Flask) -->
+  <g filter="url(#cardShadow)">
+    <rect x="435" y="240" width="170" height="95" rx="8" fill="#0F172A" stroke="#3B82F6" stroke-width="2"/>
+    <text x="520" y="260" text-anchor="middle" fill="#93C5FD" font-family="system-ui, sans-serif" font-size="11" font-weight="bold">application-backend</text>
+    <text x="520" y="280" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">Python 3.12 Flask</text>
+    <text x="520" y="300" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="10">Port nội bộ :8081</text>
+    <text x="520" y="320" text-anchor="middle" fill="#BFDBFE" font-family="system-ui, sans-serif" font-size="9">REST API, ODBC, S3 Client</text>
+  </g>
+
+  <!-- Group 4: Keycloak Identity Server -->
+  <g filter="url(#cardShadow)">
+    <rect x="435" y="365" width="170" height="95" rx="8" fill="#0F172A" stroke="#F59E0B" stroke-width="2"/>
+    <text x="520" y="385" text-anchor="middle" fill="#FCD34D" font-family="system-ui, sans-serif" font-size="11" font-weight="bold">authentication-identity</text>
+    <text x="520" y="405" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">Keycloak 26 (OIDC)</text>
+    <text x="520" y="425" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="10">Internal :8080 (/auth)</text>
+    <text x="520" y="445" text-anchor="middle" fill="#FDE68A" font-family="system-ui, sans-serif" font-size="9">Realm, PKCE, JWT RS256</text>
+  </g>
+
+  <!-- Backend connections to DB, S3, Keycloak -->
+  <!-- Flask -> SQL Server -->
+  <path d="M 605 270 L 690 220" stroke="#EF4444" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="645" y="240" fill="#FCA5A5" font-family="system-ui, sans-serif" font-size="9" font-weight="600">ODBC :1433</text>
+
+  <!-- Flask -> MinIO -->
+  <path d="M 605 285 L 690 295" stroke="#06B6D4" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="645" y="285" fill="#67E8F9" font-family="system-ui, sans-serif" font-size="9" font-weight="600">S3 API :9000</text>
+
+  <!-- Flask <-> Keycloak JWKS -->
+  <path d="M 520 335 L 520 365" stroke="#F59E0B" stroke-width="2" stroke-dasharray="3 3"/>
+  <text x="525" y="353" fill="#FCD34D" font-family="system-ui, sans-serif" font-size="8">JWKS Verify</text>
+
+  <!-- Group 3: SQL Server 2022 -->
+  <g filter="url(#cardShadow)">
+    <rect x="695" y="170" width="165" height="85" rx="8" fill="#0F172A" stroke="#EF4444" stroke-width="2"/>
+    <text x="777" y="190" text-anchor="middle" fill="#FCA5A5" font-family="system-ui, sans-serif" font-size="11" font-weight="bold">relational-database</text>
+    <text x="777" y="210" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">SQL Server 2022</text>
+    <text x="777" y="230" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="9">studentdb.dbo.students</text>
+    <text x="777" y="245" text-anchor="middle" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="8">Volume: mycloud_mssql-data</text>
+  </g>
+
+  <!-- Group 5: MinIO S3 -->
+  <g filter="url(#cardShadow)">
+    <rect x="695" y="270" width="165" height="85" rx="8" fill="#0F172A" stroke="#06B6D4" stroke-width="2"/>
+    <text x="777" y="290" text-anchor="middle" fill="#67E8F9" font-family="system-ui, sans-serif" font-size="11" font-weight="bold">object-storage-server</text>
+    <text x="777" y="310" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">MinIO S3</text>
+    <text x="777" y="330" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="9">API :9000 / Console :9001</text>
+    <text x="777" y="345" text-anchor="middle" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="8">profile-pics &amp; documents</text>
+  </g>
+
+  <!-- Group 6: Internal DNS Server (Bind9) -->
+  <g filter="url(#cardShadow)">
+    <rect x="215" y="480" width="155" height="85" rx="8" fill="#0F172A" stroke="#8B5CF6" stroke-width="2"/>
+    <text x="292" y="500" text-anchor="middle" fill="#C4B5FD" font-family="system-ui, sans-serif" font-size="11" font-weight="bold">internal-dns-server</text>
+    <text x="292" y="520" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">Bind9 DNS (1053)</text>
+    <text x="292" y="540" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="9">Zone: cloud.local</text>
+    <text x="292" y="555" text-anchor="middle" fill="#DDD6FE" font-family="system-ui, sans-serif" font-size="8">app-backend, minio, keycloak</text>
+  </g>
+
+  <!-- Group 7 & 8: Monitoring & Visualization -->
+  <!-- Exporters -->
+  <g filter="url(#cardShadow)">
+    <rect x="435" y="485" width="170" height="75" rx="8" fill="#0F172A" stroke="#64748B" stroke-width="1.5"/>
+    <text x="520" y="505" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="10" font-weight="bold">Node &amp; Blackbox Exporters</text>
+    <text x="520" y="525" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="11">Node :9100 / HTTP :9115</text>
+    <text x="520" y="545" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="8">Metrics Linux VM &amp; Web Probes</text>
+  </g>
+
+  <!-- Prometheus -->
+  <g filter="url(#cardShadow)">
+    <rect x="645" y="485" width="155" height="75" rx="8" fill="#0F172A" stroke="#E11D48" stroke-width="2"/>
+    <text x="722" y="505" text-anchor="middle" fill="#FDA4AF" font-family="system-ui, sans-serif" font-size="11" font-weight="bold">Prometheus Server</text>
+    <text x="722" y="525" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="11">Prometheus :9090</text>
+    <text x="722" y="545" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="8">Time-series DB, Scrape Jobs</text>
+  </g>
+
+  <!-- Grafana -->
+  <g filter="url(#cardShadow)">
+    <rect x="835" y="485" width="125" height="75" rx="8" fill="#0F172A" stroke="#F97316" stroke-width="2"/>
+    <text x="897" y="505" text-anchor="middle" fill="#FDBA74" font-family="system-ui, sans-serif" font-size="11" font-weight="bold">Grafana</text>
+    <text x="897" y="525" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="11">Dashboard :3000</text>
+    <text x="897" y="545" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="8">3 Biểu đồ CPU/RAM/Net</text>
+  </g>
+
+  <!-- Exporters -> Prometheus -> Grafana arrows -->
+  <path d="M 605 522 L 645 522" stroke="#E11D48" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M 800 522 L 835 522" stroke="#F97316" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

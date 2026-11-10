@@ -1122,7 +1122,7 @@
     titleEl.textContent = `Nhóm ${meta.groupNum}: ${meta.name}`;
 
     contentEl.innerHTML = `
-      <table class="dns-data-table" style="margin-top: 0;">
+      <table class="service-detail-table">
         <tbody>
           <tr><th>Tên Dịch Vụ Compose</th><td><code>${escapeHtml(meta.service)}</code></td></tr>
           <tr><th>Tên Miền Nội Bộ (FQDN)</th><td><strong style="color: #2563eb;">${escapeHtml(meta.domain)}</strong></td></tr>

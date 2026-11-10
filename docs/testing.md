@@ -2,6 +2,29 @@
 
 Ngày thực hiện: 10/11/2026. Đây là trạng thái hiện hành, sau các khảo sát ban đầu.
 
+## Script setup và tài liệu bàn giao có ảnh
+
+- PASS: setup.ps1 với cả build mặc định và -NoBuild trên Docker hiện có. Tạo lại
+  các init jobs an toàn, giữ env/volumes và phục hồi readiness12/12/baUI200.
+- PASS: setup-tools.ps1 cài tools pinned trong .venv, xử lý UTF8 cho đường dẫn
+  tiếng Việt; PowerShell AST của các script hợp lệ.
+- PASS: rehearsal source sạch trong thư mục runtime riêng, chưa có env; init
+  tạo credential mới, lần2 giữ nguyên; Compose config hợp lệ. Rehearsal chỉ
+  đọc config, không tạo thêm Docker resource hoặc dùng password mới với volume cũ.
+- PASS: verify.ps1 -Browser hoàn tất backend23, gateway41, monitoring21,
+  auth/storage24, DNS hostUDP/TCP và portal navigation29checks.
+- PASS: capture-handoff.py chạy CRUD/upload-download/hash/DNS/ping11đích/metrics,
+  restart đúng SQL/MinIO và verify record/PNG/PDF còn nguyên; chỉ dọn fixture riêng.
+  Script storage dưới /tmp cần PYTHONPATH=/app, đã bổ sung trong lệnh hướng dẫn.
+- PASS: login Keycloak thật/PKCE và secure200; chụp Grafana/MinIO/Prometheus/Portal/
+  Blog trên browser. Callback auth test được intercept, không coi là đã retest
+  toàn bộ Student JavaScript. Ảnh không chứa credential/token.
+- PASS: screenshot-guide.html chứa16phần response/32ảnh nhúng tại đúng bước,
+  mở offline và mọi ảnh tải được; không cần thư mục ảnh khi gửi riêng.
+- NOT TESTED: cài Windows/WSL/Docker mới, engine trống hoàn toàn hoặc máy của
+  partner. Browser/CLI captures là snapshot theo timestamp, giao diện có thể
+  tiếp tục thay đổi trên nhánh frontend. DockerHub/AWS/SSMSGUI chưa chạy lượt này.
+
 ## Kiểm tra lại liên kết sau các lần chỉnh giao diện
 
 `python scripts/test-portal-navigation.py`: **29 checks PASS** trên Edge, sau

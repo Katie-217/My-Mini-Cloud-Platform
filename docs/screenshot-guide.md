@@ -1,15 +1,80 @@
-# Hướng dẫn chạy lệnh và chụp minh chứng MyMiniCloud
+# MyMiniCloud — Bàn giao, setup Docker và test thủ công
 
-Đối chiếu PDF [Báo Cáo Cuối Kỳ.docx.pdf](<Báo Cáo Cuối Kỳ.docx.pdf>), trang
-12–20 (kiểm thử cơ bản), 21–27 (mở rộng), và [master plan](master-implementation-plan.md).
-Làm lần lượt trên **PowerShell Windows**, trong cùng một cửa sổ để giữ biến CRUD.
-Mỗi ảnh nên thấy lệnh, kết quả và URL/tên service. Lưu ảnh cá nhân ngoài thư mục
-source, hoặc trong `.runtime/screenshots/` đã được Git ignore.
+Dành cho người nhận source dựng hệ thống trên Windows x86_64. Dùng PowerShell,
+làm lần lượt từ đầu và giữ cùng cửa sổ khi dùng các biến CRUD.
+
+**Bản gửi riêng: screenshot-guide.html** chứa toàn bộ hướng dẫn, lệnh, ý nghĩa,
+cách đọc response và ảnh nhúng ngay trong từng bước. Mở bằng Edge/Chrome, không
+cần thư mục ảnh đi kèm; không có tài liệu ảnh riêng. Markdown này là bản nguồn.
+
+Ảnh console hiển thị transcript của lệnh đã chạy thật, có timestamp và exit code;
+không phải ảnh cửa sổ PowerShell. Ảnh UI chụp trình duyệt thật. Số liệu, ID, key và
+IP động trên máy mới có thể khác; không dùng ảnh mẫu để đánh dấu máy mới đã PASS.
+
+## A. Chuẩn bị máy mới và dựng toàn bộ container
+
+1. Cài [Git for Windows](https://git-scm.com/install/windows).
+2. Cài Python 3.10+; máy hiện tại dùng 3.12. Thêm Python vào PATH và mở PowerShell
+   mới; xem [hướng dẫn Python Windows](https://docs.python.org/3.12/using/windows.html).
+3. Cài [Docker Desktop x86_64](https://docs.docker.com/desktop/setup/install/windows-install/).
+   Chọn WSL2 backend và Linux containers; bật virtualization nếu được yêu cầu.
+   Nếu chưa có WSL, làm theo mục WSL trong hướng dẫn Docker, restart Windows khi
+   trình cài yêu cầu. Script dự án không tự sửa BIOS/firewall/Windows services.
+4. Mở Docker Desktop, đợi engine sẵn sàng. Máy đã chạy có khoảng 15.48 GiB RAM
+   cấp cho Docker; đây là cấu hình tham khảo, chưa benchmark mức tối thiểu.
+   Cần Internet lần đầu để pull image và build MinIO từ source Go.
+5. Microsoft Edge dùng cho browser tests; SSMS tùy chọn để chụp SQL GUI.
+   Backend/SQL/ODBC chạy trong Docker, không cần cài SQL Server/ODBC trên host.
+
+Thay GITHUB_REPO_URL bằng link thật sau khi được cung cấp:
+
+```powershell
+Set-Location D:\
+git clone GITHUB_REPO_URL mycloud
+Set-Location .\mycloud
+git status
+python scripts/init-env.py
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup.ps1
+```
+
+**Ý nghĩa:** clone tải source/lịch sử; Set-Location đổi thư mục; status xem branch;
+init-env sinh password riêng trong .env nếu thiếu. Setup kiểm tra công cụ,
+thử mở Docker Desktop nếu engine chưa chạy, kiểm port/subnet/ownership, build,
+chạy Compose và chờ readiness. Chạy lại giữ nguyên env và dữ liệu volume.
+
+**Đọc kết quả:** cuối setup cần PASS, 12/12 probe, metrics có dữ liệu, ba UI200.
+Init jobs Exited(0) là hoàn tất đúng. Không dùng -NoBuild ở máy mới/chưa có image
+hoặc sau sửa HTML/JS/Dockerfile. -ExecutionPolicy Bypass chỉ cho tiến trình này,
+không đổi policy toàn máy; -NoProfile bỏ cấu hình PowerShell cá nhân.
+
+| Thành phần | Tự chuẩn bị khi chạy setup |
+| --- | --- |
+| Network/volumes | cloud-net172.30.50.0/24 và 5 named volumes |
+| Web/backend | 2 Nginx cùng image Portal/Blog/Student; Flask/Gunicorn/ODBC18 |
+| SQL Server | studentdb.dbo.students, cloud_app, ít nhất 3 seed |
+| Keycloak | Realm từ env, flask-app public/PKCE S256, sv01/sv02 |
+| MinIO | Buckets private profile-pics/documents |
+| DNS | Bind9 cloud.local, host1053 TCP/UDP |
+| Monitoring/Grafana | Prometheus/Node/Blackbox, hai web targets, datasource và 3 panel |
+| Gateway | Port80, /api/, /auth/, /student/ và Round Robin |
+
+Mở .env bằng editor để xem tài khoản từng server. Không lấy env từ máy khác hoặc
+xóa/tạo lại khi đã có volume. Trước lần chạy đầu có thể đổi OIDC_REALM theo MSSV
+và title trong grafana/dashboards/system-health.json. Mặc định vẫn dùng placeholder.
+PUBLIC_URL=http://localhost phục vụ demo tại máy đó; đổi host cần chỉnh cả OIDC
+issuer/redirect và truy cập port quản trị đang bind loopback.
+
+Ảnh dưới là kiểm tra công cụ và setup -NoBuild trên máy đang có image/volume,
+không phải bằng chứng cài OS hay deploy trên máy riêng của partner.
+
+<!-- evidence:versions -->
+<!-- evidence:setup -->
 
 ## 0. Chuẩn bị và cách đọc kết quả
 
 ```powershell
-Set-Location 'D:\Cuối kì computing'
+# Thay bằng thư mục đã clone trên máy bạn:
+Set-Location 'D:\mycloud'
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $OutputEncoding = [Console]::OutputEncoding
 docker compose -p mycloud config --quiet
@@ -28,22 +93,15 @@ Nếu vừa sửa HTML/JS hoặc chưa có image, bỏ `-NoBuild` để build l�
 Không chụp `.env`, resolved `docker compose config` hoặc token/password.
 Credential xem riêng trong `.env` bằng editor, không dùng `Get-Content .env` khi chụp.
 
-Các điểm thay đổi so với ví dụ của PDF:
-
-| Ví dụ trong đề | Bản đang chạy và cách giải thích |
-| --- | --- |
-| MariaDB/MySQL, notes/minicloud | SQL Server theo yêu cầu người dùng; studentdb.dbo.students, IDENTITY thay AUTO_INCREMENT |
-| Backend host :8085, web :8080, Keycloak :8081 | Backend/web chỉ nội bộ; gateway localhost:80 và Keycloak `/auth/` |
-| IP 10.10.10.x | Subnet đã khảo sát riêng 172.30.50.0/24; đối chiếu zone với IP thật |
-| Credential admin/admin, minioadmin | Password ngẫu nhiên trong `.env` |
-| Bucket demo/index.html hoặc object public | Hai bucket profile-pics/documents, PNG/JPEG và PDF; private, đọc qua backend |
-| Scrape web:80 trực tiếp | Blackbox Exporter probe HTTP hai web, Prometheus scrape kết quả probe |
-| 9 container | 9 nhóm; 12 container thường trực do có web replica và exporter; 3 init jobs riêng |
-
 Realm và tiêu đề dashboard còn `MSSV_PLACEHOLDER`: phải thay bằng MSSV thật trước
 khi chụp bản nộp cuối. Đừng ghi placeholder là đã đáp ứng yêu cầu cá nhân hóa.
 
-## 1. Cấu hình Docker, network và volume — ảnh 01–03
+## 1. Cấu hình Docker, network và volume
+
+**Ý nghĩa/cách đọc lệnh:** config --quiet kiểm schema/env mà không in resolved
+secret; ps -a xem cả jobs đã dừng; volume ls --filter chỉ liệt kê mycloud;
+network inspect xem subnet/IP thực tế. Exit0 và không lỗi là config hợp lệ.
+Những lệnh này không xóa hoặc sửa tài nguyên.
 
 ```powershell
 docker compose -p mycloud ps -a
@@ -69,7 +127,14 @@ Chụp các đoạn cấu hình trong VS Code:
 **Giải thích:** Compose tạo tài nguyên riêng cho mycloud; các container liên lạc
 qua cloud-net và service name, volume lưu dữ liệu ngoài vòng đời container.
 
-## 2. Web/Blog và hai replica — ảnh 04–06
+<!-- evidence:resources -->
+
+## 2. Web/Blog và hai replica
+
+**Ý nghĩa:** curl.exe là curl thật, -s bỏ progress, -I gửi HEAD chỉ lấy header;
+exec -T chạy trong container không TTY; wget -qO- in body ra stdout.
+HTTP200 là thành công;302/Location là redirect; X-Web-Server nhận diện replica.
+HEAD200 cần kiểm thêm nội dung UI. Có thể thêm --max-time15 để tránh đợi lâu.
 
 ```powershell
 curl.exe -sI http://localhost/
@@ -90,7 +155,16 @@ dưới `/blog/`. Ảnh phải thấy nội dung, ảnh minh họa và liên k�
 **Luồng:** Browser → gateway Nginx → một trong hai web → HTML/CSS/JS/ảnh.
 Blog tĩnh không truy vấn database.
 
-## 3. Backend trực tiếp và qua Reverse Proxy — ảnh 07–08
+<!-- evidence:web -->
+<!-- ui:portal-ui -->
+<!-- ui:blog-ui -->
+
+## 3. Backend trực tiếp và qua Reverse Proxy
+
+**Ý nghĩa:** lệnh wget chạy từ gateway đến Flask nội bộ bằng service name;
+curl -i in cả status/header/body. Invoke-RestMethod parse JSON thành object,
+Format-Table chỉ định dạng, không ghi dữ liệu. So sánh hello nội bộ/public để
+chứng minh proxy chuyển tiếp đúng. JSON5mẫu khác với bảng SQL bên dưới.
 
 ```powershell
 docker compose -p mycloud exec -T api-gateway-proxy-server wget -qO- http://application-backend-server:8081/hello
@@ -117,7 +191,18 @@ Chụp `proxy/nginx.conf`: upstream flask_backend, location `/api/`, `/student/`
 **Giải thích:** `/api/hello` đi qua gateway, bỏ prefix `/api/` rồi Flask nhận
 `/hello`. Lệnh nội bộ thay cho cổng host8085 trong đề vì backend không publish host.
 
-## 4. SQL Server, dữ liệu seed và CRUD — ảnh 09–13
+<!-- evidence:backend -->
+
+## 4. SQL Server, dữ liệu seed và CRUD
+
+**Ý nghĩa query:** Python -c chạy đoạn ngắn trong app, connection() lấy credential
+env mà không in connection string. DB_NAME/USER_NAME xác nhận DB/login; SELECT
+đọc bảng rồi serialize JSON, close() đóng kết nối. Cần thấy studentdb/cloud_app.
+
+**Ý nghĩa CRUD:** Guid tạo mã riêng; ConvertTo-Json+UTF8.GetBytes giữ tiếng Việt
+PowerShell5; WebRequest giữ StatusCode/Content. POST201 tạo ID, GET200 đọc record,
+PUT200 đổi GPA, q tìm mã; DELETE trả message/id, GET lại404 là mong đợi.
+Biến demoId chỉ còn trong cửa sổ hiện tại. Không dùng ID seed1/2/3 để demo xóa.
 
 Truy vấn SQL thật từ chính container Flask bằng ODBC, không cần in credential:
 
@@ -177,7 +262,18 @@ bước persistence; chỉ xóa nó ở bước 11. Không dùng ID 1/2/3 để 
 
 **Luồng:** Browser/PowerShell → gateway → Flask → ODBC18 → SQL Server → JSON.
 
-## 5. Keycloak, hai user và secure API — ảnh 14–17
+Ảnh SQL và CRUD dưới là các lệnh cùng luồng đã chạy thật; bản ghi test riêng đã
+dọn sau khi chụp. SSMS GUI chưa được thao tác trong lượt thu thập này.
+
+<!-- evidence:sql -->
+<!-- evidence:crud -->
+
+## 5. Keycloak, hai user và secure API
+
+**Ý nghĩa/cách đọc:** auth/config là metadata issuer/client/endpoints, không phải
+token. Secure thiếu Authorization phải401+JSON yêu cầu Bearer, không được200.
+Login đúng form+PKCE rồi secure200 có username/subject chứng minh backend kiểm
+JWT. Redirect302 ở auth là bình thường; không chụp Authorization/password.
 
 ```powershell
 curl.exe -sI http://localhost/auth/
@@ -222,7 +318,19 @@ Authorization Code + PKCE; không dùng password grant/copy token công khai.
 **Luồng:** Browser ↔ Keycloak lấy token; Browser → gateway → Flask `/secure`;
 Flask lấy JWKS Keycloak và xác minh chữ ký RS256/issuer/audience/hạn token.
 
-## 6. MinIO avatar/PDF và tải về — ảnh 18–20
+Ảnh secure200 ghi nhận login form sv01/PKCE thật; callback được intercept để
+kiểm auth độc lập UI, không thay nghiệm thu toàn bộ JavaScript Student.
+
+<!-- evidence:auth -->
+<!-- ui:keycloak-ui -->
+<!-- evidence:secure-login -->
+
+## 6. MinIO avatar/PDF và tải về
+
+**Ý nghĩa:** -F gửi multipart file/bucket, không phải JSON; --fail làm curl lỗi
+khi HTTP lỗi; -o lưu file download; Get-FileHash tính SHA256. Key do API tạo riêng.
+Hai SHA256 bằng nhau chứng minh byte không đổi. S3 anonymous403 là đúng với private
+bucket, trong khi backend download200.415 là sai định dạng, không phải lỗi mạng.
 
 Trong Student App: thêm sinh viên demo có avatar PNG/JPEG; tab Lưu trữ tệp
 upload PDF thật. Chụp thông báo thành công, avatar và file trong danh sách.
@@ -267,7 +375,18 @@ Get-FileHash -Algorithm SHA256 -LiteralPath $pdfPath,$downloadPath | Format-Tabl
 **Luồng:** Browser/curl → gateway → Flask multipart → MinIO S3 → object metadata;
 download theo chiều ngược lại. Không dùng bucket demo/index.html của ví dụ cơ bản.
 
-## 7. DNS Bind9 và phân biệt Docker DNS — ảnh 21–22
+Ảnh lệnh dưới dùng PDF báo cáo sẵn trong docs, tải lại và so hash rồi chỉ dọn
+object do bài test tạo. Console chụp sau khi dọn; bucket rỗng không phủ nhận upload.
+
+<!-- evidence:storage -->
+<!-- ui:minio-ui -->
+
+## 7. DNS Bind9 và phân biệt Docker DNS
+
+**Ý nghĩa:** named-checkconf kiểm cú pháp; dig trong container hỏi Bind9port53,
++short chỉ in IP; nháy @ tránh cú pháp PowerShell. Testhost gửi gói DNS thật tới
+1053 UDP/TCP. Nslookup hỏi Bind9.53 khác với DockerDNS mặc định127.0.0.11.
+IP phải khớp zone, không dùng ping service name để tự kết luận Bind9 đã đúng.
 
 Chụp `dns/named.conf`, `dns/named.conf.local`, `dns/db.cloud.local` trong editor.
 Sau đó:
@@ -296,7 +415,14 @@ docker compose -p mycloud exec -T api-gateway-proxy-server nslookup application-
 **Giải thích:** lệnh đầu hỏi Bind9 cho zone cloud.local; lệnh sau hỏi Docker DNS
 cho service name. Ping service name thành công riêng lẻ chưa chứng minh Bind9.
 
-## 8. Prometheus → exporter → web — ảnh 23–25
+<!-- evidence:dns -->
+
+## 8. Prometheus → exporter → web
+
+**Ý nghĩa/cách đọc:** targets API trả job/instance/health; Select-Object chọn cột;
+probe_success là kết quả HTTP đích từ Blackbox. Cần 5 targets UP và 2 probe_success=1.
+up=1 riêng lẻ chỉ nói exporter được scrape, chưa đủ chứng minh web đích phản hồi.
+Metric null/503 là chưa có nguồn; không tự đổi thành số 0 giả.
 
 Chụp `monitor/prometheus.yml`: jobs node, prometheus, blackbox và web, cùng
 relabel_configs chuyển target web tới Blackbox Exporter.
@@ -326,7 +452,14 @@ probe_success{job="web"}
 với job web, Prometheus gọi Blackbox :9115/probe, Blackbox gọi web /health.
 Không scrape HTML Nginx như Prometheus metrics.
 
-## 9. Grafana → Prometheus, ba biểu đồ thật — ảnh 26–27
+<!-- evidence:monitoring -->
+<!-- ui:prometheus-ui -->
+
+## 9. Grafana → Prometheus, ba biểu đồ thật
+
+**Ý nghĩa/cách đọc:** Grafana query Prometheus nội bộ theo datasource đã provision;
+không cần tạo trùng. Ba panel phải có đường dữ liệu trong time range đang xem;
+No data là thiếu sample/query lỗi, không phải bằng 0. Chọn Last 15 minutes/Refresh 5s.
 
 Chụp `grafana/provisioning/datasources/prometheus.yml`: URL nội bộ
 `http://monitoring-prometheus-server:9090`, access proxy, UID prometheus.
@@ -344,7 +477,14 @@ Nếu cần query, xem `grafana/dashboards/system-health.json` hoặc panel Insp
 VM/kernel của Docker Desktop; mạng thuộc namespace Node Exporter. Không ghi
 đây là số liệu toàn Windows host hoặc tổng mọi container.
 
-## 10. Routing, Round Robin và ping các server — ảnh 28–31
+<!-- ui:grafana-ui -->
+
+## 10. Routing, Round Robin và ping các server
+
+**Ý nghĩa:** nginx -t kiểm config; 1..20 phát 20 request; ForEach-Object lấy replica
+JSON; Group-Object đếm request mỗi server. Ping chạy từ gateway; -c 1 gửi 1 gói,
+-W 2 đợi 2 giây. nc -z -w 3 chỉ thử TCP 1433 trong 3 giây, không đăng nhập SQL.
+Tổng 20 request qua 2 replica và ping 11 đích không đồng nghĩa đã thử mọi cặp server.
 
 Chụp `proxy/nginx.conf`: web_pool có hai server, location `/api/`, `/auth/`,
 `/student/` và `/`. Kiểm tra cấu hình Nginx:
@@ -393,7 +533,15 @@ docker compose -p mycloud exec -T api-gateway-proxy-server nc -z -w 3 relational
 if ($LASTEXITCODE -eq 0) { 'PASS: gateway -> SQL Server TCP 1433' }
 ```
 
-## 11. Persistence SQL/MinIO — ảnh 32–33, tùy chọn lúc demo
+<!-- evidence:round-robin -->
+<!-- evidence:ping -->
+
+## 11. Persistence SQL/MinIO — tùy chọn lúc demo
+
+**Ý nghĩa/cách đọc:** restart dừng/chạy lại đúng 2 process mycloud, gây gián đoạn
+ngắn. Named volumes giữ dữ liệu ngoài process. Cần đối chiếu cùng ID/fields/file
+bytes trước/sau, không chỉ thấy container Up. Restart giữ container ID; không gọi
+là recreate. Test script trong ảnh tạo fixture/marker rồi dọn đúng fixture riêng.
 
 Đảm bảo đang giữ `$demoId` từ bước4 và đã upload ảnh/PDF bước6. Các lệnh restart
 dưới đây gây gián đoạn ngắn đúng hai service mycloud; thực hiện sau các ảnh khác.
@@ -429,7 +577,19 @@ curl.exe -i "http://localhost/api/students-db/$demoId"
 Các file/người dùng bạn chủ động tạo để làm minh chứng được giữ lại; không
 chạy script xóa rộng để dọn. Tránh chụp ảnh rồi tự mô tả kết quả chưa chạy là PASS.
 
+Ảnh dưới chạy các script persistence riêng: copy bằng compose cp; thêm
+PYTHONPATH=/app để script /tmp import integrations; create lưu record/object và
+marker; verify retry khi SQL/MinIO phục hồi, so byte/Unicode rồi dọn fixture.
+Không restart app ở giữa create/verify vì marker nằm trong app. Nếu có marker
+cũ, dừng kiểm tra bài test trước, không tự xóa marker/volume.
+
+<!-- evidence:persistence -->
+
 ## 12. Tổng kết và đối chiếu minh chứng
+
+**Ý nghĩa/cách đọc:** script kiểm thử dùng fixture riêng rồi dọn; exit 0/PASS mới
+là đạt. Số checks là số kiểm tra kỹ thuật, không phải điểm đồ án; API PASS không
+tự chứng minh GUI SSMS. verify.ps1 dừng khi bước con lỗi, không in PASS chung giả.
 
 Có thể chạy lại kiểm tra tự động để chụp dòng tổng kết:
 
@@ -444,22 +604,78 @@ Các script test dùng fixture riêng và dọn fixture; không thay thế ảnh
 Nếu giao diện đã đổi sau lần nghiệm thu cũ, chỉ ghi PASS UI khi đã thao tác lại
 hoặc chạy browser test tương ứng trên bản mới.
 
-| Hạng mục đề bài | Ảnh cần có | Chứng minh |
+| Hạng mục | Bước hướng dẫn | Chứng minh |
 | --- | --- | --- |
-| Compose/network/volume | 01–03 | Tài nguyên mycloud, cấu hình và persistence mount |
-| Web/Blog mở rộng | 04–06 | Website thật, đủ 3 bài, ảnh/backlink |
-| Backend/JSON | 07–08 | Hello nội bộ/public giống nhau; 5 JSON samples |
-| SQL Server/CRUD | 09–13 | Seed, query, record API/UI/SSMS khớp |
-| Keycloak | 14–17 | Realm/client/2 user, 401 và authenticated200 |
-| MinIO | 18–20 | Avatar/PDF trong bucket, tải đúng file, private |
-| DNS | 21–22 | Zone đúng, dig/UDP/TCP và Bind9 từ container khác |
-| Prometheus | 23–25 | Targets UP, metric sample, probe_success=1 |
-| Grafana | 26–27 | Datasource và ba biểu đồ dữ liệu |
-| Proxy/Round Robin/mạng | 28–31 | Route/header, hai replica nhận request, ping11 đích |
-| Persistence và DELETE | 32–33 | Giữ record/file sau restart; xóa đúng demo record |
+| Compose/network/volume | 1 | Tài nguyên mycloud, cấu hình và persistence mount |
+| Web/Blog | 2 | Website thật, đủ 3 bài, ảnh/backlink |
+| Backend/JSON | 3 | Hello nội bộ/public giống nhau; 5 JSON samples |
+| SQL Server/CRUD | 4 | Seed, query, record API/UI/SSMS khớp |
+| Keycloak | 5 | Realm/client/2 user, 401 và authenticated 200 |
+| MinIO | 6 | Avatar/PDF trong bucket, tải đúng file, private |
+| DNS | 7 | Zone đúng, dig/UDP/TCP và Bind9 từ container khác |
+| Prometheus | 8 | Targets UP, metric sample, probe_success=1 |
+| Grafana | 9 | Datasource và ba biểu đồ dữ liệu |
+| Proxy/Round Robin/mạng | 10 | Route/header, hai replica nhận request, ping 11 đích |
+| Persistence và DELETE | 11 | Giữ record/file sau restart; xóa đúng demo record |
 
-Các kết quả lệnh chỉ đọc đã kiểm lại khi soạn ngày10/11/2026: hello/health,
-auth302/config, query SQL từ Flask, bucket list, DNS, targets/probe và ping11
-đích PASS. Các bước GUI, CRUD thủ công, upload đường dẫn cá nhân và restart ở
-tài liệu này là **hướng dẫn để bạn tự chạy/chụp**, không tự suy thành PASS mới.
-SSMS GUI/Docker Hub/AWS vẫn NOT TESTED cho đến khi có thao tác thật tương ứng.
+<!-- evidence:verification -->
+
+## B. Scripts thiết lập và chạy lại trên máy nhận source
+
+| Script | Tác dụng |
+| --- | --- |
+| setup.ps1 | Dựng toàn hệ thống, build mặc định; -NoBuild khi đã có image |
+| start.ps1 | Khởi chạy, preflight và readiness |
+| stop.ps1 | Dừng mycloud, giữ containers/volumes |
+| health-check.ps1 -RequireFrontend | Kiểm probe, metric và ba UI |
+| setup-tools.ps1 | Cài tools pinned vào .venv, không cần activate |
+| verify.ps1 | Backend 23, gateway 41, DNS host, monitoring 21, auth/storage 24 checks |
+| verify.ps1 -Browser | Thêm 29 kiểm tra điều hướng trình duyệt, cần Edge/tools |
+| capture-handoff.py | Chạy lệnh thật/chụp UI và transcript vào runtime |
+| build-handoff.py | Nhúng ảnh vào đúng các bước trong cùng hướng dẫn HTML |
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-tools.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 -Browser
+.\.venv\Scripts\python.exe scripts/capture-handoff.py --include-restart
+.\.venv\Scripts\python.exe scripts/build-handoff.py
+```
+
+Browser mặc định Microsoft Edge. Nếu không có Edge và chỉ cần capture tài liệu,
+chạy setup-tools.ps1 -InstallChromium rồi thêm --browser chromium cho capture.
+--include-restart cho phép bước persistence; bỏ cờ nếu chưa muốn gián đoạn
+SQL/MinIO. Không dùng ảnh cũ để xác nhận lần chưa chạy. Ảnh/transcript trung gian
+ở .runtime/handoff đã Git ignore, không cần gửi riêng; HTML đã chứa toàn bộ ảnh.
+
+Vận hành thường ngày:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup.ps1 -NoBuild
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/health-check.ps1 -RequireFrontend
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop.ps1
+```
+
+Sửa HTML/JS/Dockerfile thì setup bỏ -NoBuild để build mới. Máy partner có volume
+riêng/seed mới, không tự mang dữ liệu từ máy tác giả. Không xóa env/volume để reset.
+
+## C. Xử lý lỗi và trạng thái bàn giao
+
+| Hiện tượng | Kiểm tra tiếp |
+| --- | --- |
+| Tất cả site không mở | Docker Desktop/engine Linux, docker info, sau đó setup |
+| Port/subnet conflict | Preflight, network/route/VPN; không tự dừng dự án khác/SQLEXPRESS; đổi IPAM/zone đồng bộ nếu cần |
+| API 503/SQL login lỗi | Health, logs app/database-init, credential trong volume; không xóa env/volume |
+| Chart thiếu dữ liệu | Targets/probe_success, đợi scrape/rate window, time range |
+| Frontend cũ | Build lại setup, cả 2 replica cùng image, Ctrl+F5 |
+| Init job Exited (0) | Bình thường; exit khác 0 đọc logs init |
+| Build/pull lỗi | Internet/registry/build log; MinIO build tag nguồn upstream; không bỏ lỗi bằng -NoBuild |
+
+Ảnh thu thập ngày 10/11/2026 theo UTC+7 trên máy dự án, gồm CRUD, upload/download,
+persistence sau restart, DNS, monitoring, Round Robin và GUI Grafana/MinIO/Keycloak.
+Setup đã chạy trên engine/image/volume hiện có; cài OS/tools hoặc deploy trên máy
+riêng của partner cần partner chạy rồi xác nhận. SSMS GUI/Docker Hub/AWS vẫn NOT TESTED.
+
+Chưa có URL GitHub nên hiện chỉ commit local, chưa push. Có URL thật thì chủ
+dự án thêm remote/push, partner clone và làm từ phần A. Không commit/gửi .env,
+token, password hoặc dữ liệu volume. Phân biệt PASS (đã chạy/đúng), FAIL (đã chạy/sai),
+NOT TESTED (chưa thao tác); không dùng ảnh mẫu làm kết quả của máy chưa chạy.

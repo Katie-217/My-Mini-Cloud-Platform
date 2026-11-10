@@ -11,16 +11,23 @@ avatar/PDF MinIO, đăng nhập PKCE và đăng xuất phiên Keycloak.
 
 ## Chạy trên Windows
 
-Yêu cầu: Docker Desktop đang chạy Linux x86_64 containers, Docker Compose v2,
-Python 3 trên host. Mở PowerShell tại `D:\Cuối kì computing`:
+Yêu cầu: Docker Desktop Linux x86_64 containers, Docker Compose v2,
+Python 3.10+ trên host. Mở PowerShell tại thư mục đã clone:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup.ps1
 ```
 
-Script tạo `.env` ngẫu nhiên nếu chưa có, kiểm tra tài nguyên/port/subnet,
+Script kiểm tra công cụ, thử mở Docker Desktop khi cần, tạo `.env` nếu chưa có,
+kiểm tra tài nguyên/port/subnet,
 build image và khởi chạy đúng project mycloud. Giữ `.env` hiện có và dữ liệu
-trong named volume. Nếu image đã build, dùng `scripts/start.ps1 -NoBuild`.
+trong named volume. Nếu image đã build, dùng `scripts/setup.ps1 -NoBuild`.
+
+Người nhận source đọc [hướng dẫn setup/test thủ công](docs/screenshot-guide.md).
+Bản [screenshot-guide.html](docs/screenshot-guide.html) nhúng ảnh response chạy
+thật ngay trong từng bước, có thể gửi riêng một file và mở offline.
+Chạy `scripts/verify.ps1` để kiểm tra tích hợp; `scripts/setup-tools.ps1` chuẩn bị
+tools trong `.venv`, `scripts/verify.ps1 -Browser` thêm kiểm tra trình duyệt.
 
 Xem trạng thái hoặc dừng giữ dữ liệu:
 

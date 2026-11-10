@@ -77,6 +77,11 @@ Xem [ngoại lệ build MinIO](minio-build-notes.md).
 
 ## Xem và xử lý lỗi
 
+Máy nhận repo mới dùng `scripts/setup.ps1` để build và dựng đầy đủ, tạo env riêng
+và chạy bootstrap tự động. Chỉ dùng `-NoBuild` sau khi đã có image. Xem
+[hướng dẫn bàn giao có ảnh/lệnh/response](screenshot-guide.html), đọc offline
+trong một file; `scripts/verify.ps1` chạy kiểm thử tích hợp sau setup.
+
 Nếu toàn bộ Blog/Grafana/MinIO/Prometheus đều không mở được, kiểm tra Docker
 Desktop đang chạy Linux engine trước. Lỗi pipe `dockerDesktopLinuxEngine` không
 tồn tại nghĩa là chưa kết nối được engine; không phải lỗi SQL hoặc mật khẩu.

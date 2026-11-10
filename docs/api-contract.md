@@ -53,6 +53,21 @@ Ví dụ chỉ mô tả schema; không dùng các con số trên làm số liệ
 còn status và số reachable phải từ probe. `container_runtime_count=null` hiển thị
 Unknown/“Chưa đọc runtime”; không đổi thành số container đang chạy.
 
+Mỗi object `services[]` có thêm `latency_ms` (duration đo thật từ backend tới
+service), `checked_at` (ISO UTC) và `network: "cloud-net"`. Dùng các trường
+này cho response time và last checked trên card, không tự tạo số mili giây.
+
+GET `/api/metrics-summary` trả số liệu Prometheus/Node Exporter cho Portal:
+
+```json
+{"status":"unavailable","checked_at":"2026-11-10T10:00:00+00:00","source":"Prometheus / Node Exporter","scope":{"cpu":"Linux VM","memory":"Linux kernel","network":"Node Exporter namespace"},"cpu_percent":null,"memory_used_bytes":null,"memory_total_bytes":null,"memory_percent":null,"network_rx_bytes_per_second":null,"network_tx_bytes_per_second":null}
+```
+
+Đủ sample thật: HTTP 200, `status=healthy`, các field số có giá trị.
+Thiếu metric/nguồn chưa sẵn sàng: HTTP 503, field thiếu null; không đổi null
+thành 0. Giá trị 0 thật vẫn hiển thị. Ghi đúng phạm vi đo, refresh khoảng
+10–15 giây và tránh request chồng nhau.
+
 ## Keycloak / OIDC
 
 - GET `/api/auth/config` trả `{ "issuer", "client_id", "authorization_endpoint", "token_endpoint", "end_session_endpoint" }`.

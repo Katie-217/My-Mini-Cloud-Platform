@@ -31,8 +31,9 @@ trong Dockerfile, không dựa vào tên image cache cũ.
 - Hai bucket private `profile-pics`, `documents` được tạo bởi init job.
 - Upload/stat/list/download PNG và PDF giữ nguyên byte qua Flask.
 - Anonymous GET vào bucket/object trả 403.
-- Chưa thao tác GUI Console trong browser và chưa kiểm thử restart MinIO giữ
-  object ở giai đoạn này; không đánh dấu những mục đó PASS.
+- Cập nhật: Edge đăng nhập Console thật, hiển thị đủ hai bucket; đã chụp ảnh.
+- Cập nhật: recreate MinIO sang container ID mới vẫn giữ nguyên PNG/PDF trong
+  named volume; kiểm tra qua Flask và chỉ dọn object do bài test tạo.
 
 Nguồn: [MinIO release/tag chính thức](https://github.com/minio/minio/releases/tag/RELEASE.2025-04-22T22-12-26Z),
 [hướng dẫn Docker của MinIO](https://github.com/minio/minio/blob/master/docs/docker/README.md).

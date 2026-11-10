@@ -193,8 +193,9 @@ secure API và kết thúc SSO khi logout. Viewport mobile 390 px không tràn n
 
 Test trạng thái lỗi chỉ intercept response trong browser, không thay đổi backend
 hoặc dừng container. Chỉ xóa record/object có ID/key do test tạo. Không lưu
-credential/token vào ảnh hoặc báo cáo. [Report](evidence/frontend-e2e.json),
-[review chi tiết](frontend-review.md), [ảnh](evidence/README.md).
+credential/token vào ảnh hoặc báo cáo. Report `docs/evidence/frontend-e2e.json`
+và các ảnh rời là output local, không đưa lên Git. Ảnh phục vụ bàn giao nằm trong
+[hướng dẫn có ảnh nhúng](screenshot-guide.html).
 
 ## Script vận hành và kiểm tra secret
 
@@ -224,8 +225,8 @@ credential/token vào ảnh hoặc báo cáo. [Report](evidence/frontend-e2e.jso
   Hạ tầng phục hồi 12/12 reachable và metric thật sau recreate.
 - `capture-admin-ui.py`: login Edge thật vào Grafana và MinIO. Grafana có 3
   panel với canvas, không No data; MinIO hiển thị hai bucket. Đã xem lại ảnh.
-- [Ảnh Grafana](evidence/grafana-dashboard.png), [ảnh MinIO](evidence/minio-console.png),
-  [metadata đã lọc](evidence/local-infrastructure.json).
+- Ảnh Grafana/MinIO và metadata ở `docs/evidence/` chỉ giữ local, được Git ignore.
+  Bản bàn giao có ảnh nhúng tại [screenshot-guide.html](screenshot-guide.html).
 - Kiểm tra cuối: 12 container thường trực, 3 init jobs Exited (0), 5 named
   volumes mycloud; 37 container ngoài project không chạy. Không dùng prune,
   không thay đổi SQLEXPRESS/ICS hoặc tài nguyên ngoài mycloud.

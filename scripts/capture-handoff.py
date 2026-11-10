@@ -66,7 +66,8 @@ try {
 curl.exe --max-time 15 -i "http://localhost/api/students-db/$demoId"'''),
     'auth': ('Keycloak config và secure không token', '''Invoke-RestMethod http://localhost/api/auth/config | Format-List
 curl.exe --max-time 15 -i http://localhost/api/secure'''),
-    'storage': ('Upload/download PDF và kiểm tra byte', '''$pdfPath = (Get-ChildItem -LiteralPath docs -Filter *.pdf | Select-Object -First 1).FullName
+    'storage': ('Upload/download PDF và kiểm tra byte', '''python scripts/create-demo-files.py
+$pdfPath = (Resolve-Path .runtime/demo-files/report.pdf).Path
 $uploadJson = curl.exe --max-time 60 -sS --fail -F 'bucket=documents' -F "file=@$pdfPath;type=application/pdf" http://localhost/api/files
 if ($LASTEXITCODE -ne 0) { throw 'Upload failed' }
 $upload = $uploadJson | ConvertFrom-Json

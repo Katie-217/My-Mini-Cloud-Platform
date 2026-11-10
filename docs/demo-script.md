@@ -51,10 +51,9 @@ Không in access token khi đang trình chiếu. Test UI và callback Student th
 
 ## Ảnh cho báo cáo
 
-- Đã có [Grafana](evidence/grafana-dashboard.png), [MinIO](evidence/minio-console.png)
-  và [snapshot hạ tầng](evidence/local-infrastructure.json).
-- Đã có [Portal/card/metrics, Blog và CRUD Student](evidence/README.md),
-  [report 27 browser checks](evidence/frontend-e2e.json).
+- [Hướng dẫn có ảnh nhúng](screenshot-guide.html) chứa ảnh Portal, Blog, response
+  CRUD, Grafana/MinIO và các lệnh hạ tầng.
+- Ảnh rời, report và snapshot ở `docs/evidence/` chỉ giữ local, không đưa lên Git.
 - Có thể bổ sung ảnh từng bài Blog, upload/download và Account khi trình bày báo cáo.
 - SSMS query, Prometheus Targets, header/replica và Compose ps là ảnh/bằng chứng bổ sung.
 - Persistence dùng testcase đã chạy và ID container mới; không xóa volume trong buổi demo.

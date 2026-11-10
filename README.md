@@ -109,14 +109,14 @@ Kiểm tra auth độc lập: `python scripts/test-auth-browser.py` và
 Các test không in token/password. Persistence đã kiểm tra bằng recreate đúng
 container SQL/MinIO và đối chiếu record/file; không xóa named volume.
 
-[Kết quả chi tiết](docs/testing.md), [ảnh và metadata](docs/evidence/README.md),
+[Kết quả chi tiết](docs/testing.md), [hướng dẫn có ảnh nhúng](docs/screenshot-guide.html),
 [kịch bản demo 12–15 phút](docs/demo-script.md).
 [Hướng dẫn chạy lệnh và chụp minh chứng theo phần Kỳ vọng của đề](docs/screenshot-guide.md)
 có response mong đợi, cấu hình cần chụp và cách chứng minh kết nối giữa các server.
 
-## Cấu trúc và cộng tác
+## Cấu trúc source
 
-- `web/`: Dockerfile/Nginx do Codex; `web/html/**` do Gemini xây, Codex review/tích hợp.
+- `web/`: Dockerfile/Nginx và giao diện HTML/CSS/JavaScript.
 - `app/`: Flask, ODBC, SQL bootstrap, JWT/JWKS, MinIO, status và metrics API.
 - `db/init/001_init.sql`: T-SQL schema/seed `studentdb.dbo.students`.
 - `auth/`: readiness Keycloak; bootstrap realm/users nằm ở `app/init_auth.py`.
@@ -126,11 +126,12 @@ có response mong đợi, cấu hình cần chụp và cách chứng minh kết 
 - `storage/data/` là khung cũ; dữ liệu thật dùng named volumes Docker.
 - `docker-compose.ym yes` và `proxy/empty` là placeholder khung cũ, không được dùng.
 
-[Kiến trúc](docs/architecture.md), [API contract](docs/api-contract.md),
-[phân công Git/worktree](docs/collaboration-plan.md),
-[yêu cầu UI](docs/ui-requirements.md), [prompt Gemini](docs/gemini-frontend-prompt.md).
-Chi tiết tiếp nhận và sửa sau review: [frontend-review.md](docs/frontend-review.md).
+[Kiến trúc](docs/architecture.md), [API contract](docs/api-contract.md).
+Tài liệu giao việc, kế hoạch/prompt, khảo sát nội bộ, PDF đề gốc và output
+`docs/evidence/` chỉ giữ local và đã được ignore. Hướng dẫn setup/test là tài liệu
+bàn giao được giữ trong repo. Tạo file mẫu để thử storage:
+`python scripts/create-demo-files.py` (output trong `.runtime/demo-files/`).
 
 Mỗi phần làm trên nhánh tính năng, commit có mô tả liệt kê tiếng Việt. Hiện chỉ
-commit local; chưa có Git remote, chưa push Docker Hub và chưa triển khai AWS.
+commit local; origin đã trỏ tới GitHub, chưa push và chưa triển khai AWS/Docker Hub.
 [Hướng dẫn Docker Hub](docs/docker-hub.md).

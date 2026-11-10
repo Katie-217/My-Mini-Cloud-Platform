@@ -358,10 +358,11 @@ curl.exe -sI "http://localhost:9000/documents/$pdfKey"
 anonymous **403**. Bucket private; backend cung cấp đường đọc file của demo local.
 File đã upload phải xuất hiện thật trong Console, không chỉ có thông báo UI.
 
-Nếu muốn upload bằng lệnh (chọn PDF có sẵn trên máy):
+Nếu muốn upload bằng lệnh, tạo file mẫu bằng script đi kèm repo:
 
 ```powershell
-$pdfPath = 'C:\duong-dan\bao-cao.pdf'
+python scripts/create-demo-files.py
+$pdfPath = (Resolve-Path .runtime/demo-files/report.pdf).Path
 $uploadJson = curl.exe -sS -F 'bucket=documents' -F "file=@$pdfPath;type=application/pdf" http://localhost/api/files
 $upload = $uploadJson | ConvertFrom-Json
 $upload | Format-List
@@ -371,11 +372,11 @@ curl.exe -sS --fail -o $downloadPath "http://localhost$($upload.download_url)"
 Get-FileHash -Algorithm SHA256 -LiteralPath $pdfPath,$downloadPath | Format-Table
 ```
 
-**Kỳ vọng:** hai SHA256 bằng nhau. Chỉ chạy khi đã thay đường dẫn PDF thật.
+**Kỳ vọng:** hai SHA256 bằng nhau. Có thể thay pdfPath bằng PDF thật của bạn.
 **Luồng:** Browser/curl → gateway → Flask multipart → MinIO S3 → object metadata;
 download theo chiều ngược lại. Không dùng bucket demo/index.html của ví dụ cơ bản.
 
-Ảnh lệnh dưới dùng PDF báo cáo sẵn trong docs, tải lại và so hash rồi chỉ dọn
+Ảnh lệnh dưới dùng PDF mẫu do script tạo, tải lại và so hash rồi chỉ dọn
 object do bài test tạo. Console chụp sau khi dọn; bucket rỗng không phủ nhận upload.
 
 <!-- evidence:storage -->
@@ -631,6 +632,7 @@ hoặc chạy browser test tương ứng trên bản mới.
 | setup-tools.ps1 | Cài tools pinned vào .venv, không cần activate |
 | verify.ps1 | Backend 23, gateway 41, DNS host, monitoring 21, auth/storage 24 checks |
 | verify.ps1 -Browser | Thêm 29 kiểm tra điều hướng trình duyệt, cần Edge/tools |
+| create-demo-files.py | Tạo PDF/PNG mẫu trong runtime, không cần PDF đề gốc |
 | capture-handoff.py | Chạy lệnh thật/chụp UI và transcript vào runtime |
 | build-handoff.py | Nhúng ảnh vào đúng các bước trong cùng hướng dẫn HTML |
 
@@ -670,7 +672,7 @@ riêng/seed mới, không tự mang dữ liệu từ máy tác giả. Không xó
 | Init job Exited (0) | Bình thường; exit khác 0 đọc logs init |
 | Build/pull lỗi | Internet/registry/build log; MinIO build tag nguồn upstream; không bỏ lỗi bằng -NoBuild |
 
-Ảnh thu thập ngày 10/11/2026 theo UTC+7 trên máy dự án, gồm CRUD, upload/download,
+Ảnh thu thập theo timestamp UTC+7 hiển thị tại từng phần trên máy dự án, gồm CRUD, upload/download,
 persistence sau restart, DNS, monitoring, Round Robin và GUI Grafana/MinIO/Keycloak.
 Setup đã chạy trên engine/image/volume hiện có; cài OS/tools hoặc deploy trên máy
 riêng của partner cần partner chạy rồi xác nhận. SSMS GUI/Docker Hub/AWS vẫn NOT TESTED.

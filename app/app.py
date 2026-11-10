@@ -176,4 +176,5 @@ def change_student(student_id):
     return jsonify(query_one(student_id)) if data else jsonify(message='Student deleted', id=student_id)
 
 
-# Tích hợp sẽ được thêm ở nhánh auth/storage; không tạo trạng thái xác thực giả.
+from integrations import integrations
+app.register_blueprint(integrations)

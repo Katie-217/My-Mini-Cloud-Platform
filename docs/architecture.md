@@ -62,7 +62,7 @@ Container để Compose sinh tên `mycloud-<service>-1`, tránh tên toàn cục
 | database-init | image app, chạy migration/seed T-SQL | không publish | `db/init/001_init.sql`; retry có giới hạn |
 | authentication-identity-server | `quay.io/keycloak/keycloak:26.1.4` | 8080 → qua `/auth/` | `mycloud_keycloak-data`; start-dev chỉ local |
 | auth-init | image app, bootstrap realm/client/2 user | không publish | `auth/`; secret local |
-| object-storage-server | `minio/minio:RELEASE.2025-04-22T22-12-26Z` nếu pull được | 9000/9001 → loopback cùng cổng | `mycloud_minio-data` |
+| object-storage-server | `mycloud-minio:source-2025-04-22`, build source upstream | 9000/9001 → loopback cùng cổng | `mycloud_minio-data`; xem minio-build-notes.md |
 | internal-dns-server | `internetsystemsconsortium/bind9:9.18` | 53 → loopback 1053 TCP/UDP | `dns/`, zone `cloud.local` |
 | monitoring-node-exporter-server | `prom/node-exporter:v1.9.1` | 9100 → nội bộ | metrics Linux VM |
 | monitoring-http-exporter-server | `prom/blackbox-exporter:v0.26.0` | 9115 → nội bộ | `monitor/blackbox.yml` |
@@ -71,9 +71,9 @@ Container để Compose sinh tên `mycloud-<service>-1`, tránh tên toàn cục
 | api-gateway-proxy-server | `nginx:1.28-alpine` | 80 → host 80 | `proxy/nginx.conf` |
 
 Image/tag là lựa chọn cho demo có phiên bản; cần pull/build và ghi digest thực tế
-trước khi đánh dấu PASS. MinIO tag cũ được chọn để kiểm thử Console phù hợp demo,
-không dùng image custom trong cache làm bằng chứng upstream. Nếu không kéo được,
-ghi lỗi và phương án thay thế có nguồn; không âm thầm đổi công nghệ.
+trước khi đánh dấu PASS. MinIO upstream registry không cho pull ở lần chạy này;
+đã build tag nguồn chính thức và kiểm tra S3/Console, không tái sử dụng image cache
+của dự án cũ. Chi tiết tại [minio-build-notes.md](minio-build-notes.md).
 
 ## Network và DNS
 

@@ -1,5 +1,9 @@
 # Kịch bản demo MyMiniCloud — khoảng 12–15 phút
 
+Để chụp báo cáo theo từng mục Kỳ vọng trong PDF, dùng
+[hướng dẫn lệnh và minh chứng](screenshot-guide.md): có lệnh PowerShell,
+response mong đợi và ảnh tương ứng cho từng nhóm server.
+
 Trạng thái hiện tại: hạ tầng/API và ba giao diện đã tích hợp, kiểm thử local PASS.
 27 checks Edge thật bao gồm CRUD, file và login/logout. Mở `.env` trên máy để
 biết credential, không chiếu password/token.

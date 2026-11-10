@@ -71,13 +71,47 @@ body.blog-page {
   letter-spacing: 0.04em;
 }
 
-.blog-nav-links {
+/* Header Nav Tabs (Chuyển thanh nav lên cạnh Logo) */
+.blog-header-nav {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  gap: 0.35rem;
+  background-color: #f1f5f9;
+  padding: 0.25rem 0.35rem;
+  border-radius: var(--radius-full);
+  border: 1px solid #e2e8f0;
+}
+
+.blog-nav-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 1.15rem;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.blog-nav-tab-btn:hover {
+  color: #0f172a;
+}
+
+.blog-nav-tab-btn.active {
+  background-color: #ffffff;
+  color: #2563eb;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.blog-nav-links {
+  display: none;
 }
 
 .blog-nav-link {
@@ -572,7 +606,7 @@ body.blog-page {
    TRANG BÀI VIẾT CHI TIẾT (ARTICLE DETAIL PAGE)
    ========================================================================== */
 .article-detail-wrap {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 1.75rem auto 4rem;
   padding: 0 1.5rem;
 }

@@ -13,7 +13,8 @@
   <!-- Top Navbar -->
   <header class="blog-navbar">
     <div class="blog-nav-inner">
-      <a href="/blog/" class="blog-brand">
+      <!-- Click vào Logo quay về Portal Control Center -->
+      <a href="/" class="blog-brand" title="Quay về Cổng Điều Khiển MyMiniCloud Portal (/)">
         <div class="blog-brand-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
@@ -25,14 +26,26 @@
         </div>
       </a>
 
-      <nav aria-label="Blog Navigation">
-        <ul class="blog-nav-links">
-          <li><a href="/blog/#articles" class="blog-nav-link">&larr; Danh Sách Bài Viết</a></li>
-          <li><a href="/" class="blog-nav-link">Portal Control (/)</a></li>
-          <li><a href="/app/" class="blog-nav-link">Student App (/app/)</a></li>
-        </ul>
+      <!-- Thanh điều hướng Tab chuyển lên Header cạnh logo -->
+      <nav class="blog-header-nav" aria-label="Blog Navigation">
+        <a href="/blog/" class="blog-nav-tab-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>Home (Giới Thiệu)</span>
+        </a>
+
+        <a href="/blog/#articles" class="blog-nav-tab-btn active">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span>Blog (Danh Sách Bài Viết)</span>
+        </a>
       </nav>
 
+      <!-- Status Tag bên phải -->
       <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #64748b; font-weight: 600;">
         <span style="width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; display: inline-block;"></span>
         <span>Web Replicas &bull; Port 80</span>
@@ -40,8 +53,31 @@
     </div>
   </header>
 
-  <!-- Article Detail Wrap -->
+  <!-- Article Detail Wrap (Đồng bộ độ rộng 1200px với Home và Student App) -->
   <main class="article-detail-wrap">
+
+    <!-- Blue Hero Card Đồng Bộ 100% với Blog Home & Student App -->
+    <div class="blog-hero-card" style="margin-bottom: 1.5rem;">
+      <div class="blog-hero-content">
+        <div class="blog-hero-top-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Chuyên Đề 01 &bull; Cloud Architecture</span>
+        </div>
+        <h1 class="blog-hero-title">
+          Điện Toán Đám Mây &amp; Xu Hướng Xây Dựng Private / Mini Cloud Trong Doanh Nghiệp
+        </h1>
+        <p class="blog-hero-desc">
+          Chuyên mục chia sẻ kiến thức nền tảng về điện toán đám mây và lý do các tổ chức hiện đại xây dựng mô hình Mini Cloud nội bộ nhằm làm chủ dữ liệu và tối ưu chi phí.
+        </p>
+      </div>
+      <div>
+        <a href="/blog/#articles" class="btn btn-secondary" style="background: rgba(255, 255, 255, 0.15); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); white-space: nowrap; font-weight: 600;">
+          &larr; Tất Cả Bài Viết
+        </a>
+      </div>
+    </div>
 
     <!-- Top Action Bar -->
     <div class="article-top-bar">
@@ -54,7 +90,7 @@
       </a>
 
       <nav aria-label="Breadcrumb" style="font-size: 0.85rem; color: #64748b;">
-        <a href="/" style="color: #64748b; text-decoration: none;">Trang chủ</a> &rsaquo;
+        <a href="/" style="color: #64748b; text-decoration: none;">Portal Control</a> &rsaquo;
         <a href="/blog/" style="color: #64748b; text-decoration: none;">Blog</a> &rsaquo;
         <span style="color: #0f172a; font-weight: 600;">Chuyên đề 01</span>
       </nav>
@@ -66,9 +102,9 @@
       <!-- Header Section -->
       <header class="article-header">
         <span class="blog-category-badge cat-cloud">Cloud Architecture</span>
-        <h1 class="article-title-big">
+        <h2 class="article-title-big">
           Điện Toán Đám Mây &amp; Xu Hướng Xây Dựng Private / Mini Cloud Trong Doanh Nghiệp
-        </h1>
+        </h2>
 
         <div class="article-meta-row">
           <div style="display: flex; align-items: center; gap: 0.5rem;">

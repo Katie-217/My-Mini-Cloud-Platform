@@ -1,0 +1,34 @@
+log_format web_cloud '$remote_addr [$time_local] "$request_method $uri $server_protocol" $status $body_bytes_sent';
+access_log /var/log/nginx/access.log web_cloud;
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+    server_tokens off;
+    charset utf-8;
+    add_header X-Web-Server $hostname always;
+    add_header X-Content-Type-Options nosniff always;
+
+    location = /health {
+        access_log off;
+        default_type text/plain;
+        return 200 "web ready\n";
+    }
+    location = /__replica {
+        default_type application/json;
+        return 200 '{"replica":"$hostname"}';
+    }
+    error_page 503 /frontend-pending.html;
+    location = /frontend-pending.html {
+        internal;
+        root /usr/share/nginx;
+    }
+    location / {
+        if (-f /usr/share/nginx/frontend-pending) { return 503; }
+        try_files $uri $uri/ =404;
+    }
+    location ~ /\. {
+        deny all;
+    }
+}

@@ -22,15 +22,18 @@ Ngày thực hiện: 10/11/2026. Đây là trạng thái hiện hành, sau các 
 | Persistence sau restart SQL | PASS | `scripts/test-persistence.py`: tạo qua API, restart đúng SQL container của mycloud, đọc lại khớp toàn bộ object, xóa đúng record test |
 | Init chạy lại an toàn | PASS | `docker compose run --rm database-init` Exited (0); chạy lại test API kiểm tra seed/CRUD |
 | SSMS đăng nhập bằng GUI | NOT TESTED | Port SQL publish thành công; chưa thao tác SSMS |
-| Frontend qua Nginx / round robin | NOT TESTED | Chờ frontend Gemini và cấu hình web/proxy |
+| Gateway / round robin | PASS | 41 gateway checks, GET/POST/PUT/DELETE, 20 request chia 10/10; cả hai web cùng image ID |
+| Nội dung Portal/Blog/Student frontend | NOT TESTED | Chờ Gemini bàn giao; web trả HTTP 503 trung thực khi nội dung chưa ghép |
 | Keycloak / `/secure` nội bộ | PASS | 2 user login form thật, state/code, PKCE code exchange, JWT/JWKS, sai chữ ký/thiếu token bị từ chối |
 | MinIO upload/download | PASS | Avatar PNG/PDF, stat/list/download đúng byte; anonymous 403; 24 checks auth/storage PASS |
 | MinIO Console HTML | PASS | `http://localhost:9001/` HTTP 200 và HTML thật; chưa kiểm thử GUI quản trị trong browser |
-| Keycloak qua `/auth/` public và frontend callback | NOT TESTED | Chờ Nginx và frontend; test hiện tại gọi service nội bộ với issuer/redirect URI public |
+| Keycloak qua `/auth/` public | PASS | Edge thật localhost: 2 user login, cookie, state, PKCE, token và secure API qua proxy |
+| Student JavaScript callback/login/logout | NOT TESTED | Browser test chặn callback để kiểm tra auth độc lập; chưa nghiệm thu JS frontend |
 | Bind9 authoritative DNS | PASS | Record khớp IP service thật; host 1053 UDP/TCP và container dig đều đúng |
 | Prometheus + Grafana datasource/dashboard API | PASS | 17 DNS/monitoring checks; node/prometheus/blackbox UP, 3 panel có sample thật, Grafana query qua datasource proxy |
 | Portal metrics/status backend | PASS | `/metrics-summary` có số liệu CPU/RAM/network thật; `/status` có latency_ms và checked_at đo theo probe |
-| Target web / visualization trong browser | NOT TESTED | Chờ web replicas và frontend; chưa chụp dashboard GUI |
+| Target web | PASS | 21 DNS/monitoring checks; 2 web targets UP và probe_success=1 |
+| Grafana visualization trong browser | NOT TESTED | Datasource/PromQL có data; chưa chụp dashboard GUI |
 | Kiểm thử dừng Node Exporter và phục hồi | NOT TESTED | Cơ chế kiểm duyệt tự động chặn lệnh dừng container: blocked by policy; không có container bị dừng bởi test |
 | Docker Hub push / AWS | NOT TESTED | Chưa có phạm vi/credential tương ứng |
 
@@ -97,3 +100,31 @@ HTML/S3 đã hoạt động thật; xem [minio-build-notes.md](minio-build-notes
   file options/local mount rời. Đã thêm `dns/named.conf` include tường minh, mount
   file chính và recreate đúng container DNS của `mycloud`. `named-checkconf` và
   truy vấn thực tế đã thành công. Không sửa Windows ICS hoặc DNS của host.
+
+## Gateway và hai Web Server
+
+- `scripts/test-proxy.py`: 41 checks PASS từ Windows host qua cổng 80, gồm
+  Unicode CRUD/search, `/student`/`/student/`, issuer OIDC, metrics và status.
+- `nginx -t`: PASS trên proxy và cả hai web. Nginx upstream mặc định Round Robin,
+  dùng Docker resolver và `resolve` để theo IP mới khi container recreate.
+- Header `X-Web-Server` và endpoint `/__replica` trả hostname thật. 20 request
+  nhận web1=10, web2=10; hai replica đã đối chiếu có cùng Docker image ID.
+- `test-auth-storage.py` với `TEST_PUBLIC_BASE=http://api-gateway-proxy-server`:
+  24 checks PASS qua proxy; sau đó kiểm tra riêng bằng Edge localhost thật.
+- Ban đầu test đổi URL sang hostname nội bộ và đặt Host public làm cookie jar
+  không gửi cookie login. Đã sửa cách chuyển cookie cùng session trong test,
+  không thay cơ chế cookie production; Edge localhost xác nhận flow thật PASS.
+- `test-auth-browser.py`: hai user PASS login/cookie/state/PKCE/JWT qua public
+  route. Callback frontend được intercept để không phụ thuộc Gemini, do đó
+  không tính là đã kiểm thử Student JavaScript. Ảnh login không có credential
+  lưu `.runtime/browser-evidence/keycloak-login.png` (Git ignore).
+- Web healthcheck dùng `127.0.0.1`: BusyBox wget chọn IPv6 khi dùng localhost
+  trong khi server listen IPv4, gây false unhealthy; đã xác minh và sửa.
+- Keycloak healthcheck thực hiện GET `/auth/health/ready` trên management :9000
+  bằng bash builtins; auth-init chờ service healthy rồi bootstrap.
+- Access logs proxy và web chỉ ghi `$uri`, không ghi query string chứa OIDC code.
+
+**Giới hạn hiện tại:** `/`, `/blog/`, `/app/` trả trang chờ với HTTP 503 khi source
+frontend còn trống. Health Nginx và probe exporter kiểm tra tiến trình HTTP,
+không chứng minh nội dung frontend đã hoàn thành. Build lại web image sau khi
+review/ghép code Gemini sẽ phục vụ nội dung thật; không ghi đè `web/html/**`.

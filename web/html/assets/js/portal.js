@@ -97,10 +97,9 @@
       service: 'internal-dns-server',
       tech: 'Bind9 9.18 (Authoritative DNS)',
       network: 'cloud-net',
-      urlPort: 1053,
       role: 'Dịch vụ phân giải tên miền nội bộ zone cloud.local cho các dịch vụ (app-backend, minio, keycloak). Host port 1053.',
       checkGuide: 'Dùng lệnh dig truy vấn qua cổng 1053 để xác minh phân giải bản ghi A.',
-      testCommand: 'dig @127.0.0.1 -p 1053 app-backend.cloud.local',
+      testCommand: "docker compose exec -T internal-dns-server dig '@127.0.0.1' app-backend.cloud.local +short",
       logoBg: '#fefce8',
       logoColor: '#ca8a04',
       logoLetter: 'DNS'
@@ -131,6 +130,7 @@
       tech: 'Grafana 11.6.0',
       network: 'cloud-net',
       urlPort: 3000,
+      urlPath: '/d/mycloud-system',
       role: 'Trực quan hóa dữ liệu giám sát từ nguồn Prometheus. Cung cấp Dashboard với 3 biểu đồ: CPU Usage, RAM khả dụng, Network.',
       checkGuide: 'Mở Grafana cổng 3000 và truy cập dashboard System Health.',
       testCommand: 'curl -s http://localhost:3000/api/health',
@@ -195,16 +195,8 @@
       ip: '172.30.50.50',
       service: 'monitoring-grafana-dashboard-server',
       targetPort: 3000,
-      localUrl: 'http://localhost:3000',
+      localUrl: 'http://localhost:3000/d/mycloud-system',
       desc: 'Bảng điều khiển trực quan hóa tài nguyên'
-    },
-    {
-      domain: 'prometheus.cloud.local',
-      ip: '172.30.50.90',
-      service: 'monitoring-prometheus-server',
-      targetPort: 9090,
-      localUrl: 'http://localhost:9090/targets',
-      desc: 'Máy chủ thu thập chỉ số giám sát Scrape'
     }
   ];
 
@@ -217,6 +209,25 @@
   };
 
   let currentStatusData = null;
+  let statusPending = false;
+  const GROUP_PROBES = {
+    web: ['web1', 'web2'], app: ['app'], database: ['db'], auth: ['auth'],
+    storage: ['storage'], dns: ['dns'], monitoring: ['prometheus', 'node', 'http'],
+    visualization: ['grafana'], proxy: ['proxy']
+  };
+
+  function browserUrl(path, port) {
+    const url = new URL(path || '/', window.location.origin);
+    if (port) { url.protocol = 'http:'; url.port = port; }
+    return url.href;
+  }
+
+  function setupAdminLinks() {
+    document.querySelectorAll('a[href^="http://localhost:"]').forEach(link => {
+      const url = new URL(link.href);
+      link.href = browserUrl(url.pathname + url.search, url.port);
+    });
+  }
 
   function escapeHtml(str) {
     if (str === null || str === undefined) return '';
@@ -274,6 +285,8 @@
   // 2. Lấy dữ liệu trạng thái từ GET /api/status & /api/metrics-summary
   // =========================================================================
   async function fetchSystemStatus() {
+    if (statusPending) return;
+    statusPending = true;
     try {
       const res = await fetch('/api/status', {
         headers: { 'Accept': 'application/json' },
@@ -283,6 +296,7 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const data = await res.json();
+      if (!Array.isArray(data.services)) throw new Error('Status response không hợp lệ');
       currentStatusData = data;
 
       // Cập nhật thẻ Dashboard
@@ -290,8 +304,8 @@
       const groupsEl = document.getElementById('dash-stat-groups');
       const overallStatusEl = document.getElementById('topbar-overall-badge');
 
-      if (reachableEl) reachableEl.textContent = `${data.services_reachable || 12} / ${data.services_checked || 12}`;
-      if (groupsEl) groupsEl.textContent = `${data.groups_total || 9} Nhóm`;
+      if (reachableEl) reachableEl.textContent = `${data.services_reachable ?? '--'} / ${data.services_checked ?? '--'}`;
+      if (groupsEl) groupsEl.textContent = `${data.groups_total ?? '--'} Nhóm`;
 
       if (overallStatusEl) {
         const isHealthy = data.overall === 'healthy';
@@ -304,14 +318,20 @@
 
     } catch (err) {
       console.warn('Status fetch error:', err);
+      currentStatusData = null;
+      const reachable = document.getElementById('dash-stat-reachable');
+      if (reachable) reachable.textContent = 'Unknown';
+      const badge = document.getElementById('topbar-overall-badge');
+      if (badge) { badge.className = 'badge badge-unknown'; badge.textContent = 'Chưa kết nối'; }
       renderNimbusServiceCards([]);
     }
 
     // Lấy metrics thật từ /api/metrics-summary (Làm tròn 2 chữ số sau dấu phẩy)
     try {
       const mRes = await fetch('/api/metrics-summary', { cache: 'no-store' });
-      if (mRes.ok) {
-        const mData = await mRes.json();
+      const mData = await mRes.json();
+      if (mRes.ok && mData.status === 'healthy' &&
+          ['cpu_percent', 'memory_total_bytes', 'memory_used_bytes'].every(key => Number.isFinite(mData[key]))) {
         const cpuEl = document.getElementById('dash-stat-cpu');
         const ramEl = document.getElementById('dash-stat-ram');
 
@@ -332,9 +352,14 @@
             ramEl.textContent = `${mPct.toFixed(2)}% Used`;
           }
         }
-      }
+      } else throw new Error('Metric chưa sẵn sàng');
     } catch (e) {
-      // quiet ignore
+      ['dash-stat-cpu', 'dash-stat-ram'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = 'Chưa có dữ liệu';
+      });
+    } finally {
+      statusPending = false;
     }
   }
 
@@ -344,9 +369,6 @@
   function renderNimbusServiceCards(liveServices) {
     const container = document.getElementById('nimbus-services-grid');
     if (!container) return;
-
-    const host = window.location.hostname || 'localhost';
-    const proto = window.location.protocol || 'http:';
 
     const serviceMap = {};
     if (Array.isArray(liveServices)) {
@@ -359,28 +381,19 @@
     container.innerHTML = '';
 
     SERVICES_LIST.forEach(s => {
-      let liveStatus = 'online';
-      let latency = '3.00ms';
-      let statusDotClass = '';
-
-      const matched = serviceMap[s.id] || serviceMap[s.service];
-      if (matched) {
-        if (matched.status && matched.status !== 'healthy') {
-          liveStatus = matched.status;
-          statusDotClass = matched.status === 'unhealthy' ? 'dot-unhealthy' : 'dot-unknown';
-        }
-        if (matched.latency_ms !== undefined) {
-          const latVal = parseFloat(matched.latency_ms);
-          latency = !isNaN(latVal) ? `${latVal.toFixed(2)}ms` : `${matched.latency_ms}ms`;
-        }
-      }
-
-      let linkUrl = '';
-      if (s.urlPort) {
-        linkUrl = `${proto}//${host}:${s.urlPort}${s.urlPath || ''}`;
-      } else {
-        linkUrl = `${proto}//${host}${s.urlPath || '/'}`;
-      }
+      const probes = GROUP_PROBES[s.id].map(id => serviceMap[id]);
+      const liveStatus = probes.some(probe => probe?.status === 'unhealthy') ? 'unhealthy'
+        : probes.every(probe => probe?.status === 'healthy') ? 'healthy' : 'unknown';
+      const statusDotClass = liveStatus === 'healthy' ? '' : liveStatus === 'unhealthy' ? 'dot-unhealthy' : 'dot-unknown';
+      const durations = probes.map(probe => probe?.latency_ms).filter(Number.isFinite);
+      const latency = durations.length ? `${Math.max(...durations).toFixed(2)} ms` : 'Chưa có dữ liệu';
+      const timestamps = probes.map(probe => probe?.checked_at).filter(Boolean).sort();
+      const checked = timestamps.length ? new Date(timestamps.at(-1)).toLocaleTimeString('vi-VN') : 'Chưa có dữ liệu';
+      const linkUrl = s.id === 'dns' ? '' : browserUrl(s.urlPath, s.urlPort);
+      const address = linkUrl || 'DNS · 127.0.0.1:1053 (UDP/TCP)';
+      const openLink = linkUrl
+        ? `<a href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener" class="nimbus-service-url">${escapeHtml(linkUrl)}</a>`
+        : `<button type="button" class="btn btn-secondary btn-sm" data-inspect-service="dns">Hướng dẫn kiểm tra DNS</button>`;
 
       const card = document.createElement('div');
       card.className = 'nimbus-service-card';
@@ -402,17 +415,17 @@
           <div class="nimbus-card-middle">
             <h3 class="nimbus-service-title">${escapeHtml(s.name)}</h3>
             <p class="nimbus-service-sub">${escapeHtml(s.category)} • <code>${escapeHtml(s.tech)}</code></p>
-            <a href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener" class="nimbus-service-url">${escapeHtml(linkUrl)}</a>
+            ${openLink}
             <div class="nimbus-meta-info">
               <span>Mạng: cloud-net</span>
               <span>•</span>
-              <span>Checked: Vừa xong</span>
+              <span>Checked: ${escapeHtml(checked)}</span>
             </div>
           </div>
         </div>
 
         <div class="nimbus-card-bottom">
-          <button type="button" class="btn-nimbus-action" data-copy-link="${escapeHtml(linkUrl)}" title="Copy link">
+          <button type="button" class="btn-nimbus-action" data-copy-link="${escapeHtml(address)}" title="Copy địa chỉ">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -604,6 +617,8 @@
     tbody.innerHTML = '';
 
     DNS_RECORDS.forEach(rec => {
+      const local = new URL(rec.localUrl);
+      const localUrl = browserUrl(local.pathname + local.search, local.port);
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><strong style="color: #0f172a; font-family: var(--font-mono); font-size: 0.9rem;">${escapeHtml(rec.domain)}</strong></td>
@@ -611,10 +626,10 @@
         <td><span style="font-weight: 500; color: #334155;">${escapeHtml(rec.service)}</span></td>
         <td><span class="badge badge-healthy" style="font-weight: 700;">Port ${escapeHtml(rec.targetPort)}</span></td>
         <td style="text-align: right; white-space: nowrap;">
-          <a href="${escapeHtml(rec.localUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-right: 0.4rem;">
+          <a href="${escapeHtml(localUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-right: 0.4rem;">
             Mở Web
           </a>
-          <button type="button" class="btn btn-secondary btn-sm" data-copy-link="${escapeHtml(rec.localUrl)}">
+          <button type="button" class="btn btn-secondary btn-sm" data-copy-link="${escapeHtml(localUrl)}">
             Copy Link
           </button>
         </td>
@@ -690,7 +705,7 @@
       if (consoleBox) {
         consoleBox.textContent = 
 `=== KẾT QUẢ ĐIỀU PHỐI HẠ TẦNG (INFRASTRUCTURE DISPATCHER) ===
-[1. DNS Lookup]:   Zone cloud.local -> Bind9 authoritative trả bản ghi A: ${resolvedIp}
+[1. DNS config]:   ${matchedDomain.domain} -> ${resolvedIp} (tra cứu cấu hình; dùng dig để kiểm chứng Bind9)
 [2. Proxy Routing]: Nginx Reverse Proxy tiếp nhận -> Ánh xạ quy tắc: ${matchedRoute}
 [3. Target Node]:  Đã chuyển tiếp tới container ${targetService}
 [4. HTTP Probe]:   ${fetchUrl} -> Status HTTP ${res.status} (Thời gian xử lý: ${elapsed}ms)
@@ -888,6 +903,7 @@ ${preview.slice(0, 800)}${preview.length > 800 ? '\n... (đã rút gọn)' : ''}
   // Khởi tạo sự kiện DOM
   // =========================================================================
   document.addEventListener('DOMContentLoaded', () => {
+    setupAdminLinks();
     // 1. Chuyển tab Sidebar
     document.querySelectorAll('.portal-nav-item[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -898,6 +914,7 @@ ${preview.slice(0, 800)}${preview.length > 800 ? '\n... (đã rút gọn)' : ''}
 
     // 2. Tải trạng thái và Render Services & DNS
     fetchSystemStatus();
+    setInterval(() => { if (!document.hidden) fetchSystemStatus(); }, 15000);
     renderDnsRecordsTable();
     renderLBDashboard();
 

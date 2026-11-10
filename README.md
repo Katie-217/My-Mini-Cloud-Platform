@@ -4,10 +4,10 @@
 MinIO, Bind9, Prometheus, Node Exporter, Grafana và Nginx Reverse Proxy.
 
 **Trạng thái hiện tại:** phần cấu hình/hạ tầng đã chạy và kiểm thử local: 12
-container thường trực, 3 init jobs hoàn tất, 5 named volumes. Frontend Portal,
-Blog và Student App do Gemini làm tại worktree riêng, **chưa ghép vào main**.
-Do đó `/`, `/blog/`, `/app/` đang trả HTTP 503 với thông báo chờ tích hợp;
-API, đăng nhập Keycloak, MinIO, DNS và monitoring đã hoạt động thật.
+container thường trực, 3 init jobs hoàn tất, 5 named volumes. Frontend của Gemini
+đã được review, kết nối API và build vào cả hai web replica. **Portal, Blog và
+Student App đều HTTP 200**; 27 kiểm tra trình duyệt thật PASS, gồm CRUD SQL Server,
+avatar/PDF MinIO, đăng nhập PKCE và đăng xuất phiên Keycloak.
 
 ## Chạy trên Windows
 
@@ -30,7 +30,7 @@ docker compose -f docker-compose.yml -p mycloud ps -a
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop.ps1
 ```
 
-Sau khi ghép frontend, kiểm tra đầy đủ bằng
+Kiểm tra đầy đủ cả frontend bằng
 `scripts/health-check.ps1 -RequireFrontend`. Script stop chỉ dừng mycloud,
 không xóa container/volume. Không dùng `down -v` hoặc prune để xử lý lỗi.
 
@@ -42,7 +42,9 @@ trên EC2. [Hướng dẫn triển khai](docs/deployment.md).
 
 | Chức năng | URL / kết nối | Trạng thái |
 | --- | --- | --- |
-| Portal / Blog / Student UI | `/`, `/blog/`, `/app/` trên localhost | Chờ Gemini, HTTP 503 |
+| Portal | http://localhost/ | PASS: 9 card, status và metrics thật |
+| Blog / danh sách / 3 bài | http://localhost/blog/ và `/blog/posts/` | PASS: HTML/CSS/ảnh local |
+| Student App | http://localhost/app/ | PASS: CRUD, file, login/logout |
 | Health ứng dụng + DB | http://localhost/api/health | PASS |
 | JSON 5 sinh viên | http://localhost/api/student hoặc `/student/` | PASS |
 | CRUD SQL Server | http://localhost/api/students-db | PASS |
@@ -87,13 +89,14 @@ chọn Trust server certificate khi cần. Đây là SQL Server container; dịc
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-backend.ps1
-python scripts/test-proxy.py
+python scripts/test-proxy.py --frontend-ready
 python scripts/test-dns-host.py
 docker compose run --rm --no-deps -e TEST_PUBLIC_BASE=http://api-gateway-proxy-server integration-check
 docker compose run --rm --no-deps integration-check python /checks/test-monitoring.py --with-web
 ```
 
-Browser QA trên máy này: `python scripts/test-auth-browser.py` và
+Browser QA toàn bộ UI: `python scripts/test-frontend-browser.py` (27 checks).
+Kiểm tra auth độc lập: `python scripts/test-auth-browser.py` và
 `python scripts/capture-admin-ui.py`, cần Playwright, requests và Microsoft Edge.
 Đã chạy với Playwright 1.59.0, requests 2.33.1 trên Python Windows hiện có.
 Các test không in token/password. Persistence đã kiểm tra bằng recreate đúng
@@ -104,7 +107,7 @@ container SQL/MinIO và đối chiếu record/file; không xóa named volume.
 
 ## Cấu trúc và cộng tác
 
-- `web/`: Dockerfile/Nginx do Codex; `web/html/**` do Gemini.
+- `web/`: Dockerfile/Nginx do Codex; `web/html/**` do Gemini xây, Codex review/tích hợp.
 - `app/`: Flask, ODBC, SQL bootstrap, JWT/JWKS, MinIO, status và metrics API.
 - `db/init/001_init.sql`: T-SQL schema/seed `studentdb.dbo.students`.
 - `auth/`: readiness Keycloak; bootstrap realm/users nằm ở `app/init_auth.py`.
@@ -117,6 +120,7 @@ container SQL/MinIO và đối chiếu record/file; không xóa named volume.
 [Kiến trúc](docs/architecture.md), [API contract](docs/api-contract.md),
 [phân công Git/worktree](docs/collaboration-plan.md),
 [yêu cầu UI](docs/ui-requirements.md), [prompt Gemini](docs/gemini-frontend-prompt.md).
+Chi tiết tiếp nhận và sửa sau review: [frontend-review.md](docs/frontend-review.md).
 
 Mỗi phần làm trên nhánh tính năng, commit có mô tả liệt kê tiếng Việt. Hiện chỉ
 commit local; chưa có Git remote, chưa push Docker Hub và chưa triển khai AWS.

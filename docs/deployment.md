@@ -2,8 +2,8 @@
 
 ## Local Windows — đã kiểm thử
 
-Chạy `scripts/start.ps1`, `scripts/health-check.ps1` như README. Hạ tầng chạy thật,
-frontend chờ Gemini. Dùng `--require-frontend` sau khi tích hợp ba giao diện.
+Chạy `scripts/start.ps1`, `scripts/health-check.ps1 -RequireFrontend` như README.
+Hạ tầng và ba giao diện đã chạy thật; 27 checks Edge và 41 checks gateway PASS.
 Chưa có Git remote nên source hiện nằm trong repo local và các nhánh tính năng.
 
 ## Ubuntu EC2 — hướng dẫn, NOT TESTED

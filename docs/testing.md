@@ -23,8 +23,10 @@ Ngày thực hiện: 10/11/2026. Đây là trạng thái hiện hành, sau các 
 | Init chạy lại an toàn | PASS | `docker compose run --rm database-init` Exited (0); chạy lại test API kiểm tra seed/CRUD |
 | SSMS đăng nhập bằng GUI | NOT TESTED | Port SQL publish thành công; chưa thao tác SSMS |
 | Frontend qua Nginx / round robin | NOT TESTED | Chờ frontend Gemini và cấu hình web/proxy |
-| Keycloak / `/secure` | NOT TESTED | Chưa triển khai; không trả kết quả xác thực giả |
-| MinIO upload/download | NOT TESTED | Chưa triển khai |
+| Keycloak / `/secure` nội bộ | PASS | 2 user login form thật, state/code, PKCE code exchange, JWT/JWKS, sai chữ ký/thiếu token bị từ chối |
+| MinIO upload/download | PASS | Avatar PNG/PDF, stat/list/download đúng byte; anonymous 403; 24 checks auth/storage PASS |
+| MinIO Console HTML | PASS | `http://localhost:9001/` HTTP 200 và HTML thật; chưa kiểm thử GUI quản trị trong browser |
+| Keycloak qua `/auth/` public và frontend callback | NOT TESTED | Chờ Nginx và frontend; test hiện tại gọi service nội bộ với issuer/redirect URI public |
 | Bind9 / Prometheus / Grafana | NOT TESTED | Chưa triển khai |
 | Docker Hub push / AWS | NOT TESTED | Chưa có phạm vi/credential tương ứng |
 
@@ -56,3 +58,20 @@ encoding thông báo của script tạo `.env` trên Windows; đã bổ sung UTF
 
 Các credential nằm trong `.env` local đã ignore; không lưu resolved Compose config,
 connection string, password hoặc token vào tài liệu này.
+
+## Auth và storage
+
+Chạy `docker compose run --rm --no-deps integration-check` sau khi `auth-init`
+và `storage-init` Exited (0). Test service thuộc profile `tools`, không phải server
+chạy lâu dài; có `PYTHONPATH=/app` để import module khi script nằm dưới `/checks`.
+
+24 checks đã PASS: hai user `sv01`, `sv02` đăng nhập Keycloak bằng form thật,
+trao đổi Authorization Code + PKCE, truy cập endpoint bảo vệ, chữ ký sai bị 401;
+upload/list/stat/download PDF và PNG qua API, byte roundtrip, bucket private,
+từ chối file giả PDF và bucket ngoài whitelist. Test xóa đúng object do nó tạo.
+Không lưu token hoặc credential vào output. API CRUD và file vẫn là demo local
+công khai qua backend; `/secure` là endpoint thực thi xác thực. Bucket private
+không đồng nghĩa backend API đã có phân quyền production.
+
+MinIO build từ source chính thức vì hai registry upstream từ chối pull. Console
+HTML/S3 đã hoạt động thật; xem [minio-build-notes.md](minio-build-notes.md).

@@ -7,6 +7,10 @@ x-app-env: &app-env
   DB_USER: ${DB_USER:-cloud_app}
   DB_PASSWORD: ${DB_PASSWORD:?Run scripts/init-env.py}
   DB_TRUST_CERTIFICATE: ${DB_TRUST_CERTIFICATE:-yes}
+  PUBLIC_URL: ${PUBLIC_URL:-http://localhost}
+  OIDC_REALM: ${OIDC_REALM:-MSSV_PLACEHOLDER}
+  MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Run scripts/init-env.py}
+  MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Run scripts/init-env.py}
 
 services:
   relational-database-server:
@@ -54,6 +58,74 @@ services:
       retries: 5
       start_period: 15s
 
+  authentication-identity-server:
+    image: quay.io/keycloak/keycloak:26.1.4
+    command: ["start-dev"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Run scripts/init-env.py}
+      KC_HTTP_ENABLED: "true"
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_HOSTNAME: ${PUBLIC_URL:-http://localhost}/auth
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+    volumes: ["keycloak-data:/opt/keycloak/data"]
+    networks: [cloud-net]
+    restart: unless-stopped
+
+  auth-init:
+    image: mycloud-app:1.0.0
+    command: ["python", "init_auth.py"]
+    environment:
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost}
+      OIDC_REALM: ${OIDC_REALM:-MSSV_PLACEHOLDER}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Run scripts/init-env.py}
+      DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:?Run scripts/init-env.py}
+    networks: [cloud-net]
+    depends_on:
+      authentication-identity-server: {condition: service_started}
+    restart: "no"
+
+  object-storage-server:
+    image: mycloud-minio:source-2025-04-22
+    build: ./storage
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Run scripts/init-env.py}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Run scripts/init-env.py}
+    ports: ["127.0.0.1:9000:9000", "127.0.0.1:9001:9001"]
+    volumes: ["minio-data:/data"]
+    networks: [cloud-net]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/minio/health/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  storage-init:
+    image: mycloud-app:1.0.0
+    command: ["python", "init_storage.py"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Run scripts/init-env.py}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Run scripts/init-env.py}
+    networks: [cloud-net]
+    depends_on:
+      object-storage-server: {condition: service_healthy}
+    restart: "no"
+
+  integration-check:
+    profiles: ["tools"]
+    image: mycloud-app:1.0.0
+    command: ["python", "/checks/test-auth-storage.py"]
+    environment:
+      <<: *app-env
+      PYTHONPATH: /app
+      DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:?Run scripts/init-env.py}
+    volumes: ["./scripts:/checks:ro"]
+    networks: [cloud-net]
+    restart: "no"
+
 networks:
   cloud-net:
     name: cloud-net
@@ -64,3 +136,7 @@ networks:
 volumes:
   mssql-data:
     name: mycloud_mssql-data
+  keycloak-data:
+    name: mycloud_keycloak-data
+  minio-data:
+    name: mycloud_minio-data

@@ -68,6 +68,7 @@
       tech: 'Microsoft SQL Server 2022 (RDBMS)',
       network: 'cloud-net',
       urlPort: null,
+      urlPath: '/api/students-db',
       role: 'Cơ sở dữ liệu quan hệ lưu trữ thông tin sinh viên trên database studentdb qua kết nối ODBC Driver 18.',
       checkGuide: 'Backend tự động kết nối qua cổng 1433; có thể kiểm tra qua endpoint /api/students-db.',
       testCommand: 'curl -s http://localhost/api/students-db',

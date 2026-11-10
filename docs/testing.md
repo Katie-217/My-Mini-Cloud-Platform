@@ -24,12 +24,15 @@ Ngày thực hiện: 10/11/2026. Đây là trạng thái hiện hành, sau các 
 | Init chạy lại an toàn | PASS | `docker compose run --rm database-init` Exited (0); chạy lại test API kiểm tra seed/CRUD |
 | SSMS đăng nhập bằng GUI | NOT TESTED | Port SQL publish thành công; chưa thao tác SSMS |
 | Gateway / round robin | PASS | 41 gateway checks, GET/POST/PUT/DELETE, 20 request chia 10/10; cả hai web cùng image ID |
-| Nội dung Portal/Blog/Student frontend | NOT TESTED | Chờ Gemini bàn giao; web trả HTTP 503 trung thực khi nội dung chưa ghép |
+| Nội dung Portal/Blog/Student frontend | PASS | Edge thật, 27 checks; ba UI 200, đủ 3 bài Blog và ảnh local |
 | Keycloak / `/secure` nội bộ | PASS | 2 user login form thật, state/code, PKCE code exchange, JWT/JWKS, sai chữ ký/thiếu token bị từ chối |
 | MinIO upload/download | PASS | Avatar PNG/PDF, stat/list/download đúng byte; anonymous 403; 24 checks auth/storage PASS |
 | MinIO Console GUI | PASS | Đăng nhập Edge thật, thấy cả hai bucket và đã chụp ảnh |
 | Keycloak qua `/auth/` public | PASS | Edge thật localhost: 2 user login, cookie, state, PKCE, token và secure API qua proxy |
-| Student JavaScript callback/login/logout | NOT TESTED | Browser test chặn callback để kiểm tra auth độc lập; chưa nghiệm thu JS frontend |
+| Student JavaScript callback/login/logout | PASS | Login UI → Keycloak → callback PKCE → secure API; logout xóa token và kết thúc SSO |
+| Student CRUD/avatar/PDF qua UI | PASS | POST/PUT/DELETE thật, literal HTML an toàn, ảnh MinIO hiển thị, PDF download đúng byte |
+| Portal card/metrics và responsive | PASS | 9 card với latency/timestamp, CPU/RAM/network thật; viewport 390 px không tràn ngang trên 3 UI |
+| Frontend khi web2 lỗi / metrics 503 | PASS | Intercept response riêng trong browser: nhóm Web unhealthy, metric không có số giả; không dừng container |
 | Bind9 authoritative DNS | PASS | Record khớp IP service thật; host 1053 UDP/TCP và container dig đều đúng |
 | Prometheus + Grafana datasource/dashboard API | PASS | 17 DNS/monitoring checks; node/prometheus/blackbox UP, 3 panel có sample thật, Grafana query qua datasource proxy |
 | Portal metrics/status backend | PASS | `/metrics-summary` có số liệu CPU/RAM/network thật; `/status` có latency_ms và checked_at đo theo probe |
@@ -97,7 +100,8 @@ HTML/S3 đã hoạt động thật; xem [minio-build-notes.md](minio-build-notes
   17 checks PASS, gồm record Bind9 khớp service, metric thật và Grafana datasource proxy.
 - `/metrics-summary` nội bộ đã trả đủ CPU %, memory bytes/%, network bytes/s;
   `/status` trả 9 nhóm, các probe có duration và timestamp, runtime count vẫn null.
-  Khi web/proxy chưa triển khai, overall degraded đúng thực tế.
+  Lúc chưa triển khai web/proxy, overall degraded đúng thực tế; sau tích hợp,
+  cả 12 probe healthy. Runtime count vẫn Unknown trên Portal vì không đọc Docker socket.
 - Phạm vi CPU/RAM là Linux VM/kernel Docker Desktop; network là namespace của
   Node Exporter. Giao diện phải ghi rõ phạm vi, không gán thành toàn bộ Windows host.
 - Lỗi Bind9 đã sửa: image có `/etc/bind/named.conf` mặc định không include các
@@ -120,7 +124,9 @@ HTML/S3 đã hoạt động thật; xem [minio-build-notes.md](minio-build-notes
   không thay cơ chế cookie production; Edge localhost xác nhận flow thật PASS.
 - `test-auth-browser.py`: hai user PASS login/cookie/state/PKCE/JWT qua public
   route. Callback frontend được intercept để không phụ thuộc Gemini, do đó
-  không tính là đã kiểm thử Student JavaScript. Ảnh login không có credential
+  không tính riêng test đó là đã kiểm thử Student JavaScript. Bài
+  `test-frontend-browser.py` chạy thêm callback và logout JS thật, PASS.
+  Ảnh login không có credential
   lưu `.runtime/browser-evidence/keycloak-login.png` (Git ignore).
 - Web healthcheck dùng `127.0.0.1`: BusyBox wget chọn IPv6 khi dùng localhost
   trong khi server listen IPv4, gây false unhealthy; đã xác minh và sửa.
@@ -128,10 +134,23 @@ HTML/S3 đã hoạt động thật; xem [minio-build-notes.md](minio-build-notes
   bằng bash builtins; auth-init chờ service healthy rồi bootstrap.
 - Access logs proxy và web chỉ ghi `$uri`, không ghi query string chứa OIDC code.
 
-**Giới hạn hiện tại:** `/`, `/blog/`, `/app/` trả trang chờ với HTTP 503 khi source
-frontend còn trống. Health Nginx và probe exporter kiểm tra tiến trình HTTP,
-không chứng minh nội dung frontend đã hoàn thành. Build lại web image sau khi
-review/ghép code Gemini sẽ phục vụ nội dung thật; không ghi đè `web/html/**`.
+**Sau tích hợp frontend:** `/`, `/blog/`, `/app/` đều HTTP 200, phục vụ source
+Gemini đã review và sửa trên nhánh `fix/connect-reviewed-frontend-services`.
+Chạy `python scripts/test-proxy.py --frontend-ready` và
+`python scripts/health-check.py --require-frontend`: PASS. Hai web cùng image ID.
+Health Nginx riêng lẻ vẫn không chứng minh nội dung hoặc thao tác UI đúng.
+
+## Nghiệm thu frontend bằng Edge thật
+
+`python scripts/test-frontend-browser.py`: **27 checks PASS**, 0 JavaScript
+pageerror. Kiểm tra đủ Portal status/metrics/card, Blog home/list/3 bài và ảnh,
+Student CRUD/search/detail, avatar upload và hiển thị, PDF roundtrip, PKCE callback,
+secure API và kết thúc SSO khi logout. Viewport mobile 390 px không tràn ngang.
+
+Test trạng thái lỗi chỉ intercept response trong browser, không thay đổi backend
+hoặc dừng container. Chỉ xóa record/object có ID/key do test tạo. Không lưu
+credential/token vào ảnh hoặc báo cáo. [Report](evidence/frontend-e2e.json),
+[review chi tiết](frontend-review.md), [ảnh](evidence/README.md).
 
 ## Script vận hành và kiểm tra secret
 

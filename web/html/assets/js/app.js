@@ -47,7 +47,8 @@
 
   function formatDateTime(isoStr) {
     if (!isoStr) return '--';
-    const d = new Date(isoStr);
+    const value = isoStr.includes('T') && !/(Z|[+-]\d\d:\d\d)$/.test(isoStr) ? isoStr + 'Z' : isoStr;
+    const d = new Date(value);
     if (isNaN(d.getTime())) return escapeHtml(isoStr);
     return d.toLocaleTimeString('vi-VN') + ' ' + d.toLocaleDateString('vi-VN');
   }
@@ -294,7 +295,7 @@
     const avgGpaEl = document.getElementById('stat-avg-gpa');
     const newStudentsEl = document.getElementById('stat-new-students');
 
-    if (!AppState.isBackendConnected || !students || students.length === 0) {
+    if (!AppState.isBackendConnected || !students) {
       if (totalEl) totalEl.textContent = '--';
       if (majorsEl) majorsEl.textContent = '--';
       if (avgGpaEl) avgGpaEl.textContent = '--';
@@ -313,8 +314,9 @@
     const now = new Date();
     students.forEach(s => {
       if (s.created_at) {
-        const cd = new Date(s.created_at);
-        if (!isNaN(cd.getTime()) && (now - cd) < 7 * 24 * 3600 * 1000) {
+        const timestamp = /(Z|[+-]\d\d:\d\d)$/.test(s.created_at) ? s.created_at : s.created_at + 'Z';
+        const cd = new Date(timestamp);
+        if (!isNaN(cd.getTime()) && now >= cd && (now - cd) < 7 * 24 * 3600 * 1000) {
           newCount++;
         }
       }
@@ -323,7 +325,7 @@
     if (totalEl) totalEl.textContent = String(total);
     if (majorsEl) majorsEl.textContent = String(majorsSet.size);
     if (avgGpaEl) avgGpaEl.textContent = String(avgGpa);
-    if (newStudentsEl) newStudentsEl.textContent = String(newCount || Math.min(total, 1));
+    if (newStudentsEl) newStudentsEl.textContent = String(newCount);
   }
 
   // =========================================================================
@@ -469,7 +471,7 @@
       showFormAlert(alertBox, 'Thêm sinh viên thành công vào SQL Server!', 'success');
       form.reset();
       const preview = document.getElementById('add-avatar-preview');
-      if (preview) preview.src = '';
+      if (preview) { preview.src = ''; preview.style.display = 'none'; }
 
       // Tải lại danh sách sinh viên
       setTimeout(() => {
@@ -892,6 +894,8 @@
 
     const savedState = sessionStorage.getItem('pkce_state');
     const codeVerifier = sessionStorage.getItem('pkce_code_verifier');
+    sessionStorage.removeItem('pkce_state');
+    sessionStorage.removeItem('pkce_code_verifier');
 
     // Xóa ngay code và state khỏi URL để tránh lộ token/code trong browser history
     window.history.replaceState({}, document.title, window.location.pathname);
@@ -939,19 +943,19 @@
       const tokenData = await tokenRes.json();
       AppState.accessToken = tokenData.access_token;
       sessionStorage.setItem('mycloud_access_token', tokenData.access_token);
+      if (tokenData.id_token) sessionStorage.setItem('mycloud_id_token', tokenData.id_token);
 
       // Dọn dẹp verifier
       sessionStorage.removeItem('pkce_code_verifier');
       sessionStorage.removeItem('pkce_state');
 
-      updateAuthUI(true, 'Đăng nhập Keycloak thành công!');
-
       // Tự động kiểm tra /api/secure
-      testSecureResource();
+      await testSecureResource();
+      loadStudents();
 
     } catch (err) {
       showFormAlert(alertBox, `Xác thực OIDC thất bại: ${err.message}`, 'danger');
-      updateAuthUI(false);
+      clearAuthentication();
     }
   }
 
@@ -978,6 +982,7 @@
       const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
+        updateAuthUI(true, 'Phiên đăng nhập đã được Backend xác minh.');
         showFormAlert(alertBox, `Xác minh thành công từ Backend! (HTTP ${res.status} OK)`, 'success');
         if (resultBox) {
           resultBox.textContent = JSON.stringify(data, null, 2);
@@ -990,6 +995,7 @@
           }
         }
       } else {
+        clearAuthentication();
         showFormAlert(alertBox, `Backend từ chối token (HTTP ${res.status}): ${data.error || res.statusText}`, 'danger');
         if (resultBox) {
           resultBox.textContent = JSON.stringify(data, null, 2);
@@ -1000,16 +1006,40 @@
     }
   }
 
-  function handleLogout() {
+  function clearAuthentication(message = '') {
     AppState.accessToken = null;
     sessionStorage.removeItem('mycloud_access_token');
+    sessionStorage.removeItem('mycloud_id_token');
+    sessionStorage.removeItem('pkce_code_verifier');
+    sessionStorage.removeItem('pkce_state');
     const userPill = document.getElementById('topbar-user-pill');
     if (userPill) userPill.style.display = 'none';
 
-    updateAuthUI(false, 'Đã đăng xuất.');
+    updateAuthUI(false, message);
 
     const resultBox = document.getElementById('secure-test-result');
     if (resultBox) resultBox.textContent = 'Chưa thực hiện kiểm tra.';
+  }
+
+  async function handleLogout() {
+    const idToken = sessionStorage.getItem('mycloud_id_token');
+    clearAuthentication('Đã đăng xuất.');
+    if (!AppState.authConfig) await loadAuthConfig();
+    const endpoint = AppState.authConfig?.end_session_endpoint;
+    if (!endpoint) return;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = endpoint;
+    const parameters = {client_id: AppState.authConfig.client_id,
+      post_logout_redirect_uri: window.location.origin + '/app/'};
+    if (idToken) parameters.id_token_hint = idToken;
+    for (const [name, value] of Object.entries(parameters)) {
+      const input = document.createElement('input');
+      input.type = 'hidden'; input.name = name; input.value = value;
+      form.appendChild(input);
+    }
+    document.body.appendChild(form);
+    form.submit();
   }
 
   function updateAuthUI(isLoggedIn, msg = '') {
@@ -1264,7 +1294,7 @@
     const savedToken = sessionStorage.getItem('mycloud_access_token');
     if (savedToken) {
       AppState.accessToken = savedToken;
-      updateAuthUI(true, 'Khôi phục phiên đăng nhập từ session.');
+      testSecureResource();
     }
 
     // Kiểm tra nếu đang có OIDC authorization code callback trong URL

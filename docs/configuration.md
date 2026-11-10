@@ -47,9 +47,10 @@ readiness và seed idempotent. Không trông chờ thư mục init tự chạy t
 - Tạo user mới qua Admin Console → realm → Users → Add user, đặt credential
   riêng; không dùng tài khoản admin làm tài khoản frontend.
 
-Lấy token qua flow login của frontend sau khi Gemini bàn giao. Hiện có test tự
-động thật bằng Edge `scripts/test-auth-browser.py`; script intercept callback
-để kiểm tra hạ tầng độc lập, không thay thế việc nghiệm thu JS Student App.
+Mở `/app/` → tab Account → đăng nhập Keycloak. Student JavaScript đã được kiểm
+thử thật bằng Edge: callback PKCE, backend xác minh token và logout kết thúc cả
+phiên SSO. Chạy lại bằng `scripts/test-frontend-browser.py`. Script auth-browser
+cũ vẫn kiểm tra hạ tầng độc lập bằng cách intercept callback.
 
 ## MinIO và file
 
@@ -85,9 +86,10 @@ docker compose -f docker-compose.yml -p mycloud logs --tail 80 auth-init storage
 python scripts/preflight.py
 ```
 
-Init job Exited (0) là thành công. Web 503 trong giai đoạn chờ Gemini là có chủ
-đích; health Nginx 200 chỉ xác nhận server sẵn sàng. Sau review frontend, build
-lại image web và chạy health với `--require-frontend`.
+Init job Exited (0) là thành công. Ba giao diện hiện trả 200. Sau thay đổi HTML/JS,
+build lại `web-frontend-server1`, cập nhật cả hai web replica dùng cùng image và
+chạy `python scripts/health-check.py --require-frontend`. Health Nginx 200 riêng
+lẻ chỉ xác nhận server sẵn sàng; cần kiểm tra nội dung và thao tác UI.
 
 Port conflict: xác định tiến trình/container sở hữu, không tự dừng SQLEXPRESS/ICS.
 SQL health fail sau đổi `.env`: đối chiếu credential đã lưu trong volume;

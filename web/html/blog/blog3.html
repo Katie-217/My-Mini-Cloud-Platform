@@ -95,12 +95,12 @@ server {
     listen 80;
     location /blog/ {
         proxy_pass http://web_backend;
-        add_header X-Served-By $upstream_addr always;
+        add_header X-Web-Server $upstream_addr always;
     }
 }
       </pre>
       <p>
-        Khi gửi nhiều request liên tiếp bằng lệnh <code class="inline-code">curl -i http://localhost/blog/</code>, người dùng sẽ thấy header <code class="inline-code">X-Served-By</code> luân phiên trả về địa chỉ IP của <code class="inline-code">web1</code> và <code class="inline-code">web2</code>. Nếu một trong hai container gặp sự cố, Nginx sẽ tự động chuyển hướng lưu lượng sang bản sao còn lại mà không làm gián đoạn trải nghiệm người dùng.
+        Khi gửi nhiều request liên tiếp bằng lệnh <code class="inline-code">curl -i http://localhost/blog/</code>, người dùng sẽ thấy header <code class="inline-code">X-Web-Server</code> luân phiên trả về địa chỉ IP của <code class="inline-code">web1</code> và <code class="inline-code">web2</code>. Nếu một trong hai container gặp sự cố, Nginx sẽ tự động chuyển hướng lưu lượng sang bản sao còn lại mà không làm gián đoạn trải nghiệm người dùng.
       </p>
 
       <h2>3. Tích Hợp Đa Dịch Vụ: Cơ Sở Dữ Liệu, S3 và Bảo Mật OIDC</h2>

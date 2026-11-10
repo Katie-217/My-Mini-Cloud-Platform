@@ -116,6 +116,8 @@ và host 1053. Windows không tự dùng zone này để duyệt web; Portal v�
   replica thật. Mỗi image custom chỉ build một lần, các replica/init job dùng lại.
 - Web source chưa ghép sẽ trả 503 ở các URL giao diện, trong khi `/health`
   kiểm tra Nginx vẫn trả 200. Phân biệt readiness hạ tầng và nghiệm thu UI.
+  Source hiện đã ghép/review, cả ba UI 200 và 27 checks Edge PASS;
+  xem [frontend-review.md](frontend-review.md).
 - Nginx dùng resolver Docker với upstream `resolve`; cấu hình tham chiếu
   [upstream module](https://nginx.org/en/docs/http/ngx_http_upstream_module.html)
   và [proxy_pass](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass).

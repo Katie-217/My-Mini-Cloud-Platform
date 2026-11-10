@@ -33,6 +33,9 @@ Ngày thực hiện: 10/11/2026. Đây là trạng thái hiện hành, sau các 
 | Prometheus + Grafana datasource/dashboard API | PASS | 17 DNS/monitoring checks; node/prometheus/blackbox UP, 3 panel có sample thật, Grafana query qua datasource proxy |
 | Portal metrics/status backend | PASS | `/metrics-summary` có số liệu CPU/RAM/network thật; `/status` có latency_ms và checked_at đo theo probe |
 | Target web | PASS | 21 DNS/monitoring checks; 2 web targets UP và probe_success=1 |
+| Script vận hành PowerShell | PASS | start.ps1 -NoBuild và health-check.ps1 chạy thành công; preflight kiểm tra ownership/subnet/ports |
+| Bash scripts | PASS: SYNTAX | bash -n thành công; chưa chạy lifecycle qua Bash trên Ubuntu |
+| Stop scripts | NOT TESTED: LIFECYCLE | Đã kiểm tra cú pháp, chưa dừng hệ thống đang dùng để demo |
 | Grafana visualization trong browser | NOT TESTED | Datasource/PromQL có data; chưa chụp dashboard GUI |
 | Kiểm thử dừng Node Exporter và phục hồi | NOT TESTED | Cơ chế kiểm duyệt tự động chặn lệnh dừng container: blocked by policy; không có container bị dừng bởi test |
 | Docker Hub push / AWS | NOT TESTED | Chưa có phạm vi/credential tương ứng |
@@ -128,3 +131,20 @@ HTML/S3 đã hoạt động thật; xem [minio-build-notes.md](minio-build-notes
 frontend còn trống. Health Nginx và probe exporter kiểm tra tiến trình HTTP,
 không chứng minh nội dung frontend đã hoàn thành. Build lại web image sau khi
 review/ghép code Gemini sẽ phục vụ nội dung thật; không ghi đè `web/html/**`.
+
+## Script vận hành và kiểm tra secret
+
+- `scripts/preflight.py`: chỉ đọc Docker/Compose/route và thử bind port khi chưa
+  được chính project publish; kiểm tra Linux x86_64, project mycloud, owner
+  network/volume/container, overlap subnet, credential placeholder và port.
+  Không tự dừng dịch vụ ngoài project, không sửa route/firewall.
+- `start.ps1 -NoBuild`: đã chạy thành công bằng Compose file/project chỉ định
+  tường minh; giữ `.env` và volume hiện có; init jobs chạy lại an toàn.
+- `health-check.py` phân biệt infrastructure readiness với `--require-frontend`.
+  Mặc định không coi trang chờ 503 là UI đã hoàn thành.
+- `stop.ps1`/`stop.sh` chỉ gọi Compose stop cho mycloud, không xóa container/volume.
+  Chưa chạy stop lifecycle vì cần giữ dịch vụ cho Gemini tích hợp.
+- PowerShell AST parse và Bash `-n`: PASS. Bash start/stop end-to-end trên Ubuntu
+  vẫn NOT TESTED. Không suy từ cú pháp hợp lệ thành đã chạy thành công.
+- `scripts/check-secrets.py`: soát file tracked hoặc `--staged`, đối chiếu secret
+  local và private key, không xuất giá trị. `.env` và `.runtime/` được Git ignore.

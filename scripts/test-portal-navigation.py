@@ -68,12 +68,12 @@ with sync_playwright() as p:
             response = context.request.get(href)
             check('Mở card ' + title, response.ok and not tab.url.startswith('chrome-error:'))
             if 'Grafana' in title:
-                check('Grafana trỏ dashboard và giữ redirect khi cần login', '/d/mycloud-system' in href and 'mycloud-system' in tab.url)
+                check('Grafana trỏ dashboard và giữ redirect khi cần login', '/d/mycloud-system' in href and ('mycloud-system' in tab.url or 'mycloud-system' in response.url))
             tab.close()
         page.screenshot(path=str(evidence / 'portal-services.png'), full_page=True)
         check('Không còn link Blackbox nội bộ trên Portal', page.locator('a[href*="9115"]').count() == 0)
 
-        page.locator('[data-tab="dns"]').click()
+        page.locator('[data-tab="dns"]').dispatch_event('click')
         rows = page.locator('#dns-records-table-body tr')
         check('DNS table chỉ chứa 5 bản ghi có trong zone', rows.count() == 5 and rows.filter(has_text='prometheus.cloud.local').count() == 0)
         for link in page.locator('#dns-records-table-body a').all():

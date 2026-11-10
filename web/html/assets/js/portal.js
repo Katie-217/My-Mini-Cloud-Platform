@@ -855,7 +855,7 @@
             ${ep.params.map(p => `
               <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.35rem;">
                 <label style="font-size: 0.8rem; font-family: var(--font-mono); font-weight: 600; width: 60px;">${p.name}:</label>
-                <input type="text" id="param-${ep.id}-${p.name}" class="form-control" style="font-size: 0.8rem; padding: 0.35rem 0.6rem; max-width: 320px;" placeholder="${p.placeholder || ''}">
+                <input type="text" id="param-${ep.id}-${p.name}" class="swagger-param-input" placeholder="${p.placeholder || ''}">
               </div>
             `).join('')}
           </div>
@@ -867,7 +867,7 @@
         bodyInputHtml = `
           <div style="margin-bottom: 1rem;">
             <div style="font-size: 0.825rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Request Body (JSON):</div>
-            <textarea id="body-${ep.id}" class="form-control" style="font-family: var(--font-mono); font-size: 0.8rem; height: 110px; resize: vertical;">${escapeHtml(ep.sampleBody)}</textarea>
+            <textarea id="body-${ep.id}" class="swagger-body-textarea" placeholder="Nhập JSON request payload...">${escapeHtml(ep.sampleBody)}</textarea>
           </div>
         `;
       }

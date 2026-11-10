@@ -3,140 +3,288 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bên Trong MyMiniCloud: Cách Hệ Thống 9 Dịch Vụ Vận Hành - MyMiniCloud Blog</title>
+  <title>Bên Trong MyMiniCloud: Vận Hành Hệ Thống 9 Dịch Vụ - MyMiniCloud Blog</title>
   <link rel="icon" href="/assets/images/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/css/common.css">
   <link rel="stylesheet" href="/assets/css/blog.css">
 </head>
 <body class="blog-page">
 
-  <!-- Site Header -->
-  <header class="site-header">
-    <div class="container navbar">
-      <a href="/" class="brand">
-        <div class="brand-icon">
+  <!-- Top Navbar -->
+  <header class="blog-navbar">
+    <div class="blog-nav-inner">
+      <a href="/blog/" class="blog-brand">
+        <div class="blog-brand-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
           </svg>
         </div>
-        <span>MyMiniCloud</span>
-        <span class="brand-badge">Blog</span>
+        <div>
+          <span class="blog-brand-text">MyMiniCloud</span>
+          <span class="blog-brand-pill">Dev Blog</span>
+        </div>
       </a>
 
-      <nav aria-label="Main Navigation">
-        <ul class="nav-links">
-          <li><a href="/" class="nav-link">Về Portal Control</a></li>
-          <li><a href="/blog/" class="nav-link active">Blog Chuyên Đề</a></li>
-          <li><a href="/app/" class="nav-link">Student App</a></li>
+      <nav aria-label="Blog Navigation">
+        <ul class="blog-nav-links">
+          <li><a href="/blog/#articles" class="blog-nav-link">&larr; Danh Sách Bài Viết</a></li>
+          <li><a href="/" class="blog-nav-link">Portal Control (/)</a></li>
+          <li><a href="/app/" class="blog-nav-link">Student App (/app/)</a></li>
         </ul>
       </nav>
 
-      <div class="env-tag">
-        <span class="env-dot"></span>
-        <span>Static Nginx Web</span>
+      <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #64748b; font-weight: 600;">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; display: inline-block;"></span>
+        <span>Web Replicas &bull; Port 80</span>
       </div>
     </div>
   </header>
 
-  <!-- Article Hero Banner -->
-  <header class="article-hero-banner">
-    <div class="container" style="max-width: 860px;">
-      <div class="article-breadcrumb">
-        <a href="/">Trang chủ</a> &rsaquo;
-        <a href="/blog/">Blog chuyên đề</a> &rsaquo;
-        <span>Chuyên đề 03</span>
-      </div>
-      <h1 class="article-title" style="color: #ffffff; margin-top: 0.5rem;">
-        Bên Trong MyMiniCloud: Cách Một Hệ Thống 9 Dịch Vụ Vận Hành Thực Tế
-      </h1>
-      <p style="color: #cbd5e1; font-size: 1.05rem; margin-top: 0.75rem; line-height: 1.6;">
-        Khám phá chi tiết luồng xử lý end-to-end: Reverse Proxy cân bằng tải Round Robin, Flask REST API, SQL Server 2022, MinIO S3, Keycloak PKCE và chu trình giám sát Prometheus.
-      </p>
-      <div class="article-meta-box">
-        <div style="display: flex; align-items: center; gap: 0.5rem; color: #f1f5f9; font-weight: 600;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-          <span>Nhóm Kỹ sư Đám mây</span>
+  <!-- Article Detail Wrap -->
+  <main class="article-detail-wrap">
+
+    <!-- Top Action Bar -->
+    <div class="article-top-bar">
+      <a href="/blog/#articles" class="article-back-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>Quay lại danh sách Blog</span>
+      </a>
+
+      <nav aria-label="Breadcrumb" style="font-size: 0.85rem; color: #64748b;">
+        <a href="/" style="color: #64748b; text-decoration: none;">Trang chủ</a> &rsaquo;
+        <a href="/blog/" style="color: #64748b; text-decoration: none;">Blog</a> &rsaquo;
+        <span style="color: #0f172a; font-weight: 600;">Chuyên đề 03</span>
+      </nav>
+    </div>
+
+    <!-- Main Article Card -->
+    <article class="article-main-card">
+
+      <!-- Header Section -->
+      <header class="article-header">
+        <span class="blog-category-badge cat-sys">Distributed Systems</span>
+        <h1 class="article-title-big">
+          Bên Trong MyMiniCloud: Cách Một Hệ Thống 9 Dịch Vụ Vận Hành Thực Tế
+        </h1>
+
+        <div class="article-meta-row">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background-color: #f5f3ff; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd6fe;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <strong style="color: #0f172a;">Kiến trúc sư Hệ thống</strong>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.35rem;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <time datetime="2026-11-10">10/11/2026</time>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.35rem;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>8 phút đọc</span>
+          </div>
+
+          <span style="background-color: #f1f5f9; color: #475569; padding: 0.15rem 0.55rem; border-radius: 4px; font-size: 0.775rem; font-weight: 600;">
+            Chuyên đề Hệ Thống Phân Tán &bull; Homelab
+          </span>
         </div>
-        <time datetime="2026-11-10">10/11/2026</time>
-        <span class="blog-category-tag">Distributed Systems</span>
-      </div>
-    </div>
-  </header>
+      </header>
 
-  <!-- Article Content (Nền trắng) -->
-  <main class="article-container-white">
-    <article class="article-body-text">
-      <img src="/assets/images/mini-cloud-arch.svg" alt="Kiến trúc 9 Dịch Vụ MyMiniCloud" class="article-featured-banner">
-
-      <div class="alert alert-info" style="margin-bottom: 2rem;">
-        <strong>Giới thiệu chuyên đề:</strong> MyMiniCloud không phải là một ứng dụng nguyên khối (monolith) giả lập, mà là một hệ thống phân tán thực thụ gồm 9 nhóm dịch vụ container hóa độc lập. Mỗi dịch vụ đảm nhiệm một trách nhiệm chuyên biệt, được kết nối an toàn qua mạng bridge và được phối hợp nhịp nhàng thông qua Nginx Reverse Proxy.
+      <!-- Hero Featured Image -->
+      <div class="article-hero-img-box">
+        <img src="/assets/images/mini-cloud-arch.svg" alt="Kiến trúc 9 Dịch Vụ MyMiniCloud">
       </div>
 
-      <h2>1. Kiến Trúc Tổng Thể &amp; Luồng Di Chuyển Của Request</h2>
-      <p>
-        Điểm cốt lõi trong thiết kế của MyMiniCloud là mô hình Single Point of Entry (Cổng tiếp nhận duy nhất). Người dùng từ trình duyệt bên ngoài chỉ cần truy cập vào cổng 80 của máy chủ Host. Tất cả các dịch vụ nội bộ khác (Flask API :8081, SQL Server :1433, Keycloak :8080) đều được ẩn sau mạng <code class="inline-code">cloud-net</code> và không cần phơi bày cổng ra Internet:
-      </p>
-      <ul>
-        <li><strong>Truy cập Portal (<code class="inline-code">/</code>) và Blog (<code class="inline-code">/blog/</code>):</strong> Proxy chuyển hướng tới một trong hai máy chủ web Nginx (<code class="inline-code">web-frontend-server1</code> hoặc <code class="inline-code">web-frontend-server2</code>) theo thuật toán xoay vòng Round Robin.</li>
-        <li><strong>Truy cập ứng dụng Quản lý Sinh viên (<code class="inline-code">/app/</code>):</strong> Proxy phục vụ tệp HTML/CSS/JavaScript tĩnh từ web server; sau đó trình duyệt của người dùng gửi các lời gọi AJAX tới đường dẫn <code class="inline-code">/api/*</code>.</li>
-        <li><strong>Gọi REST API (<code class="inline-code">/api/*</code>):</strong> Proxy tiến hành loại bỏ (strip) tiền tố <code class="inline-code">/api/</code> và chuyển tiếp nguyên vẹn method và payload JSON tới container <code class="inline-code">application-backend-server:8081</code>.</li>
-        <li><strong>Xác thực danh tính (<code class="inline-code">/auth/*</code>):</strong> Proxy giữ nguyên đường dẫn và forwarded headers chuyển tiếp đến <code class="inline-code">authentication-identity-server:8080</code> (Keycloak).</li>
-      </ul>
+      <!-- Table of Contents -->
+      <nav class="article-toc-box" aria-label="Mục lục bài viết">
+        <div class="article-toc-title">Mục Lục Chuyên Đề:</div>
+        <ul class="article-toc-list">
+          <li><a href="#kien-truc-tong-the">1. Kiến Trúc Tổng Thể &amp; Luồng Di Chuyển Của Request</a></li>
+          <li><a href="#can-bang-tai-round-robin">2. Cơ Chế Cân Bằng Tải Round Robin Giữa 2 Web Replicas</a></li>
+          <li><a href="#tich-hop-da-dich-vu">3. Tích Hợp Đa Dịch Vụ: SQL Server, MinIO S3, Keycloak PKCE &amp; Prometheus</a></li>
+          <li><a href="#bang-boc-tach-dich-vu">4. Bảng Bóc Tách Chi Tiết 9 Nhóm Dịch Vụ MyMiniCloud</a></li>
+        </ul>
+      </nav>
 
-      <h2>2. Cơ Chế Cân Bằng Tải Round Robin Giữa 2 Web Replicas</h2>
-      <p>
-        Nhằm mô phỏng tính sẵn sàng cao (High Availability), hệ thống khởi chạy hai bản sao máy chủ web tĩnh độc lập:
-      </p>
-      <pre class="code-block">
+      <!-- Article Content Body -->
+      <div class="article-content-body">
+
+        <div class="article-callout-box">
+          <strong>Giới thiệu chuyên đề:</strong> MyMiniCloud không phải là một ứng dụng nguyên khối (monolith) giả lập, mà là một hệ thống phân tán thực thụ gồm 9 nhóm dịch vụ container hóa độc lập. Mỗi dịch vụ đảm nhiệm một trách nhiệm chuyên biệt, được kết nối an toàn qua mạng bridge và được phối hợp nhịp nhàng thông qua Nginx Reverse Proxy.
+        </div>
+
+        <h2 id="kien-truc-tong-the">1. Kiến Trúc Tổng Thể &amp; Luồng Di Chuyển Của Request</h2>
+        <p>
+          Điểm cốt lõi trong thiết kế của MyMiniCloud là mô hình Single Point of Entry (Cổng tiếp nhận duy nhất). Người dùng từ trình duyệt bên ngoài chỉ cần truy cập vào cổng 80 của máy chủ Host. Tất cả các dịch vụ nội bộ khác (Flask API :8081, SQL Server :1433, Keycloak :8080) đều được ẩn sau mạng <code class="inline-code">cloud-net</code> và không cần phơi bày cổng ra Internet:
+        </p>
+        <ul>
+          <li><strong>Truy cập Portal (<code class="inline-code">/</code>) và Blog (<code class="inline-code">/blog/</code>):</strong> Proxy chuyển hướng tới một trong hai máy chủ web Nginx (<code class="inline-code">web-frontend-server1</code> hoặc <code class="inline-code">web-frontend-server2</code>) theo thuật toán xoay vòng Round Robin.</li>
+          <li><strong>Truy cập ứng dụng Quản lý Sinh viên (<code class="inline-code">/app/</code>):</strong> Proxy phục vụ tệp HTML/CSS/JavaScript tĩnh từ web server; sau đó trình duyệt của người dùng gửi các lời gọi AJAX tới đường dẫn <code class="inline-code">/api/*</code>.</li>
+          <li><strong>Gọi REST API (<code class="inline-code">/api/*</code>):</strong> Proxy tiến hành loại bỏ (strip) tiền tố <code class="inline-code">/api/</code> và chuyển tiếp nguyên vẹn method và payload JSON tới container <code class="inline-code">application-backend-server:8081</code>.</li>
+          <li><strong>Xác thực danh tính (<code class="inline-code">/auth/*</code>):</strong> Proxy giữ nguyên đường dẫn và forwarded headers chuyển tiếp đến <code class="inline-code">authentication-identity-server:8080</code> (Keycloak).</li>
+        </ul>
+
+        <h2 id="can-bang-tai-round-robin">2. Cơ Chế Cân Bằng Tải Round Robin Giữa 2 Web Replicas</h2>
+        <p>
+          Nhằm mô phỏng tính sẵn sàng cao (High Availability), hệ thống khởi chạy hai bản sao máy chủ web tĩnh độc lập:
+        </p>
+        <div class="article-code-block">
 upstream web_pool {
     zone web_pool 64k;
     server web-frontend-server1:80 resolve max_fails=2 fail_timeout=5s;
     server web-frontend-server2:80 resolve max_fails=2 fail_timeout=5s;
 }
-      </pre>
-      <p>
-        Mỗi request gửi đến máy chủ web được gắn kèm header <code class="inline-code">X-Web-Server</code> phản ánh chính xác hostname của container đang xử lý. Khi người dùng thực hiện reload hoặc gửi yêu cầu trên ứng dụng, lượng tải sẽ luân phiên chia đều 50/50 giữa 2 server.
-      </p>
+        </div>
+        <p>
+          Khi người dùng nhấn Reload hoặc chạy thử nghiệm tải trong Portal Control, Nginx phân phối luân phiên từng request đến Server 1 rồi đến Server 2 với tỷ lệ cân bằng 50/50 hoàn hảo.
+        </p>
 
-      <h2>3. Tích Hợp Đa Dịch Vụ: Cơ Sở Dữ Liệu, S3 và Bảo Mật OIDC</h2>
-      <p>
-        Mảnh ghép nghiệp vụ trung tâm của MyMiniCloud nằm ở container <code class="inline-code">application-backend-server</code> viết bằng Python 3.12 Flask:
-      </p>
-      <ol>
-        <li>
-          <strong>Tương tác SQL Server 2022 qua ODBC Driver 18:</strong> Backend sử dụng thư viện <code class="inline-code">pyodbc</code> kết nối trực tiếp đến database <code class="inline-code">studentdb</code>. Mọi thao tác CRUD sinh viên đều thực thi các câu lệnh T-SQL chuẩn mực trên bảng <code class="inline-code">dbo.students</code>, đảm bảo tính toàn vẹn dữ liệu (ACID).
-        </li>
-        <li>
-          <strong>Lưu trữ đối tượng với MinIO S3:</strong> Thay vì lưu ảnh và tài liệu trực tiếp vào hệ thống tệp của container (gây đầy ổ và mất dữ liệu khi scale), backend tích hợp thư viện MinIO SDK. Tệp ảnh đại diện được tải vào bucket <code class="inline-code">profile-pics</code>, hồ sơ PDF tải vào bucket <code class="inline-code">documents</code>. Vì các bucket này ở chế độ private, backend hoạt động như một Secure Gateway kiểm duyệt quyền truy cập trước khi sinh download stream.
-        </li>
-        <li>
-          <strong>Xác thực OIDC với PKCE (Proof Key for Code Exchange):</strong> Thay vì dùng flow Implicit đã lỗi thời hoặc truyền client secret ở frontend, ứng dụng sử dụng flow <strong>Authorization Code kèm PKCE S256</strong>. Trình duyệt tự sinh <code class="inline-code">code_verifier</code> và <code class="inline-code">code_challenge</code>, gửi xác thực qua Keycloak, nhận Authorization Code và đổi lấy JWT Access Token. Backend Flask kiểm tra tính hợp lệ của token qua chữ ký RS256 và endpoint JWKS của Keycloak.
-        </li>
-      </ol>
+        <h2 id="tich-hop-da-dich-vu">3. Tích Hợp Đa Dịch Vụ: SQL Server, MinIO S3, Keycloak PKCE &amp; Prometheus</h2>
+        <p>
+          Khác với các đồ án đơn lẻ, MyMiniCloud chứng minh khả năng liên kết sâu giữa các thành phần doanh nghiệp:
+        </p>
+        <ol>
+          <li><strong>Lưu trữ quan hệ (RDBMS):</strong> Container <code class="inline-code">database-sqlserver-2022</code> chạy SQL Server 2022 trên Linux, lưu trữ danh mục sinh viên và điểm số theo mô hình ACID chuẩn mực.</li>
+          <li><strong>Lưu trữ phi cấu trúc (Object Storage):</strong> Container <code class="inline-code">object-storage-server</code> chạy MinIO S3 tương thích AWS S3 API, tiếp nhận ảnh đại diện và hồ sơ sinh viên tải lên qua bucket <code class="inline-code">profile-pics</code>.</li>
+          <li><strong>Bảo mật phân quyền (IAM SSO):</strong> Container <code class="inline-code">authentication-identity-server</code> cung cấp Keycloak realm <code class="inline-code">mini-cloud</code>, hỗ trợ đăng nhập một lần (Single Sign-On) và cấp phát JWT token có chữ ký số.</li>
+          <li><strong>Giám sát hạ tầng (Observability):</strong> Bộ đôi Prometheus (:9090) và Grafana (:3000) tự động cào metrics từ cAdvisor và Node Exporter, vẽ biểu đồ CPU, RAM, Network I/O thời gian thực.</li>
+        </ol>
 
-      <div class="article-nav" style="margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between;">
-        <a href="/blog/blog2.html" class="btn btn-secondary btn-sm">&larr; Chuyên đề 02: Docker &amp; Containers</a>
-        <a href="/" class="btn btn-primary btn-sm">Về Portal Control &rarr;</a>
+        <h2 id="bang-boc-tach-dich-vu">4. Bảng Bóc Tách Chi Tiết 9 Nhóm Dịch Vụ MyMiniCloud</h2>
+        <div class="article-table-wrap">
+          <table class="article-data-table">
+            <thead>
+              <tr>
+                <th>Nhóm Dịch Vụ</th>
+                <th>Container Service</th>
+                <th>FQDN Nội Bộ</th>
+                <th>Cổng Nội Bộ</th>
+                <th>Vai Trò Kiến Trúc</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Nhóm 1: Web Hosting</strong></td>
+                <td>web-frontend-server1, 2</td>
+                <td>web.cloud.local</td>
+                <td>80</td>
+                <td>Cụm Nginx Web Replicas phục vụ Portal, App, Blog</td>
+              </tr>
+              <tr>
+                <td><strong>Nhóm 2: Application API</strong></td>
+                <td>application-backend-server</td>
+                <td>app-backend.cloud.local</td>
+                <td>8081</td>
+                <td>Flask REST API nghiệp vụ quản lý sinh viên</td>
+              </tr>
+              <tr>
+                <td><strong>Nhóm 3: SQL Database</strong></td>
+                <td>database-sqlserver-2022</td>
+                <td>sqlserver.cloud.local</td>
+                <td>1433</td>
+                <td>Cơ sở dữ liệu quan hệ SQL Server 2022 Linux</td>
+              </tr>
+              <tr>
+                <td><strong>Nhóm 4: Object Storage</strong></td>
+                <td>object-storage-server</td>
+                <td>minio.cloud.local</td>
+                <td>9000, 9001</td>
+                <td>MinIO S3 Object Storage lưu trữ ảnh đại diện</td>
+              </tr>
+              <tr>
+                <td><strong>Nhóm 5: Identity IAM</strong></td>
+                <td>authentication-identity-server</td>
+                <td>keycloak.cloud.local</td>
+                <td>8080</td>
+                <td>Keycloak SSO Realm mini-cloud (OIDC / OAuth 2.0)</td>
+              </tr>
+              <tr>
+                <td><strong>Nhóm 6: Reverse Proxy</strong></td>
+                <td>api-gateway-proxy-server</td>
+                <td>gateway.cloud.local</td>
+                <td>80</td>
+                <td>Cổng tiếp nhận duy nhất &amp; Cân bằng tải Round Robin</td>
+              </tr>
+              <tr>
+                <td><strong>Nhóm 7: Internal DNS</strong></td>
+                <td>dns-bind9-server</td>
+                <td>dns.cloud.local</td>
+                <td>1053</td>
+                <td>Phân giải tên miền cục bộ zone cloud.local</td>
+              </tr>
+              <tr>
+                <td><strong>Nhóm 8: Metrics Prometheus</strong></td>
+                <td>monitoring-prometheus-server</td>
+                <td>prometheus.cloud.local</td>
+                <td>9090</td>
+                <td>Thu thập và lưu trữ time-series metrics</td>
+              </tr>
+              <tr>
+                <td><strong>Nhóm 9: Dashboard Grafana</strong></td>
+                <td>monitoring-grafana-dashboard-server</td>
+                <td>grafana.cloud.local</td>
+                <td>3000</td>
+                <td>Trực quan hóa Dashboard hiệu năng máy chủ</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
       </div>
+
+      <!-- Author Bio Footer -->
+      <footer class="article-author-footer">
+        <div class="blog-author-avatar-wrap">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <div>
+          <h4 style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0 0 0.35rem 0;">
+            Kiến Trúc Sư Hệ Thống &bull; MyMiniCloud Team
+          </h4>
+          <p style="font-size: 0.875rem; color: #64748b; margin: 0; line-height: 1.5;">
+            Trưởng nhóm thiết kế kiến trúc phân tán cho MyMiniCloud, chịu trách nhiệm thiết kế mạng riêng ảo, tối ưu định tuyến Gateway và kiểm thử khả năng chịu lỗi của cụm dịch vụ.
+          </p>
+        </div>
+      </footer>
+
+      <!-- Navigation Row (Prev / Next) -->
+      <div class="article-nav-row">
+        <a href="/blog/blog2.html" class="article-nav-tile">
+          <div style="font-size: 0.775rem; font-weight: 700; color: #64748b; text-transform: uppercase;">&larr; Bài trước</div>
+          <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-top: 0.35rem;">
+            Chuyên đề 02: Docker &amp; Containers Tầng OS
+          </div>
+        </a>
+
+        <a href="/blog/#articles" class="article-nav-tile" style="text-align: right;">
+          <div style="font-size: 0.775rem; font-weight: 700; color: #2563eb; text-transform: uppercase;">Quay lại &rarr;</div>
+          <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-top: 0.35rem;">
+            Danh Sách Tất Cả Bài Viết Blog
+          </div>
+        </a>
+      </div>
+
     </article>
-  </main>
 
-  <!-- Site Footer -->
-  <footer class="site-footer">
-    <div class="container footer-content">
-      <div>
-        <p><strong>MyMiniCloud Blog</strong> &copy; 2026. Phục vụ tĩnh qua cụm Nginx Web Replicas.</p>
-      </div>
-      <div class="footer-links">
-        <a href="/" class="footer-link">Portal Control</a>
-        <a href="/blog/" class="footer-link">Blog Home</a>
-        <a href="/app/" class="footer-link">Student App</a>
-      </div>
-    </div>
-  </footer>
+  </main>
 
 </body>
 </html>

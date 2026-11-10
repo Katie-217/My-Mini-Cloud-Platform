@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Điện Toán Đám Mây & Xu Hướng Private/Mini Cloud - MyMiniCloud Blog</title>
+  <link rel="icon" href="/assets/images/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/common.css">
+  <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="container navbar">
+      <a href="/" class="brand">
+        <div class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+          </svg>
+        </div>
+        <span>MyMiniCloud</span>
+        <span class="brand-badge">Blog</span>
+      </a>
+
+      <nav aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link">Portal</a></li>
+          <li><a href="/blog/" class="nav-link active">Blog</a></li>
+          <li><a href="/app/" class="nav-link">Student App</a></li>
+        </ul>
+      </nav>
+
+      <div class="env-tag">
+        <span class="env-dot"></span>
+        <span>Local Static Site</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Article Header -->
+  <header class="article-header">
+    <div class="container article-header-container">
+      <div class="article-breadcrumb">
+        <a href="/">Trang chủ</a> &rsaquo;
+        <a href="/blog/">Blog chuyên đề</a> &rsaquo;
+        <span>Chuyên đề 01</span>
+      </div>
+      <h1 class="article-title">Điện Toán Đám Mây &amp; Xu Hướng Xây Dựng Private / Mini Cloud Trong Doanh Nghiệp</h1>
+      <div class="article-meta">
+        <div class="article-author">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>Nhóm Kỹ sư Đám mây</span>
+        </div>
+        <time datetime="2026-11-10">Ngày đăng: 10/11/2026</time>
+        <span class="blog-tag">Cloud Architecture</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Article Body -->
+  <main>
+    <article class="article-content">
+      <img src="/assets/images/cloud-computing.svg" alt="Mô hình Điện toán đám mây và Mini Cloud" class="article-featured-img">
+
+      <p class="article-callout">
+        <strong>Tóm tắt chuyên đề:</strong> Điện toán đám mây (Cloud Computing) không chỉ đơn thuần là việc thuê máy chủ từ các nhà cung cấp đám mây công cộng (Public Cloud). Ngày càng nhiều doanh nghiệp lựa chọn kiến trúc Mini Cloud hoặc Private Cloud nội bộ để bảo vệ dữ liệu nhạy cảm, giảm thiểu độ trễ mạng và làm chủ toàn diện vòng đời hạ tầng.
+      </p>
+
+      <h2>1. Tổng Quan Về Điện Toán Đám Mây &amp; Các Mô Hình Cốt Lõi</h2>
+      <p>
+        Điện toán đám mây là mô hình cho phép truy cập theo yêu cầu (on-demand) tới một mạng lưới tài nguyên tính toán dùng chung có thể cấu hình được (như máy chủ tính toán, hệ thống lưu trữ, cơ sở dữ liệu, mạng và ứng dụng). Thay vì phải đầu tư chi phí lớn vào việc mua sắm và duy trì phần cứng vật lý cồng kềnh, tổ chức có thể cấp phát tài nguyên tức thì chỉ với vài cú nhấp chuột hoặc dòng lệnh.
+      </p>
+      <p>
+        Trong lý thuyết kiến trúc đám mây chuẩn (NIST Definition of Cloud Computing), hệ thống được phân thành 3 mô hình dịch vụ chính:
+      </p>
+      <ul>
+        <li><strong>Infrastructure as a Service (IaaS):</strong> Cung cấp tầng hạ tầng tính toán cơ bản nhất gồm máy chủ ảo (VM), ổ cứng lưu trữ khối (Block Storage) và mạng ảo hóa (VPC). Người dùng tự chịu trách nhiệm cài đặt hệ điều hành, phần mềm nền tảng và ứng dụng.</li>
+        <li><strong>Platform as a Service (PaaS):</strong> Cung cấp môi trường thực thi hoàn chỉnh (runtime environment) giúp lập trình viên triển khai ứng dụng mà không cần lo lắng về việc vá lỗi kernel, cấu hình hệ điều hành hay quản lý cụm phần cứng.</li>
+        <li><strong>Software as a Service (SaaS):</strong> Ứng dụng hoàn chỉnh được phân phối tới người dùng cuối thông qua trình duyệt web (ví dụ: Google Workspace, Microsoft 365, cổng quản lý đào tạo sinh viên).</li>
+      </ul>
+
+      <h2>2. Tại Sao Xu Hướng "Mini Cloud" Nội Bộ Lại Trở Nên Phổ Biến?</h2>
+      <p>
+        Mặc dù Public Cloud (AWS, Google Cloud, Azure) mang lại quy mô khổng lồ, chi phí sử dụng lâu dài và băng thông truyền tải dữ liệu (egress traffic) thường tăng theo cấp số nhân. Hơn nữa, những yêu cầu khắt khe về bảo mật dữ liệu, chủ quyền dữ liệu (Data Sovereignty) và tuân thủ quy định nội bộ khiến mô hình <strong>Private Cloud</strong> và <strong>Mini Cloud</strong> trở thành lời giải lý tưởng:
+      </p>
+      <ol>
+        <li><strong>Kiểm soát hoàn toàn dữ liệu:</strong> Toàn bộ dữ liệu cơ sở dữ liệu quan hệ (SQL Server), hồ sơ định danh người dùng (Keycloak) và tệp tin lưu trữ (MinIO S3) được lưu giữ trong phạm vi mạng nội bộ (On-premises / Local environment), loại bỏ rủi ro rò rỉ dữ liệu qua bên thứ ba.</li>
+        <li><strong>Độ trễ siêu thấp (Low Latency):</strong> Các dịch vụ giao tiếp với nhau trong cùng mạng ảo nội bộ <code class="inline-code">cloud-net</code> với băng thông Gigabit/10-Gigabit mà không bị nghẽn đường truyền Internet.</li>
+        <li><strong>Tối ưu chi phí cho môi trường R&amp;D và Giáo dục:</strong> Với Docker Compose và phần cứng sẵn có, một phòng lab hoặc doanh nghiệp vừa và nhỏ hoàn toàn có thể chạy mô phỏng toàn bộ chu trình đám mây với 9 nhóm dịch vụ mà không phát sinh chi phí hàng tháng.</li>
+      </ol>
+
+      <h2>3. Các Trụ Cột Kỹ Thuật Của Một Hệ Thống Mini Cloud Chuẩn Mực</h2>
+      <p>
+        Để một cụm phần mềm được công nhận là một hệ thống Mini Cloud hoàn chỉnh, hệ thống cần đảm bảo tối thiểu 5 trụ cột kiến trúc:
+      </p>
+      <ul>
+        <li><strong>Compute &amp; Web Hosting:</strong> Máy chủ web phân phối nội dung tĩnh, có khả năng mở rộng replica và cân bằng tải để tránh tình trạng đơn điểm hỏng hóc (Single Point of Failure - SPOF).</li>
+        <li><strong>Application &amp; Microservices:</strong> Backend RESTful API xử lý logic nghiệp vụ, giao tiếp với các dịch vụ nền tảng thông qua các chuẩn HTTP/JSON và ODBC tiêu chuẩn.</li>
+        <li><strong>Storage Layer:</strong> Phân định rạch ròi giữa dữ liệu quan hệ (RDBMS - SQL Server 2022) và dữ liệu phi cấu trúc (Object Storage tương thích AWS S3 - MinIO).</li>
+        <li><strong>Identity &amp; Access Management (IAM):</strong> Máy chủ định danh tập trung (Keycloak) hỗ trợ giao thức OIDC (OpenID Connect), OAuth 2.0 và cơ chế bảo mật PKCE giúp bảo vệ API mà không cần lưu trữ mật khẩu phân tán.</li>
+        <li><strong>Observability (Khả năng quan sát):</strong> Giám sát liên tục trạng thái phần cứng và ứng dụng thông qua Prometheus và trực quan hóa dữ liệu qua Grafana Dashboard.</li>
+      </ul>
+
+      <h2>4. Tổng Kết &amp; Hướng Phát Triển</h2>
+      <p>
+        Mô hình MyMiniCloud triển khai trong đồ án này chính là minh chứng sống động cho khả năng thu nhỏ kiến trúc điện toán đám mây chuẩn mực vào trong một máy chủ cục bộ hoặc laptop phát triển. Qua việc kết nối 9 dịch vụ độc lập trên mạng <code class="inline-code">cloud-net</code>, chúng ta nắm vững cách các khối kiến trúc đám mây tương tác và phối hợp nhịp nhàng với nhau.
+      </p>
+
+      <div class="article-nav">
+        <a href="/blog/" class="btn btn-secondary btn-sm">&larr; Danh sách bài viết</a>
+        <a href="/blog/blog2.html" class="btn btn-primary btn-sm">Bài tiếp theo: Docker &amp; Containers &rarr;</a>
+      </div>
+    </article>
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <div>
+        <p><strong>MyMiniCloud Blog</strong> &copy; 2026. Phục vụ qua Nginx Web Replicas.</p>
+      </div>
+      <div class="footer-links">
+        <a href="/" class="footer-link">Portal</a>
+        <a href="/blog/" class="footer-link">Blog</a>
+        <a href="/app/" class="footer-link">Student App</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

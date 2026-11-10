@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docker & Containers: Ảo Hóa Tầng OS & Microservices - MyMiniCloud Blog</title>
+  <link rel="icon" href="/assets/images/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/common.css">
+  <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="container navbar">
+      <a href="/" class="brand">
+        <div class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+          </svg>
+        </div>
+        <span>MyMiniCloud</span>
+        <span class="brand-badge">Blog</span>
+      </a>
+
+      <nav aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link">Portal</a></li>
+          <li><a href="/blog/" class="nav-link active">Blog</a></li>
+          <li><a href="/app/" class="nav-link">Student App</a></li>
+        </ul>
+      </nav>
+
+      <div class="env-tag">
+        <span class="env-dot"></span>
+        <span>Local Static Site</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Article Header -->
+  <header class="article-header">
+    <div class="container article-header-container">
+      <div class="article-breadcrumb">
+        <a href="/">Trang chủ</a> &rsaquo;
+        <a href="/blog/">Blog chuyên đề</a> &rsaquo;
+        <span>Chuyên đề 02</span>
+      </div>
+      <h1 class="article-title">Docker &amp; Containers: Ảo Hóa Tầng Hệ Điều Hành &amp; Đóng Gói Microservices</h1>
+      <div class="article-meta">
+        <div class="article-author">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>Nhóm Kỹ sư Đám mây</span>
+        </div>
+        <time datetime="2026-11-10">Ngày đăng: 10/11/2026</time>
+        <span class="blog-tag">DevOps &amp; Docker</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Article Body -->
+  <main>
+    <article class="article-content">
+      <img src="/assets/images/docker-containers.svg" alt="So sánh Kiến trúc VM và Docker Container" class="article-featured-img">
+
+      <p class="article-callout">
+        <strong>Tóm tắt chuyên đề:</strong> Containerization đã tạo ra cuộc cách mạng trong phương thức phát triển và phát hành phần mềm hiện đại. Thay vì mang theo cả một hệ điều hành khách (Guest OS) nặng nề hàng chục Gigabyte như máy ảo truyền thống, Docker tận dụng chung nhân hệ điều hành Linux (Host Kernel) để mang lại hiệu năng khởi động tức thì và mức tiêu thụ tài nguyên tối thiểu.
+      </p>
+
+      <h2>1. So Sánh Bản Chất: Virtual Machines (VMs) vs. Docker Containers</h2>
+      <p>
+        Để hiểu vì sao Docker lại trở thành tiêu chuẩn vàng trong triển khai microservices, chúng ta cần so sánh sự khác biệt căn bản về mặt kiến trúc ảo hóa:
+      </p>
+      <ul>
+        <li>
+          <strong>Máy ảo (Virtual Machine - Hypervisor):</strong> Ảo hóa ở tầng phần cứng (Hardware-level Virtualization). Hypervisor (như VMware ESXi, Hyper-V, KVM) phân chia phần cứng vật lý và tạo ra các máy ảo độc lập. Mỗi máy ảo bắt buộc phải có một bản sao hệ điều hành khách hoàn chỉnh (Guest OS) bao gồm nhân kernel, thư viện hệ thống và tiến trình nền, dẫn đến dung lượng đĩa lớn (10GB - 50GB) và thời gian khởi động tính bằng phút.
+        </li>
+        <li>
+          <strong>Docker Container:</strong> Ảo hóa ở tầng hệ điều hành (OS-level Virtualization). Mọi container đều chạy trực tiếp trên nhân hệ điều hành chủ (Host OS Kernel) thông qua Docker Daemon. Nhờ vậy, container chỉ chứa ứng dụng và các thư viện phụ thuộc (dependencies) thực sự cần thiết, dung lượng ảnh chỉ từ vài chục Megabytes đến vài trăm Megabytes và có thể khởi động chỉ trong vài giây.
+        </li>
+      </ul>
+
+      <h2>2. Ba "Trụ Cột" Công Nghệ Của Linux Kernel Tạo Nên Docker</h2>
+      <p>
+        Docker không phải là một công nghệ ảo hóa độc lập bí ẩn, mà là một lớp trừu tượng (abstraction layer) tinh vi tận dụng 3 tính năng cốt lõi của Linux Kernel:
+      </p>
+      <ol>
+        <li>
+          <strong>Linux Namespaces (Không gian tên cô lập):</strong> Đảm bảo sự cô lập hoàn toàn giữa các tiến trình của từng container. Các namespace quan trọng gồm:
+          <ul>
+            <li><code>PID namespace</code>: Cô lập cây tiến trình, tiến trình trong container chỉ nhìn thấy chính nó như là PID 1.</li>
+            <li><code>NET namespace</code>: Cô lập giao diện mạng, bảng định tuyến và danh sách cổng IP riêng biệt.</li>
+            <li><code>MNT namespace</code>: Cung cấp điểm gắn hệ thống tệp riêng biệt cho container.</li>
+            <li><code>IPC &amp; UTS namespaces</code>: Cô lập giao tiếp liên tiến trình và tên máy chủ (hostname).</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Control Groups (Cgroups - Kiểm soát định mức tài nguyên):</strong> Cho phép Docker Daemon giới hạn và giám sát lượng tài nguyên vật lý mà mỗi container được phép sử dụng (CPU quotas, giới hạn RAM, băng thông I/O). Điều này ngăn ngừa tình trạng một container bị lỗi rò rỉ bộ nhớ làm sập toàn bộ hệ thống máy chủ.
+        </li>
+        <li>
+          <strong>Union File System (Overlay2 - Hệ thống tệp lớp):</strong> Cho phép xếp chồng nhiều lớp tệp (layers) chỉ đọc (read-only) lên nhau và tạo một lớp ghi (read-write container layer) mỏng trên cùng. Các container chia sẻ chung các lớp image gốc giúp tiết kiệm hàng chục Gigabyte dung lượng đĩa.
+        </li>
+      </ol>
+
+      <h2>3. Quản Trị Mạng Và Lưu Trữ Bền Vững Trong MyMiniCloud</h2>
+      <p>
+        Trong hệ thống MyMiniCloud, chúng ta áp dụng các nguyên tắc kỹ thuật Docker chuẩn mực:
+      </p>
+      <ul>
+        <li>
+          <strong>Mạng Bridge cách ly (<code class="inline-code">cloud-net</code>):</strong> Thay vì dùng mạng bridge mặc định thiếu tính năng phân giải tên miền nội bộ, MyMiniCloud tạo một user-defined bridge network riêng với dải IP tách biệt. Các container có thể phân giải địa chỉ của nhau bằng tên dịch vụ (ví dụ: <code class="inline-code">application-backend-server</code> tự tìm thấy <code class="inline-code">relational-database-server</code> qua Docker DNS nội bộ).
+        </li>
+        <li>
+          <strong>Docker Named Volumes cho dữ liệu bất biến:</strong> Container về bản chất là phi trạng thái (stateless/ephemeral). Để dữ liệu cơ sở dữ liệu SQL Server không bị biến mất khi container khởi động lại hoặc recreate, named volume <code class="inline-code">mycloud_mssql-data</code> được gắn trực tiếp vào <code class="inline-code">/var/opt/mssql</code>. Tương tự, MinIO sử dụng <code class="inline-code">mycloud_minio-data</code> và Grafana dùng <code class="inline-code">mycloud_grafana-data</code>.
+        </li>
+      </ul>
+
+      <h2>4. Quản Lý Vòng Đời Bằng Docker Compose</h2>
+      <p>
+        Với một hệ thống gồm 9 nhóm dịch vụ đa dạng từ Web Nginx, API Flask, SQL Server, MinIO đến Prometheus, việc chạy các lệnh <code class="inline-code">docker run</code> thủ công là không khả thi và dễ xảy ra sai sót. <strong>Docker Compose</strong> đóng vai trò như bản thiết kế hạ tầng dạng mã nguồn (Infrastructure as Code - IaC), giúp:
+      </p>
+      <ul>
+        <li>Khai báo quan hệ phụ thuộc giữa các dịch vụ (<code class="inline-code">depends_on</code> và healthcheck).</li>
+        <li>Tách biệt cấu hình nhạy cảm (mật khẩu SA, khóa bí mật) ra tệp biến môi trường <code class="inline-code">.env</code>.</li>
+        <li>Khởi động hoặc dừng toàn bộ hệ sinh thái chỉ bằng một lệnh duy nhất: <code class="inline-code">docker compose up -d</code>.</li>
+      </ul>
+
+      <div class="article-nav">
+        <a href="/blog/blog1.html" class="btn btn-secondary btn-sm">&larr; Bài trước: Điện toán đám mây</a>
+        <a href="/blog/blog3.html" class="btn btn-primary btn-sm">Bài tiếp theo: Kiến trúc MyMiniCloud &rarr;</a>
+      </div>
+    </article>
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <div>
+        <p><strong>MyMiniCloud Blog</strong> &copy; 2026. Phục vụ qua Nginx Web Replicas.</p>
+      </div>
+      <div class="footer-links">
+        <a href="/" class="footer-link">Portal</a>
+        <a href="/blog/" class="footer-link">Blog</a>
+        <a href="/app/" class="footer-link">Student App</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

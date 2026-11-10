@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%" fill="none">
+  <rect width="800" height="450" rx="16" fill="#0F172A"/>
+  
+  <defs>
+    <linearGradient id="whaleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+    <filter id="boxShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="400" y="50" text-anchor="middle" fill="#93C5FD" font-family="system-ui, sans-serif" font-size="18" font-weight="bold" letter-spacing="1">DOCKER ENGINE &amp; OS-LEVEL CONTAINERIZATION</text>
+
+  <!-- Left: Traditional VM Architecture -->
+  <g transform="translate(60, 80)">
+    <rect width="300" height="320" rx="10" fill="#1E293B" stroke="#334155" stroke-width="2"/>
+    <text x="150" y="32" text-anchor="middle" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="15" font-weight="bold">Máy ảo truyền thống (VM)</text>
+    
+    <!-- Infrastructure layer -->
+    <rect x="20" y="260" width="260" height="40" rx="6" fill="#334155"/>
+    <text x="150" y="285" text-anchor="middle" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="12" font-weight="600">Phần cứng hạ tầng (Server Hardware)</text>
+
+    <!-- Host OS -->
+    <rect x="20" y="210" width="260" height="42" rx="6" fill="#475569"/>
+    <text x="150" y="236" text-anchor="middle" fill="#F1F5F9" font-family="system-ui, sans-serif" font-size="12" font-weight="600">Hệ điều hành Host OS</text>
+
+    <!-- Hypervisor -->
+    <rect x="20" y="160" width="260" height="42" rx="6" fill="#64748B"/>
+    <text x="150" y="186" text-anchor="middle" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">Hypervisor (Type 1 / Type 2)</text>
+
+    <!-- VMs -->
+    <!-- VM 1 -->
+    <g transform="translate(20, 50)">
+      <rect width="125" height="100" rx="6" fill="#1E3A8A" stroke="#3B82F6" stroke-width="1.5"/>
+      <rect x="5" y="60" width="115" height="32" rx="4" fill="#1D4ED8"/>
+      <text x="62" y="80" text-anchor="middle" fill="#EFF6FF" font-family="system-ui, sans-serif" font-size="10">Guest OS (GBs)</text>
+      <rect x="5" y="35" width="115" height="20" rx="4" fill="#2563EB"/>
+      <text x="62" y="49" text-anchor="middle" fill="#FFF" font-family="system-ui, sans-serif" font-size="10">Bins / Libs</text>
+      <rect x="5" y="8" width="115" height="22" rx="4" fill="#38BDF8"/>
+      <text x="62" y="23" text-anchor="middle" fill="#0F172A" font-family="system-ui, sans-serif" font-size="10" font-weight="bold">App A</text>
+    </g>
+
+    <!-- VM 2 -->
+    <g transform="translate(155, 50)">
+      <rect width="125" height="100" rx="6" fill="#1E3A8A" stroke="#3B82F6" stroke-width="1.5"/>
+      <rect x="5" y="60" width="115" height="32" rx="4" fill="#1D4ED8"/>
+      <text x="62" y="80" text-anchor="middle" fill="#EFF6FF" font-family="system-ui, sans-serif" font-size="10">Guest OS (GBs)</text>
+      <rect x="5" y="35" width="115" height="20" rx="4" fill="#2563EB"/>
+      <text x="62" y="49" text-anchor="middle" fill="#FFF" font-family="system-ui, sans-serif" font-size="10">Bins / Libs</text>
+      <rect x="5" y="8" width="115" height="22" rx="4" fill="#38BDF8"/>
+      <text x="62" y="23" text-anchor="middle" fill="#0F172A" font-family="system-ui, sans-serif" font-size="10" font-weight="bold">App B</text>
+    </g>
+  </g>
+
+  <!-- Right: Docker Containers Architecture -->
+  <g transform="translate(440, 80)">
+    <rect width="300" height="320" rx="10" fill="#1E293B" stroke="#0284C7" stroke-width="2"/>
+    <text x="150" y="32" text-anchor="middle" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="15" font-weight="bold">Docker Containers (MyMiniCloud)</text>
+
+    <!-- Infrastructure layer -->
+    <rect x="20" y="260" width="260" height="40" rx="6" fill="#334155"/>
+    <text x="150" y="285" text-anchor="middle" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="12" font-weight="600">Phần cứng hạ tầng (Server Hardware)</text>
+
+    <!-- Host OS / Kernel -->
+    <rect x="20" y="210" width="260" height="42" rx="6" fill="#1E3A8A"/>
+    <text x="150" y="236" text-anchor="middle" fill="#93C5FD" font-family="system-ui, sans-serif" font-size="12" font-weight="600">Host OS (Linux Kernel - Cgroups/Namespaces)</text>
+
+    <!-- Docker Daemon -->
+    <rect x="20" y="160" width="260" height="42" rx="6" fill="#0284C7"/>
+    <text x="150" y="186" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">Docker Engine (Dùng chung Kernel)</text>
+
+    <!-- Containers -->
+    <!-- Cont 1: Web -->
+    <g transform="translate(20, 50)">
+      <rect width="80" height="100" rx="6" fill="#0F172A" stroke="#10B981" stroke-width="1.5"/>
+      <rect x="5" y="45" width="70" height="48" rx="4" fill="#065F46"/>
+      <text x="40" y="73" text-anchor="middle" fill="#A7F3D0" font-family="system-ui, sans-serif" font-size="9">Nginx Web</text>
+      <rect x="5" y="8" width="70" height="30" rx="4" fill="#10B981"/>
+      <text x="40" y="26" text-anchor="middle" fill="#064E3B" font-family="system-ui, sans-serif" font-size="10" font-weight="bold">Web-1/2</text>
+    </g>
+
+    <!-- Cont 2: App -->
+    <g transform="translate(110, 50)">
+      <rect width="80" height="100" rx="6" fill="#0F172A" stroke="#3B82F6" stroke-width="1.5"/>
+      <rect x="5" y="45" width="70" height="48" rx="4" fill="#1E3A8A"/>
+      <text x="40" y="73" text-anchor="middle" fill="#BFDBFE" font-family="system-ui, sans-serif" font-size="9">Flask Py</text>
+      <rect x="5" y="8" width="70" height="30" rx="4" fill="#3B82F6"/>
+      <text x="40" y="26" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="10" font-weight="bold">Backend</text>
+    </g>
+
+    <!-- Cont 3: DB -->
+    <g transform="translate(200, 50)">
+      <rect width="80" height="100" rx="6" fill="#0F172A" stroke="#F59E0B" stroke-width="1.5"/>
+      <rect x="5" y="45" width="70" height="48" rx="4" fill="#78350F"/>
+      <text x="40" y="73" text-anchor="middle" fill="#FDE68A" font-family="system-ui, sans-serif" font-size="9">SQL 2022</text>
+      <rect x="5" y="8" width="70" height="30" rx="4" fill="#F59E0B"/>
+      <text x="40" y="26" text-anchor="middle" fill="#78350F" font-family="system-ui, sans-serif" font-size="10" font-weight="bold">MSSQL</text>
+    </g>
+  </g>
+</svg>

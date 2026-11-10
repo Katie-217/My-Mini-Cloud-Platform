@@ -85,9 +85,9 @@ body.app-body {
 
 /* App Main Container */
 .app-container {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 1.5rem auto 3rem;
-  padding: 0 1.5rem;
+  padding: 0 2rem;
 }
 
 /* Hero Banner (Matching Image 1) */
@@ -486,6 +486,66 @@ body.app-body {
 .gpa-good { background-color: #dbeafe; color: #1d4ed8; }
 .gpa-med  { background-color: #fef3c7; color: #b45309; }
 .gpa-low  { background-color: #fee2e2; color: #b91c1c; }
+
+/* Drag and Drop File Upload Area */
+.file-dropzone-box {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 2.25rem 1.5rem;
+  text-align: center;
+  background-color: #f8fafc;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+.file-dropzone-box:hover,
+.file-dropzone-box.dragover {
+  border-color: var(--app-blue-600);
+  background-color: #eff6ff;
+}
+
+.dropzone-icon {
+  width: 44px;
+  height: 44px;
+  color: #2563eb;
+  margin: 0 auto 0.5rem;
+}
+
+.dropzone-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.25rem;
+}
+
+.dropzone-sub {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+}
+
+.file-selected-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #ffffff;
+  border: 1px solid var(--app-border);
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.dropzone-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
 
 /* Forms */
 .form-grid {

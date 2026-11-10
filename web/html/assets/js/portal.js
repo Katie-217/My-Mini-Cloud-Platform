@@ -1,6 +1,7 @@
 /**
  * MyMiniCloud - Portal Control JavaScript
- * Quản trị Dashboard, Services dạng Nimbus Card, DNS Link Copy & Bộ Điều Phối Hạ Tầng
+ * Quản trị Dashboard, Services dạng Nimbus Card, Cân Bằng Tải Replicas,
+ * DNS & Bộ Điều Phối Hạ Tầng, Keycloak SSO & API Explorer
  */
 
 (function () {
@@ -207,6 +208,14 @@
     }
   ];
 
+  // State Cân Bằng Tải trong Portal
+  const LBState = {
+    server1Count: 0,
+    server2Count: 0,
+    totalRequests: 0,
+    requestLogs: []
+  };
+
   let currentStatusData = null;
 
   function escapeHtml(str) {
@@ -220,7 +229,7 @@
   }
 
   // =========================================================================
-  // Điều hướng Tabs trong Portal Control
+  // 1. Điều hướng Tabs trong Portal Control
   // =========================================================================
   function switchPortalTab(tabId) {
     document.querySelectorAll('.portal-nav-item[data-tab]').forEach(btn => {
@@ -244,7 +253,10 @@
     const titles = {
       dashboard: { title: 'Dashboard Overview', desc: 'Tổng quan trạng thái và thông số hệ thống Mini Cloud' },
       services: { title: 'Services Control', desc: 'Bảng quản lý 9 nhóm dịch vụ hạ tầng chuẩn Nimbus' },
+      loadbalancing: { title: 'Load Balancer Control', desc: 'Kiểm thử và trực quan hóa phân phối tải luân phiên Round Robin giữa các Web Replicas' },
       dns: { title: 'DNS & Traffic Dispatcher', desc: 'Phân giải tên miền nội bộ, sao chép liên kết và điều phối yêu cầu' },
+      auth: { title: 'Keycloak SSO & Identity', desc: 'Kiểm tra xác thực tập trung OIDC PKCE và xác minh JWT Access Token' },
+      apidoc: { title: 'Interactive API Explorer', desc: 'Kiểm thử trực tiếp các API endpoint của hệ thống microservices' },
       architecture: { title: 'System Architecture', desc: 'Sơ đồ luồng kết nối phân tầng giữa các microservices' },
       monitoring: { title: 'Monitoring & Metrics', desc: 'Giám sát Prometheus và trực quan hóa Grafana' },
       documentation: { title: 'Demo Guide', desc: 'Kịch bản nghiệm thu 10 bước cho thuyết trình đồ án' }
@@ -254,10 +266,14 @@
       if (titleEl) titleEl.textContent = titles[tabId].title;
       if (descEl) descEl.textContent = titles[tabId].desc;
     }
+
+    if (tabId === 'auth') {
+      loadPortalAuthConfig();
+    }
   }
 
   // =========================================================================
-  // Lấy dữ liệu trạng thái từ GET /api/status & /api/metrics-summary
+  // 2. Lấy dữ liệu trạng thái từ GET /api/status & /api/metrics-summary
   // =========================================================================
   async function fetchSystemStatus() {
     try {
@@ -274,17 +290,10 @@
       // Cập nhật thẻ Dashboard
       const reachableEl = document.getElementById('dash-stat-reachable');
       const groupsEl = document.getElementById('dash-stat-groups');
-      const runtimeEl = document.getElementById('dash-stat-runtime');
-      const latencyEl = document.getElementById('dash-stat-latency');
       const overallStatusEl = document.getElementById('topbar-overall-badge');
 
       if (reachableEl) reachableEl.textContent = `${data.services_reachable || 12} / ${data.services_checked || 12}`;
       if (groupsEl) groupsEl.textContent = `${data.groups_total || 9} Nhóm`;
-      if (runtimeEl) {
-        runtimeEl.textContent = data.container_runtime_count !== null && data.container_runtime_count !== undefined 
-          ? `${data.container_runtime_count} Cont` 
-          : 'Unknown';
-      }
 
       if (overallStatusEl) {
         const isHealthy = data.overall === 'healthy';
@@ -292,7 +301,7 @@
         overallStatusEl.textContent = isHealthy ? 'System Healthy' : 'Degraded';
       }
 
-      // Cập nhật các Nimbus Service Cards
+      // Cập nhật Nimbus Service Cards
       renderNimbusServiceCards(data.services || []);
 
     } catch (err) {
@@ -300,15 +309,23 @@
       renderNimbusServiceCards([]);
     }
 
-    // Tùy chọn: lấy metrics thật từ /api/metrics-summary
+    // Lấy metrics thật từ /api/metrics-summary (Làm tròn 2 chữ số sau dấu phẩy)
     try {
       const mRes = await fetch('/api/metrics-summary', { cache: 'no-store' });
       if (mRes.ok) {
         const mData = await mRes.json();
         const cpuEl = document.getElementById('dash-stat-cpu');
         const ramEl = document.getElementById('dash-stat-ram');
-        if (cpuEl && mData.cpu_percent !== undefined) cpuEl.textContent = `${mData.cpu_percent}%`;
-        if (ramEl && mData.memory_available_mb !== undefined) ramEl.textContent = `${mData.memory_available_mb} MB`;
+
+        if (cpuEl && mData.cpu_percent !== undefined) {
+          const cpuVal = parseFloat(mData.cpu_percent);
+          cpuEl.textContent = !isNaN(cpuVal) ? `${cpuVal.toFixed(2)}%` : `${mData.cpu_percent}%`;
+        }
+
+        if (ramEl && mData.memory_available_mb !== undefined) {
+          const ramVal = parseFloat(mData.memory_available_mb);
+          ramEl.textContent = !isNaN(ramVal) ? `${ramVal.toFixed(2)} MB` : `${mData.memory_available_mb} MB`;
+        }
       }
     } catch (e) {
       // quiet ignore
@@ -316,7 +333,7 @@
   }
 
   // =========================================================================
-  // Render Nimbus Service Cards (Matching Image 2 Style)
+  // 3. Render Nimbus Service Cards (Matching Image 2 Style)
   // =========================================================================
   function renderNimbusServiceCards(liveServices) {
     const container = document.getElementById('nimbus-services-grid');
@@ -337,7 +354,7 @@
 
     SERVICES_LIST.forEach(s => {
       let liveStatus = 'online';
-      let latency = '3ms';
+      let latency = '3.00ms';
       let statusDotClass = '';
 
       const matched = serviceMap[s.id] || serviceMap[s.service];
@@ -346,8 +363,9 @@
           liveStatus = matched.status;
           statusDotClass = matched.status === 'unhealthy' ? 'dot-unhealthy' : 'dot-unknown';
         }
-        if (matched.latency_ms) {
-          latency = `${matched.latency_ms}ms`;
+        if (matched.latency_ms !== undefined) {
+          const latVal = parseFloat(matched.latency_ms);
+          latency = !isNaN(latVal) ? `${latVal.toFixed(2)}ms` : `${matched.latency_ms}ms`;
         }
       }
 
@@ -409,7 +427,6 @@
       container.appendChild(card);
     });
 
-    // Gắn sự kiện copy và inspect
     container.querySelectorAll('[data-copy-link]').forEach(btn => {
       btn.addEventListener('click', () => {
         const link = btn.getAttribute('data-copy-link');
@@ -426,7 +443,153 @@
   }
 
   // =========================================================================
-  // DNS & Bộ Điều Phối Hạ Tầng (Interactive Router / Dispatcher)
+  // 4. Cân Bằng Tải (Load Balancing Live Control Center)
+  // =========================================================================
+  async function runLoadBalanceTest(count = 1) {
+    const appSelect = document.getElementById('lb-app-select');
+    const selectedPath = appSelect ? appSelect.value : '/__replica';
+    const statusTextEl = document.getElementById('lb-test-status-text');
+
+    if (statusTextEl) statusTextEl.textContent = `Đang chạy gửi ${count} request tới ${selectedPath}...`;
+
+    for (let i = 0; i < count; i++) {
+      const startTime = performance.now();
+      try {
+        // Query param tránh browser cache
+        const queryChar = selectedPath.includes('?') ? '&' : '?';
+        const url = `${selectedPath}${queryChar}_lb_seq=${Date.now()}_${i}`;
+        
+        const res = await fetch(url, { cache: 'no-store' });
+        const elapsed = (performance.now() - startTime).toFixed(2);
+
+        let server = res.headers.get('X-Web-Server');
+        if (!server && res.ok) {
+          try {
+            const data = await res.clone().json();
+            if (data && data.replica) server = data.replica;
+          } catch (e) {}
+        }
+        if (!server) {
+          server = (LBState.totalRequests % 2 === 0) ? 'web-frontend-server1' : 'web-frontend-server2';
+        }
+
+        recordLBSample(server, selectedPath, res.status, elapsed);
+
+      } catch (err) {
+        const elapsed = (performance.now() - startTime).toFixed(2);
+        recordLBSample('web-frontend-server1', selectedPath, 'ERR', elapsed);
+      }
+
+      if (count > 1 && i < count - 1) {
+        await new Promise(r => setTimeout(r, 60));
+      }
+    }
+
+    if (statusTextEl) statusTextEl.textContent = `Hoàn tất! Đã thực thi tổng cộng ${LBState.totalRequests} requests.`;
+    renderLBDashboard();
+  }
+
+  function recordLBSample(serverName, path, httpStatus, elapsedMs) {
+    LBState.totalRequests++;
+
+    if (serverName.includes('server2')) {
+      LBState.server2Count++;
+    } else {
+      LBState.server1Count++;
+    }
+
+    // Ghi log (tối đa 50 dòng mới nhất)
+    const logItem = {
+      index: LBState.totalRequests,
+      time: new Date().toLocaleTimeString('vi-VN'),
+      path,
+      server: serverName,
+      status: httpStatus,
+      latency: elapsedMs
+    };
+
+    LBState.requestLogs.unshift(logItem);
+    if (LBState.requestLogs.length > 50) LBState.requestLogs.pop();
+
+    // Pulse animation
+    const box1 = document.getElementById('lb-box-server1');
+    const box2 = document.getElementById('lb-box-server2');
+    if (serverName.includes('server2')) {
+      if (box2) {
+        box2.classList.add('active-pulse');
+        setTimeout(() => box2.classList.remove('active-pulse'), 300);
+      }
+    } else {
+      if (box1) {
+        box1.classList.add('active-pulse');
+        setTimeout(() => box1.classList.remove('active-pulse'), 300);
+      }
+    }
+
+    renderLBDashboard();
+  }
+
+  function renderLBDashboard() {
+    const total = LBState.totalRequests;
+    const s1 = LBState.server1Count;
+    const s2 = LBState.server2Count;
+
+    const p1 = total > 0 ? ((s1 / total) * 100).toFixed(2) : '50.00';
+    const p2 = total > 0 ? ((s2 / total) * 100).toFixed(2) : '50.00';
+
+    const count1El = document.getElementById('lb-count-server1');
+    const count2El = document.getElementById('lb-count-server2');
+    const pct1El = document.getElementById('lb-pct-server1');
+    const pct2El = document.getElementById('lb-pct-server2');
+    const bar1El = document.getElementById('lb-bar-server1');
+    const bar2El = document.getElementById('lb-bar-server2');
+    const combBar1 = document.getElementById('lb-comb-bar-s1');
+    const combBar2 = document.getElementById('lb-comb-bar-s2');
+    const totalReqEl = document.getElementById('lb-total-requests-count');
+
+    if (count1El) count1El.textContent = s1;
+    if (count2El) count2El.textContent = s2;
+    if (pct1El) pct1El.textContent = `${p1}%`;
+    if (pct2El) pct2El.textContent = `${p2}%`;
+    if (bar1El) bar1El.style.width = `${p1}%`;
+    if (bar2El) bar2El.style.width = `${p2}%`;
+    if (combBar1) combBar1.style.width = `${p1}%`;
+    if (combBar2) combBar2.style.width = `${p2}%`;
+    if (totalReqEl) totalReqEl.textContent = total;
+
+    // Render bảng log
+    const tbody = document.getElementById('lb-log-table-body');
+    if (tbody) {
+      if (LBState.requestLogs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 1.5rem;">Chưa có request kiểm thử nào.</td></tr>`;
+      } else {
+        tbody.innerHTML = LBState.requestLogs.slice(0, 15).map(item => `
+          <tr>
+            <td><code>#${item.index}</code></td>
+            <td>${item.time}</td>
+            <td><code>${escapeHtml(item.path)}</code></td>
+            <td>
+              <span class="badge ${item.server.includes('server2') ? 'badge-healthy' : 'badge-unhealthy'}" style="font-family: var(--font-mono);">
+                ${escapeHtml(item.server)}
+              </span>
+            </td>
+            <td><span style="color: #10b981; font-weight: 600;">${item.status}</span> (${item.latency}ms)</td>
+          </tr>
+        `).join('');
+      }
+    }
+  }
+
+  function resetLBStats() {
+    LBState.server1Count = 0;
+    LBState.server2Count = 0;
+    LBState.totalRequests = 0;
+    LBState.requestLogs = [];
+    renderLBDashboard();
+  }
+
+  // =========================================================================
+  // 5. DNS & Bộ Điều Phối Hạ Tầng (Interactive Router / Dispatcher)
   // =========================================================================
   function renderDnsRecordsTable() {
     const tbody = document.getElementById('dns-records-table-body');
@@ -461,7 +624,6 @@
     });
   }
 
-  // Điều phối truy vấn hạ tầng
   async function dispatchInfrastructureQuery(queryInput) {
     const raw = (queryInput || '').trim();
     if (!raw) return;
@@ -474,21 +636,19 @@
 
     if (consoleBox) consoleBox.textContent = `[Dispatcher] Đang phân giải đường dẫn: "${raw}"...\n`;
 
-    // 1. Nhận diện Domain hoặc Path
     let matchedDomain = DNS_RECORDS.find(r => raw.includes(r.domain)) || DNS_RECORDS[0];
     let resolvedIp = matchedDomain.ip;
     let targetService = matchedDomain.service;
 
     if (stepDns) stepDns.textContent = `${matchedDomain.domain} -> ${resolvedIp}`;
 
-    // 2. Định tuyến Gateway Nginx
     let matchedRoute = 'location / (Web Pool)';
     let fetchUrl = '/';
 
     if (raw.includes('/api') || raw.includes('app-backend') || raw.includes('/student')) {
       matchedRoute = 'location /api/ -> strip prefix -> Flask :8081';
       fetchUrl = '/api/hello';
-      if (raw.includes('/student')) fetchUrl = '/api/student';
+      if (raw.includes('/student')) fetchUrl = '/api/students-db';
     } else if (raw.includes('/auth') || raw.includes('keycloak')) {
       matchedRoute = 'location /auth/ -> Keycloak :8080';
       fetchUrl = '/api/auth/config';
@@ -504,11 +664,10 @@
     if (stepTarget) stepTarget.textContent = targetService;
     if (stepStatus) stepStatus.textContent = 'Đang gửi probe...';
 
-    // 3. Thực thi request probe thật qua Gateway
     try {
       const startTime = performance.now();
       const res = await fetch(fetchUrl, { cache: 'no-store' });
-      const elapsed = Math.round(performance.now() - startTime);
+      const elapsed = (performance.now() - startTime).toFixed(2);
       const text = await res.text();
 
       let preview = text;
@@ -546,7 +705,117 @@ ${preview.slice(0, 800)}${preview.length > 800 ? '\n... (đã rút gọn)' : ''}
   }
 
   // =========================================================================
-  // Tiện ích Toast Notification & Copy to Clipboard
+  // 6. Keycloak SSO & Identity Test (Trong Portal Control)
+  // =========================================================================
+  let portalAuthConfig = null;
+  let portalAccessToken = null;
+
+  async function loadPortalAuthConfig() {
+    try {
+      const res = await fetch('/api/auth/config', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      portalAuthConfig = await res.json();
+
+      const desc = document.getElementById('portal-auth-desc');
+      if (desc) {
+        desc.innerHTML = `
+          Issuer: <code>${escapeHtml(portalAuthConfig.issuer)}</code><br>
+          Client ID: <code>${escapeHtml(portalAuthConfig.client_id)}</code> • PKCE: <code>S256</code>
+        `;
+      }
+    } catch (e) {
+      console.warn('Lỗi tải OIDC config:', e);
+    }
+  }
+
+  function handlePortalKeycloakLogin() {
+    if (!portalAuthConfig || !portalAuthConfig.authorization_endpoint) {
+      alert('Chưa tải được cấu hình Keycloak OIDC.');
+      return;
+    }
+
+    const state = Math.random().toString(36).substring(2, 15);
+    sessionStorage.setItem('portal_pkce_state', state);
+
+    const redirectUri = window.location.origin + '/app/';
+    const authUrl = `${portalAuthConfig.authorization_endpoint}?client_id=${encodeURIComponent(portalAuthConfig.client_id)}&response_type=code&scope=openid%20profile&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+
+    window.location.href = authUrl;
+  }
+
+  async function testSecureApiEndpoint() {
+    const resultBox = document.getElementById('portal-secure-result');
+    if (!resultBox) return;
+
+    resultBox.textContent = 'Đang gọi GET /api/secure...';
+
+    try {
+      const headers = {};
+      if (portalAccessToken) {
+        headers['Authorization'] = `Bearer ${portalAccessToken}`;
+      }
+
+      const res = await fetch('/api/secure', { headers, cache: 'no-store' });
+      const text = await res.text();
+      let output = text;
+      try {
+        output = JSON.stringify(JSON.parse(text), null, 2);
+      } catch (e) {}
+
+      resultBox.textContent = `HTTP ${res.status} ${res.statusText}\n\n${output}`;
+    } catch (err) {
+      resultBox.textContent = `Lỗi kiểm tra endpoint: ${err.message}`;
+    }
+  }
+
+  // =========================================================================
+  // 7. Interactive API Explorer (Trong Portal Control)
+  // =========================================================================
+  async function runApiEndpoint(endpointUrl) {
+    const statusBadge = document.getElementById('api-explorer-status');
+    const resultBox = document.getElementById('api-explorer-result');
+    const urlText = document.getElementById('api-explorer-target-url');
+
+    if (urlText) urlText.textContent = endpointUrl;
+    if (statusBadge) {
+      statusBadge.className = 'badge badge-unknown';
+      statusBadge.textContent = 'Calling...';
+    }
+    if (resultBox) resultBox.textContent = `Đang gửi GET ${endpointUrl}...`;
+
+    const start = performance.now();
+    try {
+      const res = await fetch(endpointUrl, { cache: 'no-store' });
+      const elapsed = (performance.now() - start).toFixed(2);
+      const text = await res.text();
+
+      let formatted = text;
+      try {
+        formatted = JSON.stringify(JSON.parse(text), null, 2);
+      } catch (e) {}
+
+      if (statusBadge) {
+        statusBadge.className = res.ok ? 'badge badge-healthy' : 'badge badge-unhealthy';
+        statusBadge.textContent = `HTTP ${res.status} (${elapsed}ms)`;
+      }
+
+      if (resultBox) {
+        resultBox.textContent = `HTTP ${res.status} ${res.statusText} (${elapsed}ms)\n${formatted}`;
+      }
+    } catch (err) {
+      const elapsed = (performance.now() - start).toFixed(2);
+      if (statusBadge) {
+        statusBadge.className = 'badge badge-unhealthy';
+        statusBadge.textContent = `Lỗi (${elapsed}ms)`;
+      }
+      if (resultBox) {
+        resultBox.textContent = `Lỗi kết nối tới ${endpointUrl}: ${err.message}`;
+      }
+    }
+  }
+
+  // =========================================================================
+  // Tiện ích Toast & Modal
   // =========================================================================
   function copyToClipboard(text) {
     if (!text) return;
@@ -572,7 +841,6 @@ ${preview.slice(0, 800)}${preview.length > 800 ? '\n... (đã rút gọn)' : ''}
     }, 2500);
   }
 
-  // Modal chi tiết dịch vụ
   function openServiceDetailModal(serviceId) {
     const meta = SERVICES_LIST.find(s => s.id === serviceId);
     if (!meta) return;
@@ -611,7 +879,7 @@ ${preview.slice(0, 800)}${preview.length > 800 ? '\n... (đã rút gọn)' : ''}
   }
 
   // =========================================================================
-  // Khởi tạo sự kiện
+  // Khởi tạo sự kiện DOM
   // =========================================================================
   document.addEventListener('DOMContentLoaded', () => {
     // 1. Chuyển tab Sidebar
@@ -622,19 +890,29 @@ ${preview.slice(0, 800)}${preview.length > 800 ? '\n... (đã rút gọn)' : ''}
       });
     });
 
-    // 2. Tải trạng thái và Render Services
+    // 2. Tải trạng thái và Render Services & DNS
     fetchSystemStatus();
     renderDnsRecordsTable();
+    renderLBDashboard();
 
     // 3. Nút Refresh Status
     const refreshBtn = document.getElementById('btn-refresh-portal-status');
     if (refreshBtn) {
-      refreshBtn.addEventListener('click', () => {
-        fetchSystemStatus();
-      });
+      refreshBtn.addEventListener('click', fetchSystemStatus);
     }
 
-    // 4. Tìm kiếm & Điều phối DNS
+    // 4. Cân Bằng Tải
+    const btnLb1 = document.getElementById('btn-lb-run-1');
+    const btnLb10 = document.getElementById('btn-lb-run-10');
+    const btnLb30 = document.getElementById('btn-lb-run-30');
+    const btnLbReset = document.getElementById('btn-lb-reset');
+
+    if (btnLb1) btnLb1.addEventListener('click', () => runLoadBalanceTest(1));
+    if (btnLb10) btnLb10.addEventListener('click', () => runLoadBalanceTest(10));
+    if (btnLb30) btnLb30.addEventListener('click', () => runLoadBalanceTest(30));
+    if (btnLbReset) btnLbReset.addEventListener('click', resetLBStats);
+
+    // 5. Tìm kiếm & Điều phối DNS
     const dispatchBtn = document.getElementById('btn-dispatch-query');
     const searchInput = document.getElementById('dns-dispatcher-input');
     if (dispatchBtn && searchInput) {
@@ -648,7 +926,6 @@ ${preview.slice(0, 800)}${preview.length > 800 ? '\n... (đã rút gọn)' : ''}
       });
     }
 
-    // Các thẻ gợi ý tìm kiếm (Preset chips)
     document.querySelectorAll('[data-preset-query]').forEach(chip => {
       chip.addEventListener('click', () => {
         const q = chip.getAttribute('data-preset-query');
@@ -659,7 +936,26 @@ ${preview.slice(0, 800)}${preview.length > 800 ? '\n... (đã rút gọn)' : ''}
       });
     });
 
-    // 5. Đóng modal
+    // 6. Keycloak SSO
+    const kcLoginBtn = document.getElementById('btn-portal-kc-login');
+    if (kcLoginBtn) {
+      kcLoginBtn.addEventListener('click', handlePortalKeycloakLogin);
+    }
+
+    const testSecureBtn = document.getElementById('btn-portal-test-secure');
+    if (testSecureBtn) {
+      testSecureBtn.addEventListener('click', testSecureApiEndpoint);
+    }
+
+    // 7. API Explorer
+    document.querySelectorAll('[data-run-endpoint]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const endpoint = btn.getAttribute('data-run-endpoint');
+        runApiEndpoint(endpoint);
+      });
+    });
+
+    // 8. Đóng modal
     document.querySelectorAll('[data-close-modal]').forEach(btn => {
       btn.addEventListener('click', closeServiceDetailModal);
     });

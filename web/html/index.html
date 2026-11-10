@@ -164,22 +164,6 @@
       <!-- ================================================================= -->
       <section class="portal-tab-pane active" id="tab-dashboard">
         
-        <!-- Architecture Info Banner -->
-        <div style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #f8fafc; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; border: 1px solid rgba(255,255,255,0.1);">
-          <div>
-            <div style="font-size: 0.8rem; text-transform: uppercase; color: #38bdf8; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Hạ Tầng Điện Toán Đám Mây Thu Nhỏ</div>
-            <div style="font-size: 1.05rem; font-weight: 700; color: #ffffff;">Hệ Thống Phân Tán MyMiniCloud (Docker Compose)</div>
-            <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.25rem;">
-              Bao gồm <strong>9 nhóm dịch vụ kiến trúc logic</strong>, điều phối tổng cộng <strong>12 Docker Containers</strong> hoạt động trên mạng cô lập <code>cloud-net</code> (Subnet <code>172.30.50.0/24</code>).
-            </div>
-          </div>
-          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <span class="badge" style="background: rgba(37,99,235,0.25); color: #93c5fd; border: 1px solid rgba(147,197,253,0.3);">Round Robin Nginx</span>
-            <span class="badge" style="background: rgba(16,185,129,0.25); color: #6ee7b7; border: 1px solid rgba(110,231,183,0.3);">Keycloak OIDC</span>
-            <span class="badge" style="background: rgba(245,158,11,0.25); color: #fde68a; border: 1px solid rgba(253,230,138,0.3);">Bind9 DNS :1053</span>
-          </div>
-        </div>
-
         <!-- 4 Metrics Cards (Healthy Containers, Infrastructure Groups, CPU Usage, Memory Usage) -->
         <div class="overview-stats-grid">
           
@@ -621,56 +605,48 @@
             <span class="badge badge-healthy">OIDC &bull; RS256 JWKS</span>
           </div>
 
-          <!-- OIDC Config Cards Grid -->
-          <div class="auth-grid">
-            
-            <!-- Card 1: Keycloak Realm & Client -->
-            <div class="auth-card">
-              <div class="auth-card-title">
+          <!-- Card Gom Gọn: Thông Tin Realm & Client + Trạng Thái & Buttons ở góc trên bên phải -->
+          <div class="auth-card" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0;">
+              
+              <!-- Bên trái: Tiêu đề -->
+              <div class="auth-card-title" style="margin: 0;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #2563eb;">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                   <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
                 Thông Tin Realm &amp; Client
               </div>
-              <table class="service-detail-table" style="font-size: 0.85rem;">
-                <tbody>
-                  <tr><th>Máy Chủ SSO</th><td><code>http://localhost:8080/auth/</code></td></tr>
-                  <tr><th>Realm Name</th><td><strong style="color: #2563eb;">mini-cloud</strong> (hoặc mycloud)</td></tr>
-                  <tr><th>Client ID</th><td><code>flask-app</code> (Public Client PKCE)</td></tr>
-                  <tr><th>Flow Type</th><td>Authorization Code + PKCE (S256)</td></tr>
-                  <tr><th>Signing Key</th><td>Thuật toán RS256 qua endpoint JWKS</td></tr>
-                </tbody>
-              </table>
-            </div>
 
-            <!-- Card 2: Actions & Token Status -->
-            <div class="auth-card">
-              <div class="auth-card-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #16a34a;">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                Trạng Thái Phiên &amp; Bearer Token
-              </div>
-              <div style="margin-bottom: 1rem;">
-                <div style="font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 0.35rem;">Trạng Thái Hiện Tại:</div>
+              <!-- Bên phải: Trạng thái và các buttons -->
+              <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
                 <div id="auth-tab-status-badge">
                   <span class="badge badge-unknown">Chưa cấp Bearer Token</span>
                 </div>
-              </div>
-              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <button type="button" class="btn btn-primary btn-sm" id="btn-auth-sso-login">
-                  Đăng Nhập Keycloak SSO
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm" id="btn-auth-open-modal">
-                  Nhập Token Thủ Công
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm" id="btn-auth-clear-token">
-                  Xóa Token
-                </button>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                  <button type="button" class="btn btn-primary btn-sm" id="btn-auth-sso-login">
+                    Đăng Nhập Keycloak SSO
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-auth-open-modal">
+                    Nhập Token Thủ Công
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-auth-clear-token">
+                    Xóa Token
+                  </button>
+                </div>
               </div>
             </div>
 
+            <!-- Bảng chi tiết cấu hình Realm & Client -->
+            <table class="service-detail-table" style="font-size: 0.85rem;">
+              <tbody>
+                <tr><th>Máy Chủ SSO</th><td><code>http://localhost:8080/auth/</code></td></tr>
+                <tr><th>Realm Name</th><td><strong style="color: #2563eb;">mini-cloud</strong> (hoặc mycloud)</td></tr>
+                <tr><th>Client ID</th><td><code>flask-app</code> (Public Client PKCE)</td></tr>
+                <tr><th>Flow Type</th><td>Authorization Code + PKCE (S256)</td></tr>
+                <tr><th>Signing Key</th><td>Thuật toán RS256 qua endpoint JWKS</td></tr>
+              </tbody>
+            </table>
           </div>
 
           <!-- Test Protected Endpoint /api/secure -->

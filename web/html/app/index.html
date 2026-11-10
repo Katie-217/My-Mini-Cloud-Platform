@@ -21,7 +21,7 @@
           <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
       </div>
-      <span>MyMiniCloud App</span>
+      <span>Student Management System</span>
     </a>
 
     <!-- Horizontal Pill Tabs (Matching Image 1) -->
@@ -30,24 +30,21 @@
       <button type="button" class="top-tab-btn" data-tab="students">Students</button>
       <button type="button" class="top-tab-btn" data-tab="add-student">Add Student</button>
       <button type="button" class="top-tab-btn" data-tab="storage">File Storage</button>
-      <button type="button" class="top-tab-btn" data-tab="account">Keycloak SSO</button>
-      <button type="button" class="top-tab-btn" data-tab="apidoc">API Docs</button>
     </nav>
 
     <div class="app-topbar-right">
-      <span class="badge badge-unknown" id="topbar-status-pill">Đang kiểm tra API...</span>
-      <span class="badge badge-healthy" id="topbar-user-pill" style="display: none;">User: Demo</span>
+      <span class="badge badge-healthy" id="topbar-status-pill">API Connected</span>
       <a href="/" class="btn btn-secondary btn-sm" title="Quay về Portal Control">
-        &larr; Về Portal
+        &larr; Về Portal Control
       </a>
     </div>
   </header>
 
-  <!-- Main Content Container -->
+  <!-- Main Content Container (Full Width) -->
   <main class="app-container">
 
     <!-- =================================================================== -->
-    <!-- TAB 1: DASHBOARD (Matching Image 1 Exactly + Load Balancing Widget) -->
+    <!-- TAB 1: DASHBOARD (Matching Image 1) -->
     <!-- =================================================================== -->
     <section class="tab-pane active" id="tab-dashboard">
       
@@ -153,7 +150,7 @@
               </svg>
             </div>
             <h3 class="quick-action-title">View All Students</h3>
-            <p class="quick-action-desc">Browse and manage student records from SQL Server 2022 database.</p>
+            <p class="quick-action-desc">Xem và quản lý hồ sơ sinh viên đầy đủ trong hệ thống.</p>
           </div>
 
           <!-- Action 2: Add New Student -->
@@ -165,10 +162,10 @@
               </svg>
             </div>
             <h3 class="quick-action-title">Add New Student</h3>
-            <p class="quick-action-desc">Register a new student with avatar upload to MinIO S3 storage.</p>
+            <p class="quick-action-desc">Đăng ký thêm sinh viên mới và cập nhật ảnh hồ sơ.</p>
           </div>
 
-          <!-- Action 3: Manage Courses / Storage -->
+          <!-- Action 3: Manage Documents / Storage -->
           <div class="quick-action-card" data-tab="storage">
             <div class="quick-action-icon icon-purple">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -176,88 +173,9 @@
                 <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
               </svg>
             </div>
-            <h3 class="quick-action-title">Manage Courses / Storage</h3>
-            <p class="quick-action-desc">View and manage PDF course documents and files in MinIO storage.</p>
+            <h3 class="quick-action-title">Manage Documents</h3>
+            <p class="quick-action-desc">Lưu trữ và quản lý tài liệu học tập, giáo trình PDF.</p>
           </div>
-        </div>
-      </div>
-
-      <!-- Live Load Balancing Monitor (Theo yêu cầu người dùng: cập nhật lượng tải giữa 2 server khi reload / tăng request) -->
-      <div class="loadbalance-card">
-        <div class="loadbalance-header">
-          <div class="lb-title-box">
-            <div class="lb-icon-wrap">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="16 3 21 3 21 8"></polyline>
-                <line x1="4" y1="20" x2="21" y2="3"></line>
-                <polyline points="21 16 21 21 16 21"></polyline>
-                <line x1="15" y1="15" x2="21" y2="21"></line>
-                <line x1="4" y1="4" x2="9" y2="9"></line>
-              </svg>
-            </div>
-            <div>
-              <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin-bottom: 0.2rem;">
-                Cân Bằng Tải Hai Web Server (Nginx Round Robin Load Balancing)
-              </h3>
-              <p style="font-size: 0.85rem; color: #64748b;">
-                Hệ thống Nginx Reverse Proxy tự động phân phối request luân phiên giữa 2 web replicas.
-              </p>
-            </div>
-          </div>
-
-          <div class="lb-actions">
-            <button type="button" class="btn btn-secondary btn-sm" id="btn-lb-single-req">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
-              </svg>
-              Gửi 1 Request
-            </button>
-            <button type="button" class="btn btn-primary btn-sm" id="btn-lb-batch-req">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-              </svg>
-              Tăng Tải 10 Request Liên Tục
-            </button>
-          </div>
-        </div>
-
-        <div class="lb-servers-grid">
-          <!-- Server 1 -->
-          <div class="lb-server-box" id="box-server1">
-            <div class="lb-server-header">
-              <div class="lb-server-name">web-frontend-server1</div>
-              <span class="badge badge-healthy" id="badge-s1-live">Active</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-              <span style="font-size: 1.75rem; font-weight: 800; color: #2563eb;" id="count-server1">0</span>
-              <span style="font-size: 0.85rem; font-weight: 600; color: #64748b;" id="percent-server1">50%</span>
-            </div>
-            <div class="lb-progress-bar-bg">
-              <div class="lb-progress-bar-fill fill-server1" id="bar-server1" style="width: 50%;"></div>
-            </div>
-            <div style="font-size: 0.775rem; color: #64748b;">Docker Network: cloud-net (Port 80 nội bộ)</div>
-          </div>
-
-          <!-- Server 2 -->
-          <div class="lb-server-box" id="box-server2">
-            <div class="lb-server-header">
-              <div class="lb-server-name">web-frontend-server2</div>
-              <span class="badge badge-healthy" id="badge-s2-live">Active</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-              <span style="font-size: 1.75rem; font-weight: 800; color: #10b981;" id="count-server2">0</span>
-              <span style="font-size: 0.85rem; font-weight: 600; color: #64748b;" id="percent-server2">50%</span>
-            </div>
-            <div class="lb-progress-bar-bg">
-              <div class="lb-progress-bar-fill fill-server2" id="bar-server2" style="width: 50%;"></div>
-            </div>
-            <div style="font-size: 0.775rem; color: #64748b;">Docker Network: cloud-net (Port 80 nội bộ)</div>
-          </div>
-        </div>
-
-        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: #64748b; padding-top: 0.5rem; border-top: 1px solid #f1f5f9;">
-          <div>Tổng số request đã phục vụ: <strong id="lb-total-requests" style="color: #0f172a;">0</strong></div>
-          <div>Request gần nhất xử lý bởi: <span class="badge badge-unknown" id="lb-last-server">Chưa có request</span></div>
         </div>
       </div>
 
@@ -269,8 +187,8 @@
     <section class="tab-pane" id="tab-students">
       <div class="panel-card">
         <div class="panel-card-header">
-          <h2 class="panel-card-title">Danh Sách Sinh Viên (SQL Server 2022)</h2>
-          <button type="button" class="btn btn-primary btn-sm" data-tab="add-student">+ Thêm Sinh Viên</button>
+          <h2 class="panel-card-title">Danh Sách Sinh Viên</h2>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-goto-add-student">+ Thêm Sinh Viên</button>
         </div>
         <div class="panel-card-body">
           <div class="table-toolbar">
@@ -306,7 +224,7 @@
               <tbody id="students-table-body">
                 <tr id="students-loading">
                   <td colspan="8" style="text-align: center; padding: 2rem; color: #64748b;">
-                    Đang tải danh sách sinh viên từ /api/students-db...
+                    Đang tải danh sách sinh viên...
                   </td>
                 </tr>
                 <tr id="students-empty" style="display: none;">
@@ -322,25 +240,22 @@
     </section>
 
     <!-- =================================================================== -->
-    <!-- TAB 3: ADD STUDENT -->
+    <!-- TAB 3: ADD STUDENT (Trực tiếp bên dưới khi bấm thêm học sinh) -->
     <!-- =================================================================== -->
     <section class="tab-pane" id="tab-add-student">
-      <div class="panel-card" style="max-width: 800px; margin: 0 auto;">
+      <div class="panel-card">
         <div class="panel-card-header">
           <h2 class="panel-card-title">Thêm Sinh Viên Mới</h2>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-back-to-students">&larr; Quay lại danh sách</button>
         </div>
         <div class="panel-card-body">
-          <div class="alert alert-info" style="margin-bottom: 1.25rem;">
-            Dữ liệu được lưu trực tiếp vào database <code>studentdb</code> trên SQL Server 2022 qua endpoint <code>POST /api/students-db</code>. Ảnh đại diện tải lên MinIO S3 bucket <code>profile-pics</code>.
-          </div>
-
           <div id="add-student-alert" class="alert" style="display: none;"></div>
 
           <form id="add-student-form">
             <div class="form-grid">
               <div class="form-group">
                 <label class="form-label" for="add-student-id">Mã Sinh Viên *</label>
-                <input type="text" class="form-control" id="add-student-id" name="student_id" placeholder="VD: SV004" required maxlength="10">
+                <input type="text" class="form-control" id="add-student-id" name="student_id" placeholder="VD: SV006" required maxlength="10">
                 <span class="form-hint">1-10 ký tự chữ/số/gạch nối.</span>
               </div>
 
@@ -353,7 +268,7 @@
               <div class="form-group">
                 <label class="form-label" for="add-dob">Ngày Sinh *</label>
                 <input type="date" class="form-control" id="add-dob" name="dob" required>
-                <span class="form-hint">Định dạng YYYY-MM-DD, không ở tương lai.</span>
+                <span class="form-hint">Định dạng YYYY-MM-DD.</span>
               </div>
 
               <div class="form-group">
@@ -371,24 +286,24 @@
               <div class="form-group">
                 <label class="form-label" for="add-gpa">Điểm GPA (Thang 4.0) *</label>
                 <input type="number" class="form-control" id="add-gpa" name="gpa" placeholder="VD: 3.50" step="0.01" min="0" max="4" value="3.50" required>
-                <span class="form-hint">Từ 0.00 đến 4.00.</span>
+                <span class="form-hint">Làm tròn 2 chữ số (VD: 3.50).</span>
               </div>
             </div>
 
             <div class="form-group" style="margin-bottom: 1.5rem;">
-              <label class="form-label">Ảnh Thẻ Đại Diện (MinIO S3)</label>
+              <label class="form-label">Ảnh Thẻ Đại Diện</label>
               <div class="avatar-preview-box">
                 <img id="add-avatar-preview" src="" alt="Avatar Preview" class="preview-img" style="display: none;">
                 <div style="flex-grow: 1;">
                   <input type="file" id="add-avatar-file" name="avatar_file" accept="image/png, image/jpeg, image/jpg" class="form-control">
-                  <span class="form-hint">PNG hoặc JPEG, tối đa 10 MiB. Tải vào bucket private <code>profile-pics</code>.</span>
+                  <span class="form-hint">Tệp hình ảnh PNG hoặc JPEG (tối đa 10 MB).</span>
                 </div>
               </div>
             </div>
 
             <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-              <button type="button" class="btn btn-secondary" data-tab="students">Hủy bỏ</button>
-              <button type="submit" class="btn btn-primary">Lưu Sinh Viên Vào Database</button>
+              <button type="button" class="btn btn-secondary" id="btn-cancel-add-student">Hủy bỏ</button>
+              <button type="submit" class="btn btn-primary">Lưu Sinh Viên</button>
             </div>
           </form>
         </div>
@@ -396,190 +311,83 @@
     </section>
 
     <!-- =================================================================== -->
-    <!-- TAB 4: FILE STORAGE (MINIO S3) -->
+    <!-- TAB 4: FILE STORAGE (Kéo thả tệp & Danh sách toàn màn hình) -->
     <!-- =================================================================== -->
     <section class="tab-pane" id="tab-storage">
       <div class="panel-card">
         <div class="panel-card-header">
-          <h2 class="panel-card-title">Tải Lên Tài Liệu Học Tập (Bucket: documents)</h2>
+          <h2 class="panel-card-title">Lưu Trữ Tài Liệu Học Tập</h2>
         </div>
         <div class="panel-card-body">
           <div id="upload-file-alert" class="alert" style="display: none;"></div>
 
-          <form id="upload-document-form" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
-            <div class="form-group" style="flex-grow: 1; min-width: 280px;">
-              <label class="form-label" for="doc-file-input">Chọn tệp tài liệu PDF</label>
-              <input type="file" id="doc-file-input" name="file_input" accept="application/pdf" class="form-control" required>
-              <span class="form-hint">Chỉ nhận tệp PDF, tối đa 10 MiB. Lưu trữ trong MinIO S3 private.</span>
+          <!-- Drag and Drop Upload Area -->
+          <form id="upload-document-form">
+            <input type="file" id="doc-file-input" name="file_input" accept="application/pdf" style="display: none;">
+            
+            <div class="file-dropzone-box" id="file-dropzone">
+              <div class="dropzone-icon">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <div class="dropzone-title">Kéo thả tệp tài liệu PDF vào đây hoặc nhấn để chọn file</div>
+              <div class="dropzone-sub">Chỉ hỗ trợ tệp tài liệu PDF (tối đa 10 MB)</div>
+              <div id="selected-file-display" style="display: none;">
+                <span class="file-selected-pill">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                  </svg>
+                  <span id="selected-file-name">filename.pdf</span>
+                  <span id="selected-file-size" style="color: #64748b;">(0 KB)</span>
+                </span>
+              </div>
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-bottom: 0.2rem;">Tải Lên MinIO S3</button>
+
+            <div class="dropzone-actions-row">
+              <button type="button" class="btn btn-secondary" id="btn-refresh-files">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                </svg>
+                Tải lại danh sách
+              </button>
+              <button type="submit" class="btn btn-primary" id="btn-submit-upload" disabled>
+                Tải lên tài liệu
+              </button>
+            </div>
           </form>
-        </div>
-      </div>
 
-      <div class="panel-card">
-        <div class="panel-card-header">
-          <h2 class="panel-card-title">Danh Sách Tệp Trong Bucket <code>documents</code></h2>
-          <button type="button" class="btn btn-secondary btn-sm" id="btn-refresh-files">Làm mới danh sách</button>
-        </div>
-        <div class="panel-card-body">
-          <div id="storage-alert" class="alert" style="display: none;"></div>
+          <!-- Danh sách tài liệu -->
+          <div style="border-top: 1px solid var(--app-border); padding-top: 1.5rem;">
+            <div id="storage-alert" class="alert" style="display: none;"></div>
 
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Tên Tệp (Key)</th>
-                  <th>Kích Thước</th>
-                  <th>Thời Điểm Tải Lên</th>
-                  <th>Thao Tác</th>
-                </tr>
-              </thead>
-              <tbody id="files-table-body">
-                <tr id="files-loading">
-                  <td colspan="4" style="text-align: center; padding: 2rem; color: #64748b;">
-                    Đang lấy danh sách tệp từ /api/files?bucket=documents...
-                  </td>
-                </tr>
-                <tr id="files-empty" style="display: none;">
-                  <td colspan="4" style="text-align: center; padding: 2rem; color: #64748b;">
-                    Chưa có tệp PDF nào trong bucket documents.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- TAB 5: KEYCLOAK OIDC SSO -->
-    <!-- =================================================================== -->
-    <section class="tab-pane" id="tab-account">
-      <div class="panel-card">
-        <div class="panel-card-header">
-          <h2 class="panel-card-title">Xác Thực Tập Trung Keycloak SSO (OIDC PKCE S256)</h2>
-        </div>
-        <div class="panel-card-body">
-          <div id="account-alert" class="alert" style="display: none;"></div>
-
-          <div style="background-color: #f8fafc; border: 1px solid var(--app-border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
-              <div>
-                <span style="font-size: 0.85rem; color: #64748b;">Trạng thái phiên:</span>
-                <span id="auth-status-text" style="margin-left: 0.5rem;"><span class="badge badge-unknown">Chưa đăng nhập</span></span>
-              </div>
-              <div style="display: flex; gap: 0.75rem;">
-                <button type="button" class="btn btn-primary btn-sm" id="btn-keycloak-login">Đăng nhập qua Keycloak</button>
-                <button type="button" class="btn btn-secondary btn-sm" id="btn-keycloak-logout" style="display: none;">Đăng xuất</button>
-              </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Tên Tài Liệu</th>
+                    <th>Kích Thước</th>
+                    <th>Thời Điểm Cập Nhật</th>
+                    <th style="text-align: right;">Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody id="files-table-body">
+                  <tr id="files-loading">
+                    <td colspan="4" style="text-align: center; padding: 2rem; color: #64748b;">
+                      Đang lấy danh sách tài liệu...
+                    </td>
+                  </tr>
+                  <tr id="files-empty" style="display: none;">
+                    <td colspan="4" style="text-align: center; padding: 2.5rem; color: #64748b;">
+                      Chưa có tài liệu PDF nào được lưu trữ.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-
-            <div id="auth-config-desc" style="font-size: 0.8rem; color: #64748b;">
-              Đang tải cấu hình OIDC...
-            </div>
-          </div>
-
-          <div>
-            <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; color: #0f172a;">
-              Kiểm Tra Endpoint Bảo Vệ (<code class="inline-code">GET /api/secure</code>)
-            </h3>
-            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
-              Gửi HTTP request kèm header <code>Authorization: Bearer &lt;access_token&gt;</code> để backend xác minh chữ ký RS256 qua JWKS Keycloak.
-            </p>
-
-            <div id="secure-test-alert" class="alert" style="display: none;"></div>
-
-            <button type="button" class="btn btn-secondary btn-sm" id="btn-test-secure" disabled>
-              Gửi Request GET /api/secure
-            </button>
-
-            <div style="margin-top: 1rem;">
-              <span style="font-size: 0.8rem; font-weight: 600; color: #475569;">Kết quả phản hồi từ Backend:</span>
-              <pre class="token-viewer" id="secure-test-result">Chưa thực hiện kiểm tra.</pre>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- TAB 6: API DOCUMENTATION -->
-    <!-- =================================================================== -->
-    <section class="tab-pane" id="tab-apidoc">
-      <div class="panel-card">
-        <div class="panel-card-header">
-          <h2 class="panel-card-title">Tài Liệu Hợp Đồng API &amp; Bảng Thử Nghiệm</h2>
-        </div>
-        <div class="panel-card-body">
-          <p style="margin-bottom: 1.25rem; color: #475569;">
-            Danh sách các endpoint được định nghĩa trong <code class="inline-code">docs/api-contract.md</code>. Bấm <strong>Chạy thử (Run)</strong> để xem kết quả trả về trực tiếp.
-          </p>
-
-          <div style="background-color: #0f172a; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.5rem; color: #fff;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">
-              <span style="font-weight: 600; font-size: 0.9rem;" id="api-runner-url">GET /api/hello</span>
-              <span class="badge badge-unknown" id="api-runner-status">Sẵn sàng</span>
-            </div>
-            <pre class="token-viewer" id="api-runner-response" style="background: transparent; padding: 0; max-height: 200px;">Bấm "Chạy thử (Run)" trên bảng bên dưới để xem dữ liệu phản hồi.</pre>
-          </div>
-
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Method</th>
-                  <th>Endpoint URL</th>
-                  <th>Mô tả chức năng</th>
-                  <th>Thao tác an toàn</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><span class="badge badge-healthy">GET</span></td>
-                  <td><code>/api/hello</code></td>
-                  <td>Kiểm tra Application Backend Server</td>
-                  <td><button type="button" class="btn btn-secondary btn-sm" data-api-test data-endpoint="/api/hello" data-method="GET">Chạy thử (Run)</button></td>
-                </tr>
-                <tr>
-                  <td><span class="badge badge-healthy">GET</span></td>
-                  <td><code>/api/student</code></td>
-                  <td>5 mẫu JSON tĩnh từ file students.json</td>
-                  <td><button type="button" class="btn btn-secondary btn-sm" data-api-test data-endpoint="/api/student" data-method="GET">Chạy thử (Run)</button></td>
-                </tr>
-                <tr>
-                  <td><span class="badge badge-healthy">GET</span></td>
-                  <td><code>/api/students-db</code></td>
-                  <td>Lấy danh sách sinh viên từ SQL Server 2022</td>
-                  <td><button type="button" class="btn btn-secondary btn-sm" data-api-test data-endpoint="/api/students-db" data-method="GET">Chạy thử (Run)</button></td>
-                </tr>
-                <tr>
-                  <td><span class="badge badge-healthy">GET</span></td>
-                  <td><code>/api/health</code></td>
-                  <td>Healthcheck ứng dụng và kết nối SQL Server</td>
-                  <td><button type="button" class="btn btn-secondary btn-sm" data-api-test data-endpoint="/api/health" data-method="GET">Chạy thử (Run)</button></td>
-                </tr>
-                <tr>
-                  <td><span class="badge badge-healthy">GET</span></td>
-                  <td><code>/api/status</code></td>
-                  <td>Probe tổng thể 9 nhóm dịch vụ</td>
-                  <td><button type="button" class="btn btn-secondary btn-sm" data-api-test data-endpoint="/api/status" data-method="GET">Chạy thử (Run)</button></td>
-                </tr>
-                <tr>
-                  <td><span class="badge badge-healthy">GET</span></td>
-                  <td><code>/api/files?bucket=documents</code></td>
-                  <td>Liệt kê tệp tin hồ sơ PDF trên MinIO S3</td>
-                  <td><button type="button" class="btn btn-secondary btn-sm" data-api-test data-endpoint="/api/files?bucket=documents" data-method="GET">Chạy thử (Run)</button></td>
-                </tr>
-                <tr>
-                  <td><span class="badge badge-healthy">GET</span></td>
-                  <td><code>/api/auth/config</code></td>
-                  <td>Lấy thông tin cấu hình OIDC từ Keycloak</td>
-                  <td><button type="button" class="btn btn-secondary btn-sm" data-api-test data-endpoint="/api/auth/config" data-method="GET">Chạy thử (Run)</button></td>
-                </tr>
-              </tbody>
-            </table>
           </div>
         </div>
       </div>
@@ -587,96 +395,99 @@
 
   </main>
 
-  <!-- Modals -->
-  <!-- 1. View Student Modal -->
-  <div class="modal-backdrop" id="view-student-modal" aria-hidden="true" role="dialog" aria-labelledby="modal-view-title">
-    <div class="modal-dialog">
+  <!-- Modal Chi Tiết Sinh Viên -->
+  <div class="modal-backdrop" id="modal-student-detail" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title" id="modal-view-title">Hồ Sơ Chi Tiết Sinh Viên</h3>
-        <button type="button" class="modal-close-btn" data-close-modal aria-label="Đóng">&times;</button>
+        <h3>Hồ Sơ Chi Tiết Sinh Viên</h3>
+        <button type="button" class="btn-close-modal" data-close-modal aria-label="Đóng">&times;</button>
       </div>
-      <div class="modal-body" id="view-student-content"></div>
+      <div class="modal-body" id="modal-detail-content">
+        <!-- Rendered dynamically -->
+      </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary btn-sm" data-close-modal>Đóng</button>
+        <button type="button" class="btn btn-secondary" data-close-modal>Đóng</button>
       </div>
     </div>
   </div>
 
-  <!-- 2. Edit Student Modal -->
-  <div class="modal-backdrop" id="edit-student-modal" aria-hidden="true" role="dialog" aria-labelledby="modal-edit-title">
-    <div class="modal-dialog">
+  <!-- Modal Sửa Sinh Viên -->
+  <div class="modal-backdrop" id="modal-student-edit" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title" id="modal-edit-title">Chỉnh Sửa Thông Tin Sinh Viên</h3>
-        <button type="button" class="modal-close-btn" data-close-modal aria-label="Đóng">&times;</button>
+        <h3>Cập Nhật Thông Tin Sinh Viên</h3>
+        <button type="button" class="btn-close-modal" data-close-modal aria-label="Đóng">&times;</button>
       </div>
-      <form id="edit-student-form">
-        <div class="modal-body">
-          <div id="edit-student-alert" class="alert" style="display: none;"></div>
-          <input type="hidden" name="current_avatar_key">
-
-          <div class="form-group" style="margin-bottom: 1rem;">
-            <label class="form-label" for="edit-student-id">Mã Sinh Viên *</label>
-            <input type="text" class="form-control" id="edit-student-id" name="student_id" required maxlength="10">
+      <div class="modal-body">
+        <div id="edit-student-alert" class="alert" style="display: none;"></div>
+        <form id="edit-student-form">
+          <input type="hidden" id="edit-id" name="id">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="edit-student-id">Mã Sinh Viên</label>
+              <input type="text" class="form-control" id="edit-student-id" name="student_id" readonly>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="edit-fullname">Họ và Tên *</label>
+              <input type="text" class="form-control" id="edit-fullname" name="fullname" required maxlength="100">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="edit-dob">Ngày Sinh *</label>
+              <input type="date" class="form-control" id="edit-dob" name="dob" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="edit-major">Chuyên Ngành *</label>
+              <select class="form-control" id="edit-major" name="major" required>
+                <option value="Điện toán đám mây">Điện toán đám mây</option>
+                <option value="Kỹ thuật phần mềm">Kỹ thuật phần mềm</option>
+                <option value="Khoa học máy tính">Khoa học máy tính</option>
+                <option value="An toàn thông tin">An toàn thông tin</option>
+                <option value="Hệ thống thông tin">Hệ thống thông tin</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="edit-gpa">Điểm GPA *</label>
+              <input type="number" class="form-control" id="edit-gpa" name="gpa" step="0.01" min="0" max="4" required>
+            </div>
           </div>
 
           <div class="form-group" style="margin-bottom: 1rem;">
-            <label class="form-label" for="edit-fullname">Họ và Tên *</label>
-            <input type="text" class="form-control" id="edit-fullname" name="fullname" required maxlength="100">
-          </div>
-
-          <div class="form-group" style="margin-bottom: 1rem;">
-            <label class="form-label" for="edit-dob">Ngày Sinh *</label>
-            <input type="date" class="form-control" id="edit-dob" name="dob" required>
-          </div>
-
-          <div class="form-group" style="margin-bottom: 1rem;">
-            <label class="form-label" for="edit-major">Chuyên Ngành *</label>
-            <input type="text" class="form-control" id="edit-major" name="major" required maxlength="50">
-          </div>
-
-          <div class="form-group" style="margin-bottom: 1rem;">
-            <label class="form-label" for="edit-gpa">Điểm GPA *</label>
-            <input type="number" class="form-control" id="edit-gpa" name="gpa" step="0.01" min="0" max="4" required>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Thay Đổi Ảnh Đại Diện (Tùy chọn)</label>
+            <label class="form-label">Thay Đổi Ảnh Đại Diện</label>
             <div class="avatar-preview-box">
               <img id="edit-avatar-preview" src="" alt="Avatar" class="preview-img" style="display: none;">
               <div style="flex-grow: 1;">
-                <input type="file" name="edit_avatar_file" accept="image/png, image/jpeg, image/jpg" class="form-control">
-                <span class="form-hint">Chọn ảnh mới để lưu vào MinIO.</span>
+                <input type="file" id="edit-avatar-file" name="avatar_file" accept="image/png, image/jpeg" class="form-control">
               </div>
             </div>
           </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-sm" data-close-modal>Hủy</button>
-          <button type="submit" class="btn btn-primary btn-sm">Lưu Thay Đổi</button>
-        </div>
-      </form>
+
+          <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+            <button type="button" class="btn btn-secondary" data-close-modal>Hủy</button>
+            <button type="submit" class="btn btn-primary">Lưu Thay Đổi</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
-  <!-- 3. Delete Confirm Modal -->
-  <div class="modal-backdrop" id="delete-student-modal" aria-hidden="true" role="dialog" aria-labelledby="modal-del-title">
-    <div class="modal-dialog" style="max-width: 480px;">
+  <!-- Modal Xác Nhận Xóa Sinh Viên -->
+  <div class="modal-backdrop" id="modal-student-delete" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card" style="max-width: 480px;">
       <div class="modal-header">
-        <h3 class="modal-title" id="modal-del-title">Xác Nhận Xóa Sinh Viên</h3>
-        <button type="button" class="modal-close-btn" data-close-modal aria-label="Đóng">&times;</button>
+        <h3>Xác Nhận Xóa Sinh Viên</h3>
+        <button type="button" class="btn-close-modal" data-close-modal aria-label="Đóng">&times;</button>
       </div>
       <div class="modal-body">
-        <p id="delete-confirm-msg" style="color: #475569; font-size: 0.95rem;">
-          Bạn có chắc chắn muốn xóa sinh viên này khỏi hệ thống cơ sở dữ liệu?
-        </p>
+        <p>Bạn có chắc chắn muốn xóa sinh viên <strong id="delete-student-name">...</strong> (<span id="delete-student-code">...</span>) không?</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary btn-sm" data-close-modal>Hủy bỏ</button>
-        <button type="button" class="btn btn-danger btn-sm" id="btn-confirm-delete">Xác nhận xóa</button>
+        <button type="button" class="btn btn-secondary" data-close-modal>Hủy</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete">Xác Nhận Xóa</button>
       </div>
     </div>
   </div>
 
+  <!-- Scripts -->
   <script src="/assets/js/app.js"></script>
 </body>
 </html>

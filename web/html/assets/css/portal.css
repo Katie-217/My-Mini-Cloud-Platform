@@ -511,6 +511,231 @@ body.portal-body {
   opacity: 1;
 }
 
+/* ==========================================================================
+   TAB: LOAD BALANCING (Cân Bằng Tải Replicas Trong Portal Control)
+   ========================================================================== */
+.lb-control-card {
+  background-color: #ffffff;
+  border: 1px solid var(--portal-border);
+  border-radius: 14px;
+  padding: 1.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-bottom: 1.75rem;
+}
+
+.lb-toolbar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 1.5rem;
+}
+
+.lb-select-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.lb-select-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.lb-app-select {
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0f172a;
+  background-color: #f8fafc;
+  border: 1px solid var(--portal-border);
+  border-radius: var(--radius-md);
+  outline: none;
+  min-width: 320px;
+}
+.lb-app-select:focus {
+  border-color: var(--portal-blue-600);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.lb-servers-display {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.lb-server-metric-box {
+  background-color: #f8fafc;
+  border: 1px solid var(--portal-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all var(--transition-fast);
+}
+.lb-server-metric-box.active-pulse {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  background-color: #eff6ff;
+}
+
+.lb-server-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.lb-server-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  font-family: var(--font-mono);
+}
+
+.lb-stat-count-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.lb-stat-number {
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.lb-stat-percent {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.lb-meter-track {
+  height: 10px;
+  background-color: #e2e8f0;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.lb-meter-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+.lb-fill-s1 { background: linear-gradient(90deg, #2563eb, #3b82f6); }
+.lb-fill-s2 { background: linear-gradient(90deg, #059669, #10b981); }
+
+.lb-combined-bar-wrap {
+  margin-bottom: 1.5rem;
+}
+
+.lb-combined-bar-track {
+  height: 16px;
+  background-color: #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+}
+
+.lb-combined-fill-s1 {
+  background-color: #2563eb;
+  transition: width 0.3s ease;
+}
+
+.lb-combined-fill-s2 {
+  background-color: #10b981;
+  transition: width 0.3s ease;
+}
+
+.lb-log-table-wrap {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--portal-border);
+  border-radius: 8px;
+}
+
+/* ==========================================================================
+   TAB: AUTH & SSO (Keycloak OIDC Test Trong Portal Control)
+   ========================================================================== */
+.auth-panel-card {
+  background-color: #ffffff;
+  border: 1px solid var(--portal-border);
+  border-radius: 14px;
+  padding: 1.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-bottom: 1.75rem;
+}
+
+.auth-status-banner {
+  background-color: #f8fafc;
+  border: 1px solid var(--portal-border);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.token-viewer-box {
+  background-color: #0f172a;
+  color: #38bdf8;
+  padding: 1.25rem;
+  border-radius: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.825rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+/* ==========================================================================
+   TAB: API EXPLORER (Kiểm Thử REST API Trong Portal Control)
+   ========================================================================== */
+.api-endpoint-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.api-endpoint-card {
+  background-color: #ffffff;
+  border: 1px solid var(--portal-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all var(--transition-fast);
+}
+.api-endpoint-card:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.08);
+}
+
+.api-method-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.725rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+.method-get { background-color: #dbeafe; color: #1d4ed8; }
+.method-post { background-color: #dcfce7; color: #15803d; }
+
+
 /* Responsive adjustments */
 @media (max-width: 1200px) {
   .services-nimbus-grid {

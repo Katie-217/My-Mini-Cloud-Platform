@@ -322,9 +322,17 @@
           cpuEl.textContent = !isNaN(cpuVal) ? `${cpuVal.toFixed(2)}%` : `${mData.cpu_percent}%`;
         }
 
-        if (ramEl && mData.memory_available_mb !== undefined) {
-          const ramVal = parseFloat(mData.memory_available_mb);
-          ramEl.textContent = !isNaN(ramVal) ? `${ramVal.toFixed(2)} MB` : `${mData.memory_available_mb} MB`;
+        if (ramEl) {
+          if (mData.memory_available_mb !== undefined) {
+            const ramVal = parseFloat(mData.memory_available_mb);
+            ramEl.textContent = !isNaN(ramVal) ? `${ramVal.toFixed(2)} MB` : `${mData.memory_available_mb} MB`;
+          } else if (mData.memory_total_bytes !== undefined && mData.memory_used_bytes !== undefined) {
+            const availMb = (mData.memory_total_bytes - mData.memory_used_bytes) / (1024 * 1024);
+            ramEl.textContent = `${availMb.toFixed(2)} MB`;
+          } else if (mData.memory_percent !== undefined) {
+            const mPct = parseFloat(mData.memory_percent);
+            ramEl.textContent = `${mPct.toFixed(2)}% Used`;
+          }
         }
       }
     } catch (e) {

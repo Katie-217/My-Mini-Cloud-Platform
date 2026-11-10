@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="/assets/css/common.css">
   <link rel="stylesheet" href="/assets/css/blog.css">
 </head>
-<body>
+<body class="blog-page">
 
   <!-- Site Header -->
   <header class="site-header">
@@ -25,50 +25,55 @@
 
       <nav aria-label="Main Navigation">
         <ul class="nav-links">
-          <li><a href="/" class="nav-link">Portal</a></li>
-          <li><a href="/blog/" class="nav-link active">Blog</a></li>
+          <li><a href="/" class="nav-link">Về Portal Control</a></li>
+          <li><a href="/blog/" class="nav-link active">Blog Chuyên Đề</a></li>
           <li><a href="/app/" class="nav-link">Student App</a></li>
         </ul>
       </nav>
 
       <div class="env-tag">
         <span class="env-dot"></span>
-        <span>Local Static Site</span>
+        <span>Static Nginx Web</span>
       </div>
     </div>
   </header>
 
-  <!-- Article Header -->
-  <header class="article-header">
-    <div class="container article-header-container">
+  <!-- Article Hero Banner -->
+  <header class="article-hero-banner">
+    <div class="container" style="max-width: 860px;">
       <div class="article-breadcrumb">
         <a href="/">Trang chủ</a> &rsaquo;
         <a href="/blog/">Blog chuyên đề</a> &rsaquo;
         <span>Chuyên đề 03</span>
       </div>
-      <h1 class="article-title">Bên Trong MyMiniCloud: Cách Một Hệ Thống 9 Dịch Vụ Vận Hành Thực Tế</h1>
-      <div class="article-meta">
-        <div class="article-author">
+      <h1 class="article-title" style="color: #ffffff; margin-top: 0.5rem;">
+        Bên Trong MyMiniCloud: Cách Một Hệ Thống 9 Dịch Vụ Vận Hành Thực Tế
+      </h1>
+      <p style="color: #cbd5e1; font-size: 1.05rem; margin-top: 0.75rem; line-height: 1.6;">
+        Khám phá chi tiết luồng xử lý end-to-end: Reverse Proxy cân bằng tải Round Robin, Flask REST API, SQL Server 2022, MinIO S3, Keycloak PKCE và chu trình giám sát Prometheus.
+      </p>
+      <div class="article-meta-box">
+        <div style="display: flex; align-items: center; gap: 0.5rem; color: #f1f5f9; font-weight: 600;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
           <span>Nhóm Kỹ sư Đám mây</span>
         </div>
-        <time datetime="2026-11-10">Ngày đăng: 10/11/2026</time>
-        <span class="blog-tag">Distributed Systems</span>
+        <time datetime="2026-11-10">10/11/2026</time>
+        <span class="blog-category-tag">Distributed Systems</span>
       </div>
     </div>
   </header>
 
-  <!-- Article Body -->
-  <main>
-    <article class="article-content">
-      <img src="/assets/images/mini-cloud-arch.svg" alt="Kiến trúc 9 Dịch Vụ MyMiniCloud" class="article-featured-img">
+  <!-- Article Content (Nền trắng) -->
+  <main class="article-container-white">
+    <article class="article-body-text">
+      <img src="/assets/images/mini-cloud-arch.svg" alt="Kiến trúc 9 Dịch Vụ MyMiniCloud" class="article-featured-banner">
 
-      <p class="article-callout">
-        <strong>Tóm tắt chuyên đề:</strong> MyMiniCloud không phải là một ứng dụng nguyên khối (monolith) giả lập, mà là một hệ thống phân tán thực thụ gồm 9 nhóm dịch vụ container hóa độc lập. Mỗi dịch vụ đảm nhiệm một trách nhiệm chuyên biệt, được kết nối an toàn qua mạng bridge và được phối hợp nhịp nhàng thông qua Nginx Reverse Proxy.
-      </p>
+      <div class="alert alert-info" style="margin-bottom: 2rem;">
+        <strong>Giới thiệu chuyên đề:</strong> MyMiniCloud không phải là một ứng dụng nguyên khối (monolith) giả lập, mà là một hệ thống phân tán thực thụ gồm 9 nhóm dịch vụ container hóa độc lập. Mỗi dịch vụ đảm nhiệm một trách nhiệm chuyên biệt, được kết nối an toàn qua mạng bridge và được phối hợp nhịp nhàng thông qua Nginx Reverse Proxy.
+      </div>
 
       <h2>1. Kiến Trúc Tổng Thể &amp; Luồng Di Chuyển Của Request</h2>
       <p>
@@ -86,21 +91,14 @@
         Nhằm mô phỏng tính sẵn sàng cao (High Availability), hệ thống khởi chạy hai bản sao máy chủ web tĩnh độc lập:
       </p>
       <pre class="code-block">
-upstream web_backend {
-    server web-frontend-server1:80;
-    server web-frontend-server2:80;
-}
-
-server {
-    listen 80;
-    location /blog/ {
-        proxy_pass http://web_backend;
-        add_header X-Web-Server $upstream_addr always;
-    }
+upstream web_pool {
+    zone web_pool 64k;
+    server web-frontend-server1:80 resolve max_fails=2 fail_timeout=5s;
+    server web-frontend-server2:80 resolve max_fails=2 fail_timeout=5s;
 }
       </pre>
       <p>
-        Khi gửi nhiều request liên tiếp bằng lệnh <code class="inline-code">curl -i http://localhost/blog/</code>, người dùng sẽ thấy header <code class="inline-code">X-Web-Server</code> luân phiên trả về địa chỉ IP của <code class="inline-code">web1</code> và <code class="inline-code">web2</code>. Nếu một trong hai container gặp sự cố, Nginx sẽ tự động chuyển hướng lưu lượng sang bản sao còn lại mà không làm gián đoạn trải nghiệm người dùng.
+        Mỗi request gửi đến máy chủ web được gắn kèm header <code class="inline-code">X-Web-Server</code> phản ánh chính xác hostname của container đang xử lý. Khi người dùng thực hiện reload hoặc gửi yêu cầu trên ứng dụng, lượng tải sẽ luân phiên chia đều 50/50 giữa 2 server.
       </p>
 
       <h2>3. Tích Hợp Đa Dịch Vụ: Cơ Sở Dữ Liệu, S3 và Bảo Mật OIDC</h2>
@@ -119,25 +117,9 @@ server {
         </li>
       </ol>
 
-      <h2>4. Vòng Lặp Giám Sát (Observability Loop) Với Prometheus &amp; Grafana</h2>
-      <p>
-        Một đám mây không thể coi là hoàn thiện nếu thiếu hệ thống giám sát. MyMiniCloud thiết lập một chu trình giám sát khép kín:
-      </p>
-      <ul>
-        <li><strong>Node Exporter:</strong> Lắng nghe trên cổng nội bộ 9100, liên tục trích xuất các chỉ số phần cứng (CPU time, RAM usage, Network I/O) từ Linux VM.</li>
-        <li><strong>Blackbox HTTP Exporter:</strong> Định kỳ gửi các gói tin HTTP probe kiểm tra trạng thái phản hồi của 2 Web Server replicas.</li>
-        <li><strong>Prometheus:</strong> Đóng vai trò máy chủ Time-Series DB, định kỳ 15 giây tự động kéo (scrape) số liệu từ các Exporter và lưu trữ có lập chỉ mục.</li>
-        <li><strong>Grafana:</strong> Kết nối trực tiếp đến Prometheus làm Data Source, hiển thị 3 biểu đồ trực quan giúp quản trị viên nắm bắt tức thời tình trạng sức khỏe của toàn bộ hệ thống Mini Cloud.</li>
-      </ul>
-
-      <h2>5. Lời Kết</h2>
-      <p>
-        Thông qua việc làm chủ kiến trúc 9 dịch vụ của MyMiniCloud, chúng ta không chỉ học được cách viết mã nguồn mà quan trọng hơn là tư duy thiết kế hệ thống phân tán: tách biệt mối quan tâm, đóng gói container bất biến, đảm bảo tính bền vững dữ liệu và xây dựng cơ chế tự phục hồi trước sự cố.
-      </p>
-
-      <div class="article-nav">
-        <a href="/blog/blog2.html" class="btn btn-secondary btn-sm">&larr; Bài trước: Docker &amp; Containers</a>
-        <a href="/" class="btn btn-primary btn-sm">Về Trang Chủ Portal &rarr;</a>
+      <div class="article-nav" style="margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between;">
+        <a href="/blog/blog2.html" class="btn btn-secondary btn-sm">&larr; Chuyên đề 02: Docker &amp; Containers</a>
+        <a href="/" class="btn btn-primary btn-sm">Về Portal Control &rarr;</a>
       </div>
     </article>
   </main>
@@ -146,11 +128,11 @@ server {
   <footer class="site-footer">
     <div class="container footer-content">
       <div>
-        <p><strong>MyMiniCloud Blog</strong> &copy; 2026. Phục vụ qua Nginx Web Replicas.</p>
+        <p><strong>MyMiniCloud Blog</strong> &copy; 2026. Phục vụ tĩnh qua cụm Nginx Web Replicas.</p>
       </div>
       <div class="footer-links">
-        <a href="/" class="footer-link">Portal</a>
-        <a href="/blog/" class="footer-link">Blog</a>
+        <a href="/" class="footer-link">Portal Control</a>
+        <a href="/blog/" class="footer-link">Blog Home</a>
         <a href="/app/" class="footer-link">Student App</a>
       </div>
     </div>

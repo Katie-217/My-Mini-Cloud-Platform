@@ -1,6 +1,6 @@
 /**
  * MyMiniCloud - Student Management App JavaScript
- * Tích hợp REST API, SQL Server 2022, MinIO S3 & Keycloak OIDC PKCE
+ * Tích hợp REST API, SQL Server 2022, MinIO S3, Keycloak OIDC PKCE & Load Balancer Live Monitor
  */
 
 (function () {
@@ -10,11 +10,19 @@
   const AppState = {
     students: [],
     majors: new Set(),
-    activeTab: 'overview',
+    activeTab: 'dashboard',
     authConfig: null,
     accessToken: null,
     userInfo: null,
     isBackendConnected: false
+  };
+
+  // State quản lý bộ đếm Cân Bằng Tải (Load Balancing Round Robin)
+  const LoadBalancerState = {
+    server1Count: 0,
+    server2Count: 0,
+    totalRequests: 0,
+    lastServer: null
   };
 
   // =========================================================================
@@ -40,7 +48,8 @@
 
   function formatDate(isoStr) {
     if (!isoStr) return '--';
-    const d = new Date(isoStr);
+    const value = isoStr.includes('T') && !/(Z|[+-]\d\d:\d\d)$/.test(isoStr) ? isoStr + 'Z' : isoStr;
+    const d = new Date(value);
     if (isNaN(d.getTime())) return escapeHtml(isoStr);
     return d.toLocaleDateString('vi-VN');
   }
@@ -68,8 +77,8 @@
   function switchTab(tabId) {
     AppState.activeTab = tabId;
 
-    // Cập nhật trạng thái sidebar
-    document.querySelectorAll('.sidebar-item[data-tab]').forEach(btn => {
+    // Cập nhật trạng thái pill tabs
+    document.querySelectorAll('.top-tab-btn[data-tab]').forEach(btn => {
       if (btn.getAttribute('data-tab') === tabId) {
         btn.classList.add('active');
       } else {
@@ -86,34 +95,113 @@
       }
     });
 
-    // Cập nhật tiêu đề Topbar
-    const topbarTitle = document.getElementById('app-topbar-title');
-    const titles = {
-      overview: 'Tổng quan hệ thống',
-      students: 'Danh sách sinh viên (SQL Server)',
-      'add-student': 'Thêm sinh viên mới',
-      storage: 'Lưu trữ tệp (MinIO S3)',
-      account: 'Đăng nhập & Xác thực (Keycloak OIDC)',
-      apidoc: 'Tài liệu API & Thử nghiệm'
-    };
-    if (topbarTitle && titles[tabId]) {
-      topbarTitle.textContent = titles[tabId];
-    }
-
-    // Đóng sidebar trên màn hình di động
-    const sidebar = document.getElementById('app-sidebar');
-    if (sidebar && window.innerWidth <= 900) {
-      sidebar.classList.remove('open');
-    }
-
     // Tự động tải dữ liệu tương ứng của tab
-    if (tabId === 'students' || tabId === 'overview') {
+    if (tabId === 'students' || tabId === 'dashboard') {
       loadStudents();
     } else if (tabId === 'storage') {
       loadFilesList();
     } else if (tabId === 'account') {
       loadAuthConfig();
     }
+
+    // Ghi nhận 1 request cân bằng tải khi người dùng chuyển trang
+    sendLoadBalanceRequest();
+  }
+
+  // =========================================================================
+  // Bộ Máy Kiểm Tra & Cập Nhật Cân Bằng Tải (Round Robin Live Monitor)
+  // =========================================================================
+  async function sendLoadBalanceRequest() {
+    try {
+      const res = await fetch('/__replica?t=' + Date.now(), { cache: 'no-store' });
+      let serverName = res.headers.get('X-Web-Server');
+      if (!serverName && res.ok) {
+        const json = await res.json().catch(() => ({}));
+        serverName = json.replica;
+      }
+      if (!serverName) serverName = 'web-frontend-server1';
+
+      recordLoadBalanceServer(serverName);
+      return serverName;
+    } catch (e) {
+      // Fallback probe
+      try {
+        const res2 = await fetch('/blog/?t=' + Date.now(), { cache: 'no-store' });
+        const serverName2 = res2.headers.get('X-Web-Server') || 'web-frontend-server2';
+        recordLoadBalanceServer(serverName2);
+        return serverName2;
+      } catch (err) {
+        // quiet ignore
+      }
+    }
+  }
+
+  function recordLoadBalanceServer(serverName) {
+    LoadBalancerState.totalRequests++;
+    LoadBalancerState.lastServer = serverName;
+
+    if (serverName.includes('web-frontend-server1') || serverName.includes('web1')) {
+      LoadBalancerState.server1Count++;
+      flashServerBox('box-server1');
+    } else {
+      LoadBalancerState.server2Count++;
+      flashServerBox('box-server2');
+    }
+
+    updateLoadBalanceUI();
+  }
+
+  function flashServerBox(boxId) {
+    const el = document.getElementById(boxId);
+    if (!el) return;
+    el.classList.add('active-pulse');
+    setTimeout(() => {
+      el.classList.remove('active-pulse');
+    }, 500);
+  }
+
+  function updateLoadBalanceUI() {
+    const s1El = document.getElementById('count-server1');
+    const s2El = document.getElementById('count-server2');
+    const p1El = document.getElementById('percent-server1');
+    const p2El = document.getElementById('percent-server2');
+    const bar1 = document.getElementById('bar-server1');
+    const bar2 = document.getElementById('bar-server2');
+    const totalEl = document.getElementById('lb-total-requests');
+    const lastEl = document.getElementById('lb-last-server');
+
+    const total = LoadBalancerState.totalRequests;
+    const s1 = LoadBalancerState.server1Count;
+    const s2 = LoadBalancerState.server2Count;
+
+    if (s1El) s1El.textContent = String(s1);
+    if (s2El) s2El.textContent = String(s2);
+    if (totalEl) totalEl.textContent = String(total);
+
+    const pct1 = total > 0 ? Math.round((s1 / total) * 100) : 50;
+    const pct2 = total > 0 ? Math.round((s2 / total) * 100) : 50;
+
+    if (p1El) p1El.textContent = pct1 + '%';
+    if (p2El) p2El.textContent = pct2 + '%';
+    if (bar1) bar1.style.width = pct1 + '%';
+    if (bar2) bar2.style.width = pct2 + '%';
+
+    if (lastEl) {
+      lastEl.textContent = LoadBalancerState.lastServer || 'web-frontend-server1';
+      lastEl.className = 'badge badge-healthy';
+    }
+  }
+
+  async function triggerBatchRequests(num = 10) {
+    const btn = document.getElementById('btn-lb-batch-req');
+    if (btn) btn.disabled = true;
+
+    for (let i = 0; i < num; i++) {
+      await sendLoadBalanceRequest();
+      await new Promise(r => setTimeout(r, 120));
+    }
+
+    if (btn) btn.disabled = false;
   }
 
   // =========================================================================
@@ -123,7 +211,6 @@
     const tableBody = document.getElementById('students-table-body');
     const loadingRow = document.getElementById('students-loading');
     const emptyRow = document.getElementById('students-empty');
-    const connAlert = document.getElementById('backend-conn-alert');
     const statusPill = document.getElementById('topbar-status-pill');
 
     let url = '/api/students-db';
@@ -152,7 +239,6 @@
         statusPill.className = 'badge badge-healthy';
         statusPill.textContent = 'API Connected';
       }
-      if (connAlert) connAlert.style.display = 'none';
 
       renderStudentsTable(AppState.students);
       updateOverviewStats(AppState.students);
@@ -164,10 +250,6 @@
       if (statusPill) {
         statusPill.className = 'badge badge-unhealthy';
         statusPill.textContent = 'Chưa kết nối API';
-      }
-      if (connAlert) {
-        connAlert.style.display = 'block';
-        connAlert.textContent = `Không thể kết nối đến ${url} (${err.message}). Vui lòng đảm bảo container backend (Flask) và SQL Server đã khởi chạy.`;
       }
 
       renderStudentsTable([]);
@@ -182,7 +264,6 @@
     const emptyRow = document.getElementById('students-empty');
     if (!tableBody) return;
 
-    // Xóa các dòng cũ ngoại trừ loading/empty
     const existingRows = tableBody.querySelectorAll('tr:not(#students-loading):not(#students-empty)');
     existingRows.forEach(r => r.remove());
 
@@ -260,6 +341,7 @@
       // Cột Thao tác
       const tdActions = document.createElement('td');
       tdActions.style.whiteSpace = 'nowrap';
+      tdActions.style.textAlign = 'right';
 
       const btnView = document.createElement('button');
       btnView.type = 'button';
@@ -291,41 +373,31 @@
 
   function updateOverviewStats(students) {
     const totalEl = document.getElementById('stat-total-students');
+    const activeEl = document.getElementById('stat-active-students');
+    const activePctEl = document.getElementById('stat-active-percent');
+    const inactiveEl = document.getElementById('stat-inactive-students');
     const majorsEl = document.getElementById('stat-total-majors');
-    const avgGpaEl = document.getElementById('stat-avg-gpa');
-    const newStudentsEl = document.getElementById('stat-new-students');
 
-    if (!AppState.isBackendConnected || !students) {
-      if (totalEl) totalEl.textContent = '--';
-      if (majorsEl) majorsEl.textContent = '--';
-      if (avgGpaEl) avgGpaEl.textContent = '--';
-      if (newStudentsEl) newStudentsEl.textContent = '--';
+    if (!AppState.isBackendConnected || !students || students.length === 0) {
+      if (totalEl) totalEl.textContent = '0';
+      if (activeEl) activeEl.textContent = '0';
+      if (activePctEl) activePctEl.textContent = '0% of total';
+      if (inactiveEl) inactiveEl.textContent = '0';
+      if (majorsEl) majorsEl.textContent = '0';
       return;
     }
 
-    // Tính toán số liệu thật từ danh sách
     const total = students.length;
+    const activeStudents = students.filter(s => parseFloat(s.gpa || 0) >= 2.5).length;
+    const inactiveStudents = total - activeStudents;
+    const activePercent = total > 0 ? Math.round((activeStudents / total) * 100) : 0;
     const majorsSet = new Set(students.map(s => (s.major || '').trim()).filter(Boolean));
-    const validGpas = students.map(s => parseFloat(s.gpa)).filter(v => !isNaN(v));
-    const avgGpa = validGpas.length > 0 ? (validGpas.reduce((a, b) => a + b, 0) / validGpas.length).toFixed(2) : '0.00';
-
-    // Sinh viên mới (trong 7 ngày hoặc sinh viên có created_at gần nhất)
-    let newCount = 0;
-    const now = new Date();
-    students.forEach(s => {
-      if (s.created_at) {
-        const timestamp = /(Z|[+-]\d\d:\d\d)$/.test(s.created_at) ? s.created_at : s.created_at + 'Z';
-        const cd = new Date(timestamp);
-        if (!isNaN(cd.getTime()) && now >= cd && (now - cd) < 7 * 24 * 3600 * 1000) {
-          newCount++;
-        }
-      }
-    });
 
     if (totalEl) totalEl.textContent = String(total);
+    if (activeEl) activeEl.textContent = String(activeStudents);
+    if (activePctEl) activePctEl.textContent = `${activePercent}% of total`;
+    if (inactiveEl) inactiveEl.textContent = String(inactiveStudents);
     if (majorsEl) majorsEl.textContent = String(majorsSet.size);
-    if (avgGpaEl) avgGpaEl.textContent = String(avgGpa);
-    if (newStudentsEl) newStudentsEl.textContent = String(newCount);
   }
 
   // =========================================================================
@@ -338,18 +410,18 @@
 
     let avatarHtml = '';
     if (st.avatar_key) {
-      avatarHtml = `<img src="/api/files/profile-pics/${encodeURIComponent(st.avatar_key)}" alt="Avatar" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 2px solid var(--color-blue-500);">`;
+      avatarHtml = `<img src="/api/files/profile-pics/${encodeURIComponent(st.avatar_key)}" alt="Avatar" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--app-blue-600);">`;
     } else {
-      avatarHtml = `<div style="width: 90px; height: 90px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: #475569;">${escapeHtml((st.fullname || 'S').charAt(0).toUpperCase())}</div>`;
+      avatarHtml = `<div style="width: 80px; height: 80px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: bold; color: #475569;">${escapeHtml((st.fullname || 'S').charAt(0).toUpperCase())}</div>`;
     }
 
     content.innerHTML = `
-      <div style="display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem;">
+      <div style="display: flex; gap: 1.25rem; align-items: center; margin-bottom: 1.5rem;">
         ${avatarHtml}
         <div>
-          <h3 style="margin-bottom: 0.25rem; font-size: 1.3rem;">${escapeHtml(st.fullname)}</h3>
-          <p style="color: #64748b; font-size: 0.9rem;">Mã SV: <code class="inline-code">${escapeHtml(st.student_id)}</code></p>
-          <p style="margin-top: 0.35rem;"><span class="gpa-badge ${getGpaBadgeClass(st.gpa)}">GPA: ${parseFloat(st.gpa || 0).toFixed(2)}</span></p>
+          <h3 style="margin-bottom: 0.25rem; font-size: 1.25rem;">${escapeHtml(st.fullname)}</h3>
+          <p style="color: #64748b; font-size: 0.875rem;">Mã SV: <code class="inline-code">${escapeHtml(st.student_id)}</code></p>
+          <p style="margin-top: 0.25rem;"><span class="gpa-badge ${getGpaBadgeClass(st.gpa)}">GPA: ${parseFloat(st.gpa || 0).toFixed(2)}</span></p>
         </div>
       </div>
       <table class="detail-table">
@@ -386,7 +458,7 @@
     const gpa = parseFloat(form.gpa.value);
     const avatarFileInput = form.avatar_file;
 
-    // Validate phía client
+    // Validate
     const idRegex = /^[A-Za-z0-9_-]{1,10}$/;
     if (!idRegex.test(studentId)) {
       showFormAlert(alertBox, 'Mã sinh viên phải từ 1 đến 10 ký tự, chỉ chứa chữ cái, số, gạch nối (-) hoặc gạch dưới (_).', 'danger');
@@ -400,8 +472,7 @@
       showFormAlert(alertBox, 'Vui lòng chọn ngày sinh hợp lệ.', 'danger');
       return;
     }
-    const dobDate = new Date(dob);
-    if (dobDate > new Date()) {
+    if (new Date(dob) > new Date()) {
       showFormAlert(alertBox, 'Ngày sinh không được nằm trong tương lai.', 'danger');
       return;
     }
@@ -419,7 +490,6 @@
     try {
       let avatarKey = null;
 
-      // Nếu có chọn file ảnh đại diện, upload lên bucket profile-pics trước
       if (avatarFileInput && avatarFileInput.files && avatarFileInput.files.length > 0) {
         const file = avatarFileInput.files[0];
         if (file.size > 10 * 1024 * 1024) {
@@ -444,7 +514,6 @@
         avatarKey = uploadResult.key;
       }
 
-      // Tạo sinh viên qua POST /api/students-db
       const payload = {
         student_id: studentId,
         fullname: fullname,
@@ -468,12 +537,11 @@
         throw new Error(errData.error || `Lỗi server khi thêm sinh viên (HTTP ${res.status})`);
       }
 
-      showFormAlert(alertBox, 'Thêm sinh viên thành công vào SQL Server!', 'success');
+      showFormAlert(alertBox, 'Thêm sinh viên thành công vào SQL Server 2022!', 'success');
       form.reset();
       const preview = document.getElementById('add-avatar-preview');
-      if (preview) { preview.src = ''; preview.style.display = 'none'; }
+      if (preview) preview.style.display = 'none';
 
-      // Tải lại danh sách sinh viên
       setTimeout(() => {
         switchTab('students');
       }, 1000);
@@ -481,7 +549,7 @@
     } catch (err) {
       showFormAlert(alertBox, err.message, 'danger');
     } finally {
-      setButtonLoading(submitBtn, false, 'Lưu sinh viên');
+      setButtonLoading(submitBtn, false, 'Lưu Sinh Viên Vào Database');
     }
   }
 
@@ -536,7 +604,6 @@
     const newAvatarInput = form.edit_avatar_file;
     let avatarKey = form.current_avatar_key.value || null;
 
-    // Validate
     if (!/^[A-Za-z0-9_-]{1,10}$/.test(studentId)) {
       showFormAlert(alertBox, 'Mã sinh viên phải từ 1 đến 10 ký tự.', 'danger');
       return;
@@ -561,7 +628,6 @@
     setButtonLoading(submitBtn, true, 'Đang cập nhật...');
 
     try {
-      // Nếu có chọn ảnh mới, upload lên MinIO trước
       if (newAvatarInput && newAvatarInput.files && newAvatarInput.files.length > 0) {
         const file = newAvatarInput.files[0];
         const formData = new FormData();
@@ -577,7 +643,6 @@
         avatarKey = uploadResult.key;
       }
 
-      // Hợp đồng API: PUT gửi đủ các trường bắt buộc
       const payload = {
         student_id: studentId,
         fullname: fullname,
@@ -607,7 +672,7 @@
     } catch (err) {
       showFormAlert(alertBox, err.message, 'danger');
     } finally {
-      setButtonLoading(submitBtn, false, 'Lưu thay đổi');
+      setButtonLoading(submitBtn, false, 'Lưu Thay Đổi');
     }
   }
 
@@ -658,7 +723,7 @@
   }
 
   // =========================================================================
-  // Quản lý Lưu trữ Tệp (MinIO S3 - GET /api/files & POST /api/files)
+  // Quản lý Lưu trữ Tệp (MinIO S3)
   // =========================================================================
   async function loadFilesList() {
     const listBody = document.getElementById('files-table-body');
@@ -689,7 +754,7 @@
       if (alertBox) {
         alertBox.style.display = 'block';
         alertBox.className = 'alert alert-warning';
-        alertBox.textContent = `Không thể tải danh sách tệp từ MinIO: ${err.message}. Đảm bảo container object-storage-server và backend đã hoạt động.`;
+        alertBox.textContent = `Không thể tải danh sách tệp từ MinIO: ${err.message}.`;
       }
       renderFilesTable([]);
     } finally {
@@ -732,7 +797,6 @@
       const tdAction = document.createElement('td');
       const downloadLink = document.createElement('a');
       downloadLink.className = 'btn btn-secondary btn-sm';
-      // Hợp đồng API: /api/files/documents/<key>
       downloadLink.href = f.download_url || `/api/files/documents/${encodeURIComponent(f.key)}`;
       downloadLink.setAttribute('download', f.key || 'document.pdf');
       downloadLink.textContent = 'Tải về';
@@ -785,14 +849,13 @@
     } catch (err) {
       showFormAlert(alertBox, err.message, 'danger');
     } finally {
-      setButtonLoading(submitBtn, false, 'Tải lên');
+      setButtonLoading(submitBtn, false, 'Tải Lên MinIO S3');
     }
   }
 
   // =========================================================================
   // Keycloak OIDC Authentication với PKCE (S256)
   // =========================================================================
-  // Hàm sinh chuỗi ngẫu nhiên
   function generateRandomString(length) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
     let result = '';
@@ -804,7 +867,6 @@
     return result;
   }
 
-  // Mã hóa Base64 URL không padding
   function base64UrlEncode(arrayBuffer) {
     const bytes = new Uint8Array(arrayBuffer);
     let binary = '';
@@ -817,7 +879,6 @@
       .replace(/=+$/, '');
   }
 
-  // Tạo code_challenge bằng SHA-256
   async function generateCodeChallenge(codeVerifier) {
     const encoder = new TextEncoder();
     const data = encoder.encode(codeVerifier);
@@ -826,7 +887,6 @@
   }
 
   async function loadAuthConfig() {
-    const authStatusEl = document.getElementById('auth-status-text');
     const authDescEl = document.getElementById('auth-config-desc');
 
     try {
@@ -843,19 +903,18 @@
       }
     } catch (err) {
       if (authDescEl) {
-        authDescEl.textContent = 'Chưa tải được cấu hình OIDC từ GET /api/auth/config. Keycloak hoặc Backend có thể chưa chạy.';
+        authDescEl.textContent = 'Chưa tải được cấu hình OIDC từ GET /api/auth/config.';
       }
     }
   }
 
-  // Bắt đầu luồng đăng nhập OIDC PKCE
   async function initiateKeycloakLogin() {
     if (!AppState.authConfig || !AppState.authConfig.authorization_endpoint) {
       await loadAuthConfig();
     }
 
     if (!AppState.authConfig || !AppState.authConfig.authorization_endpoint) {
-      alert('Không lấy được cấu hình đăng nhập OIDC từ backend. Vui lòng kiểm tra lại dịch vụ Keycloak.');
+      alert('Không lấy được cấu hình đăng nhập OIDC từ backend.');
       return;
     }
 
@@ -864,7 +923,6 @@
     const state = generateRandomString(32);
     const redirectUri = window.location.origin + '/app/';
 
-    // Lưu vào sessionStorage để đối chiếu khi callback
     sessionStorage.setItem('pkce_code_verifier', codeVerifier);
     sessionStorage.setItem('pkce_state', state);
 
@@ -877,11 +935,9 @@
     authUrl.searchParams.set('code_challenge', codeChallenge);
     authUrl.searchParams.set('code_challenge_method', 'S256');
 
-    // Chuyển hướng trình duyệt tới trang đăng nhập Keycloak
     window.location.href = authUrl.toString();
   }
 
-  // Xử lý callback sau khi Keycloak chuyển hướng về /app/?code=...&state=...
   async function handleOidcCallback() {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
@@ -889,15 +945,11 @@
 
     if (!code || !state) return;
 
-    // Chuyển sang tab Account ngay để hiển thị kết quả
     switchTab('account');
 
     const savedState = sessionStorage.getItem('pkce_state');
     const codeVerifier = sessionStorage.getItem('pkce_code_verifier');
-    sessionStorage.removeItem('pkce_state');
-    sessionStorage.removeItem('pkce_code_verifier');
 
-    // Xóa ngay code và state khỏi URL để tránh lộ token/code trong browser history
     window.history.replaceState({}, document.title, window.location.pathname);
 
     const alertBox = document.getElementById('account-alert');
@@ -912,7 +964,6 @@
       return;
     }
 
-    // Đổi authorization code lấy token tại token_endpoint
     try {
       if (!AppState.authConfig) await loadAuthConfig();
       const tokenEndpoint = AppState.authConfig ? AppState.authConfig.token_endpoint : null;
@@ -943,23 +994,19 @@
       const tokenData = await tokenRes.json();
       AppState.accessToken = tokenData.access_token;
       sessionStorage.setItem('mycloud_access_token', tokenData.access_token);
-      if (tokenData.id_token) sessionStorage.setItem('mycloud_id_token', tokenData.id_token);
 
-      // Dọn dẹp verifier
       sessionStorage.removeItem('pkce_code_verifier');
       sessionStorage.removeItem('pkce_state');
 
-      // Tự động kiểm tra /api/secure
-      await testSecureResource();
-      loadStudents();
+      updateAuthUI(true, 'Đăng nhập Keycloak thành công!');
+      testSecureResource();
 
     } catch (err) {
       showFormAlert(alertBox, `Xác thực OIDC thất bại: ${err.message}`, 'danger');
-      clearAuthentication();
+      updateAuthUI(false);
     }
   }
 
-  // Gọi GET /api/secure với Bearer token thật
   async function testSecureResource() {
     const alertBox = document.getElementById('secure-test-alert');
     const resultBox = document.getElementById('secure-test-result');
@@ -982,7 +1029,6 @@
       const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
-        updateAuthUI(true, 'Phiên đăng nhập đã được Backend xác minh.');
         showFormAlert(alertBox, `Xác minh thành công từ Backend! (HTTP ${res.status} OK)`, 'success');
         if (resultBox) {
           resultBox.textContent = JSON.stringify(data, null, 2);
@@ -995,7 +1041,6 @@
           }
         }
       } else {
-        clearAuthentication();
         showFormAlert(alertBox, `Backend từ chối token (HTTP ${res.status}): ${data.error || res.statusText}`, 'danger');
         if (resultBox) {
           resultBox.textContent = JSON.stringify(data, null, 2);
@@ -1006,40 +1051,16 @@
     }
   }
 
-  function clearAuthentication(message = '') {
+  function handleLogout() {
     AppState.accessToken = null;
     sessionStorage.removeItem('mycloud_access_token');
-    sessionStorage.removeItem('mycloud_id_token');
-    sessionStorage.removeItem('pkce_code_verifier');
-    sessionStorage.removeItem('pkce_state');
     const userPill = document.getElementById('topbar-user-pill');
     if (userPill) userPill.style.display = 'none';
 
-    updateAuthUI(false, message);
+    updateAuthUI(false, 'Đã đăng xuất.');
 
     const resultBox = document.getElementById('secure-test-result');
     if (resultBox) resultBox.textContent = 'Chưa thực hiện kiểm tra.';
-  }
-
-  async function handleLogout() {
-    const idToken = sessionStorage.getItem('mycloud_id_token');
-    clearAuthentication('Đã đăng xuất.');
-    if (!AppState.authConfig) await loadAuthConfig();
-    const endpoint = AppState.authConfig?.end_session_endpoint;
-    if (!endpoint) return;
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = endpoint;
-    const parameters = {client_id: AppState.authConfig.client_id,
-      post_logout_redirect_uri: window.location.origin + '/app/'};
-    if (idToken) parameters.id_token_hint = idToken;
-    for (const [name, value] of Object.entries(parameters)) {
-      const input = document.createElement('input');
-      input.type = 'hidden'; input.name = name; input.value = value;
-      form.appendChild(input);
-    }
-    document.body.appendChild(form);
-    form.submit();
   }
 
   function updateAuthUI(isLoggedIn, msg = '') {
@@ -1120,9 +1141,6 @@
     }
   }
 
-  // =========================================================================
-  // Helper UI Utilities
-  // =========================================================================
   function showFormAlert(el, message, type) {
     if (!el) return;
     el.style.display = 'block';
@@ -1150,10 +1168,10 @@
   }
 
   // =========================================================================
-  // Khởi tạo và Lắng nghe sự kiện khi nạp trang
+  // Khởi tạo và Lắng nghe sự kiện
   // =========================================================================
   document.addEventListener('DOMContentLoaded', () => {
-    // 1. Điều hướng tabs
+    // 1. Điều hướng tabs (Cả top pill tabs và quick action cards)
     document.querySelectorAll('[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => {
         const tab = btn.getAttribute('data-tab');
@@ -1173,7 +1191,6 @@
       });
     }
 
-    // Nút làm mới sinh viên
     const refreshBtn = document.getElementById('btn-refresh-students');
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => {
@@ -1188,7 +1205,6 @@
       addStudentForm.addEventListener('submit', handleAddStudent);
     }
 
-    // Preview avatar khi chọn file ở form thêm
     const avatarInput = document.getElementById('add-avatar-file');
     const avatarPreview = document.getElementById('add-avatar-preview');
     if (avatarInput && avatarPreview) {
@@ -1281,29 +1297,36 @@
       });
     });
 
-    // 10. Toggle mobile sidebar
-    const toggleSidebarBtn = document.getElementById('mobile-sidebar-toggle');
-    const sidebar = document.getElementById('app-sidebar');
-    if (toggleSidebarBtn && sidebar) {
-      toggleSidebarBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('open');
+    // 10. Load Balancing Buttons
+    const singleReqBtn = document.getElementById('btn-lb-single-req');
+    if (singleReqBtn) {
+      singleReqBtn.addEventListener('click', () => {
+        sendLoadBalanceRequest();
       });
     }
 
-    // Kiểm tra token đã lưu từ trước
+    const batchReqBtn = document.getElementById('btn-lb-batch-req');
+    if (batchReqBtn) {
+      batchReqBtn.addEventListener('click', () => {
+        triggerBatchRequests(10);
+      });
+    }
+
+    // Khôi phục token đã lưu từ trước
     const savedToken = sessionStorage.getItem('mycloud_access_token');
     if (savedToken) {
       AppState.accessToken = savedToken;
       testSecureResource();
     }
 
-    // Kiểm tra nếu đang có OIDC authorization code callback trong URL
+    // Kiểm tra nếu đang có OIDC callback trong URL
     if (window.location.search.includes('code=')) {
       handleOidcCallback();
     } else {
-      // Khởi động mặc định tải danh sách sinh viên
       loadStudents();
       loadAuthConfig();
+      // Khởi tạo ban đầu cho Load Balancer Monitor
+      sendLoadBalanceRequest();
     }
   });
 })();

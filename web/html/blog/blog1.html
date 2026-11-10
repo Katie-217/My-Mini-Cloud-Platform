@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="/assets/css/common.css">
   <link rel="stylesheet" href="/assets/css/blog.css">
 </head>
-<body>
+<body class="blog-page">
 
   <!-- Site Header -->
   <header class="site-header">
@@ -25,50 +25,55 @@
 
       <nav aria-label="Main Navigation">
         <ul class="nav-links">
-          <li><a href="/" class="nav-link">Portal</a></li>
-          <li><a href="/blog/" class="nav-link active">Blog</a></li>
+          <li><a href="/" class="nav-link">Về Portal Control</a></li>
+          <li><a href="/blog/" class="nav-link active">Blog Chuyên Đề</a></li>
           <li><a href="/app/" class="nav-link">Student App</a></li>
         </ul>
       </nav>
 
       <div class="env-tag">
         <span class="env-dot"></span>
-        <span>Local Static Site</span>
+        <span>Static Nginx Web</span>
       </div>
     </div>
   </header>
 
-  <!-- Article Header -->
-  <header class="article-header">
-    <div class="container article-header-container">
+  <!-- Article Hero Banner -->
+  <header class="article-hero-banner">
+    <div class="container" style="max-width: 860px;">
       <div class="article-breadcrumb">
         <a href="/">Trang chủ</a> &rsaquo;
         <a href="/blog/">Blog chuyên đề</a> &rsaquo;
         <span>Chuyên đề 01</span>
       </div>
-      <h1 class="article-title">Điện Toán Đám Mây &amp; Xu Hướng Xây Dựng Private / Mini Cloud Trong Doanh Nghiệp</h1>
-      <div class="article-meta">
-        <div class="article-author">
+      <h1 class="article-title" style="color: #ffffff; margin-top: 0.5rem;">
+        Điện Toán Đám Mây &amp; Xu Hướng Xây Dựng Private / Mini Cloud Trong Doanh Nghiệp
+      </h1>
+      <p style="color: #cbd5e1; font-size: 1.05rem; margin-top: 0.75rem; line-height: 1.6;">
+        Chuyên mục chia sẻ kiến thức nền tảng về điện toán đám mây và lý do các tổ chức hiện đại xây dựng mô hình Mini Cloud nội bộ nhằm làm chủ dữ liệu và tối ưu chi phí.
+      </p>
+      <div class="article-meta-box">
+        <div style="display: flex; align-items: center; gap: 0.5rem; color: #f1f5f9; font-weight: 600;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
           <span>Nhóm Kỹ sư Đám mây</span>
         </div>
-        <time datetime="2026-11-10">Ngày đăng: 10/11/2026</time>
-        <span class="blog-tag">Cloud Architecture</span>
+        <time datetime="2026-11-10">10/11/2026</time>
+        <span class="blog-category-tag">Cloud Architecture</span>
       </div>
     </div>
   </header>
 
-  <!-- Article Body -->
-  <main>
-    <article class="article-content">
-      <img src="/assets/images/cloud-computing.svg" alt="Mô hình Điện toán đám mây và Mini Cloud" class="article-featured-img">
+  <!-- Article Content (Nền trắng) -->
+  <main class="article-container-white">
+    <article class="article-body-text">
+      <img src="/assets/images/cloud-computing.svg" alt="Mô hình Điện toán đám mây và Mini Cloud" class="article-featured-banner">
 
-      <p class="article-callout">
-        <strong>Tóm tắt chuyên đề:</strong> Điện toán đám mây (Cloud Computing) không chỉ đơn thuần là việc thuê máy chủ từ các nhà cung cấp đám mây công cộng (Public Cloud). Ngày càng nhiều doanh nghiệp lựa chọn kiến trúc Mini Cloud hoặc Private Cloud nội bộ để bảo vệ dữ liệu nhạy cảm, giảm thiểu độ trễ mạng và làm chủ toàn diện vòng đời hạ tầng.
-      </p>
+      <div class="alert alert-info" style="margin-bottom: 2rem;">
+        <strong>Giới thiệu chuyên đề:</strong> Điện toán đám mây (Cloud Computing) không chỉ là việc thuê máy chủ từ các nhà cung cấp đám mây công cộng (Public Cloud). Ngày càng nhiều doanh nghiệp lựa chọn kiến trúc Mini Cloud hoặc Private Cloud nội bộ để bảo vệ dữ liệu nhạy cảm, giảm thiểu độ trễ mạng và làm chủ toàn diện vòng đời hạ tầng.
+      </div>
 
       <h2>1. Tổng Quan Về Điện Toán Đám Mây &amp; Các Mô Hình Cốt Lõi</h2>
       <p>
@@ -88,9 +93,9 @@
         Mặc dù Public Cloud (AWS, Google Cloud, Azure) mang lại quy mô khổng lồ, chi phí sử dụng lâu dài và băng thông truyền tải dữ liệu (egress traffic) thường tăng theo cấp số nhân. Hơn nữa, những yêu cầu khắt khe về bảo mật dữ liệu, chủ quyền dữ liệu (Data Sovereignty) và tuân thủ quy định nội bộ khiến mô hình <strong>Private Cloud</strong> và <strong>Mini Cloud</strong> trở thành lời giải lý tưởng:
       </p>
       <ol>
-        <li><strong>Kiểm soát hoàn toàn dữ liệu:</strong> Toàn bộ dữ liệu cơ sở dữ liệu quan hệ (SQL Server), hồ sơ định danh người dùng (Keycloak) và tệp tin lưu trữ (MinIO S3) được lưu giữ trong phạm vi mạng nội bộ (On-premises / Local environment), loại bỏ rủi ro rò rỉ dữ liệu qua bên thứ ba.</li>
-        <li><strong>Độ trễ siêu thấp (Low Latency):</strong> Các dịch vụ giao tiếp với nhau trong cùng mạng ảo nội bộ <code class="inline-code">cloud-net</code> với băng thông Gigabit/10-Gigabit mà không bị nghẽn đường truyền Internet.</li>
-        <li><strong>Tối ưu chi phí cho môi trường R&amp;D và Giáo dục:</strong> Với Docker Compose và phần cứng sẵn có, một phòng lab hoặc doanh nghiệp vừa và nhỏ hoàn toàn có thể chạy mô phỏng toàn bộ chu trình đám mây với 9 nhóm dịch vụ mà không phát sinh chi phí hàng tháng.</li>
+        <li><strong>Kiểm soát hoàn toàn dữ liệu:</strong> Toàn bộ dữ liệu cơ sở dữ liệu quan hệ (SQL Server), hồ sơ định danh người dùng (Keycloak) và tệp tin lưu trữ (MinIO S3) được lưu giữ trong phạm vi mạng nội bộ, loại bỏ rủi ro rò rỉ dữ liệu qua bên thứ ba.</li>
+        <li><strong>Độ trễ siêu thấp (Low Latency):</strong> Các dịch vụ giao tiếp với nhau trong cùng mạng ảo nội bộ <code class="inline-code">cloud-net</code> với băng thông Gigabit mà không bị nghẽn đường truyền Internet.</li>
+        <li><strong>Tối ưu chi phí cho môi trường R&amp;D và Đào tạo:</strong> Với Docker Compose và phần cứng sẵn có, một phòng lab hoặc doanh nghiệp vừa và nhỏ hoàn toàn có thể chạy mô phỏng toàn bộ chu trình đám mây với 9 nhóm dịch vụ mà không phát sinh chi phí hàng tháng.</li>
       </ol>
 
       <h2>3. Các Trụ Cột Kỹ Thuật Của Một Hệ Thống Mini Cloud Chuẩn Mực</h2>
@@ -105,14 +110,9 @@
         <li><strong>Observability (Khả năng quan sát):</strong> Giám sát liên tục trạng thái phần cứng và ứng dụng thông qua Prometheus và trực quan hóa dữ liệu qua Grafana Dashboard.</li>
       </ul>
 
-      <h2>4. Tổng Kết &amp; Hướng Phát Triển</h2>
-      <p>
-        Mô hình MyMiniCloud triển khai trong đồ án này chính là minh chứng sống động cho khả năng thu nhỏ kiến trúc điện toán đám mây chuẩn mực vào trong một máy chủ cục bộ hoặc laptop phát triển. Qua việc kết nối 9 dịch vụ độc lập trên mạng <code class="inline-code">cloud-net</code>, chúng ta nắm vững cách các khối kiến trúc đám mây tương tác và phối hợp nhịp nhàng với nhau.
-      </p>
-
-      <div class="article-nav">
-        <a href="/blog/posts/" class="btn btn-secondary btn-sm">&larr; Danh sách bài viết</a>
-        <a href="/blog/blog2.html" class="btn btn-primary btn-sm">Bài tiếp theo: Docker &amp; Containers &rarr;</a>
+      <div class="article-nav" style="margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between;">
+        <a href="/blog/" class="btn btn-secondary btn-sm">&larr; Danh sách bài viết</a>
+        <a href="/blog/blog2.html" class="btn btn-primary btn-sm">Chuyên đề 02: Docker &amp; Containers &rarr;</a>
       </div>
     </article>
   </main>
@@ -121,11 +121,11 @@
   <footer class="site-footer">
     <div class="container footer-content">
       <div>
-        <p><strong>MyMiniCloud Blog</strong> &copy; 2026. Phục vụ qua Nginx Web Replicas.</p>
+        <p><strong>MyMiniCloud Blog</strong> &copy; 2026. Phục vụ tĩnh qua cụm Nginx Web Replicas.</p>
       </div>
       <div class="footer-links">
-        <a href="/" class="footer-link">Portal</a>
-        <a href="/blog/" class="footer-link">Blog</a>
+        <a href="/" class="footer-link">Portal Control</a>
+        <a href="/blog/" class="footer-link">Blog Home</a>
         <a href="/app/" class="footer-link">Student App</a>
       </div>
     </div>

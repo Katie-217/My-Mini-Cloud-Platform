@@ -1,0 +1,66 @@
+name: mycloud
+
+x-app-env: &app-env
+  DB_HOST: relational-database-server
+  DB_PORT: "1433"
+  DB_NAME: ${DB_NAME:-studentdb}
+  DB_USER: ${DB_USER:-cloud_app}
+  DB_PASSWORD: ${DB_PASSWORD:?Run scripts/init-env.py}
+  DB_TRUST_CERTIFICATE: ${DB_TRUST_CERTIFICATE:-yes}
+
+services:
+  relational-database-server:
+    image: mcr.microsoft.com/mssql/server:2022-CU22-ubuntu-22.04
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Run scripts/init-env.py}
+    ports: ["127.0.0.1:1433:1433"]
+    volumes: ["mssql-data:/var/opt/mssql"]
+    networks: [cloud-net]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "SQLCMDPASSWORD=\"$$MSSQL_SA_PASSWORD\" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+
+  database-init:
+    image: mycloud-app:1.0.0
+    build: ./app
+    command: ["python", "init_db.py"]
+    environment:
+      <<: *app-env
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Run scripts/init-env.py}
+    volumes: ["./db/init:/database:ro"]
+    networks: [cloud-net]
+    depends_on:
+      relational-database-server: {condition: service_healthy}
+    restart: "no"
+
+  application-backend-server:
+    image: mycloud-app:1.0.0
+    build: ./app
+    environment: *app-env
+    networks: [cloud-net]
+    depends_on:
+      database-init: {condition: service_completed_successfully}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/health', timeout=5)"]
+      interval: 15s
+      timeout: 6s
+      retries: 5
+      start_period: 15s
+
+networks:
+  cloud-net:
+    name: cloud-net
+    driver: bridge
+    ipam:
+      config: [{subnet: 172.30.50.0/24}]
+
+volumes:
+  mssql-data:
+    name: mycloud_mssql-data

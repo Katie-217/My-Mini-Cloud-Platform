@@ -111,6 +111,14 @@ và host 1053. Windows không tự dùng zone này để duyệt web; Portal v�
   ra log hoặc commit output `docker compose config` chứa resolved environment.
 - Public application routes `/`, `/blog/`, `/app/`; API chi tiết theo
   [api-contract.md](api-contract.md); quản trị dùng các port loopback đã chốt.
+- Proxy đã cấu hình `/api/` strip prefix, `/student` và `/student/` alias,
+  `/auth/` giữ prefix, web pool Round Robin. Header `X-Web-Server` nhận diện
+  replica thật. Mỗi image custom chỉ build một lần, các replica/init job dùng lại.
+- Web source chưa ghép sẽ trả 503 ở các URL giao diện, trong khi `/health`
+  kiểm tra Nginx vẫn trả 200. Phân biệt readiness hạ tầng và nghiệm thu UI.
+- Nginx dùng resolver Docker với upstream `resolve`; cấu hình tham chiếu
+  [upstream module](https://nginx.org/en/docs/http/ngx_http_upstream_module.html)
+  và [proxy_pass](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass).
 
 ## Phân công và nghiệm thu
 

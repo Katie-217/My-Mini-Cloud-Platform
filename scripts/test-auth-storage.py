@@ -11,8 +11,9 @@ import requests
 from minio.error import S3Error
 from integrations import storage_client
 
-api = 'http://application-backend-server:8081'
-auth = 'http://authentication-identity-server:8080'
+proxy_base = os.environ.get('TEST_PUBLIC_BASE', '').rstrip('/')
+api = proxy_base + '/api' if proxy_base else 'http://application-backend-server:8081'
+auth = proxy_base or 'http://authentication-identity-server:8080'
 realm = os.getenv('OIDC_REALM', 'MSSV_PLACEHOLDER')
 public = os.getenv('PUBLIC_URL', 'http://localhost').rstrip('/')
 count = 0
@@ -29,6 +30,8 @@ check('Secure từ chối request không token', requests.get(api + '/secure', t
 check('Secure từ chối token sai', requests.get(api + '/secure', headers={'Authorization': 'Bearer invalid'}, timeout=10).status_code == 401)
 for username in ('sv01', 'sv02'):
     session = requests.Session()
+    if proxy_base:
+        session.headers['Host'] = urlparse(public).netloc
     verifier = secrets.token_urlsafe(48)
     challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).decode().rstrip('=')
     state = secrets.token_urlsafe(24)
@@ -42,9 +45,18 @@ for username in ('sv01', 'sv02'):
     check(f'{username}: Keycloak trả login form thật', match is not None)
     parsed_action = urlparse(html.unescape(match.group(1)))
     action = auth + parsed_action.path + '?' + parsed_action.query
+    # Proxy test dùng URL nội bộ nhưng Host public: chuyển cookie cùng session
+    # khi rewrite URL để mô phỏng đúng cùng origin mà trình duyệt nhìn thấy.
+    login_headers = {'Cookie': '; '.join(f'{cookie.name}={cookie.value}' for cookie in session.cookies)} if proxy_base else {}
     login = session.post(action, data={'username': username, 'password': os.environ['DEMO_USER_PASSWORD'],
-                                      'credentialId': ''}, allow_redirects=False, timeout=15)
+                                      'credentialId': ''}, headers=login_headers, allow_redirects=False, timeout=15)
     callback = parse_qs(urlparse(login.headers.get('Location', '')).query)
+    if not callback.get('code'):
+        feedback = re.search(r'kc-feedback-text[^>]*>([^<]*)', login.text)
+        title = re.search(r'<title>([^<]*)', login.text)
+        print('LOGIN_DIAGNOSTIC:', login.status_code,
+              html.unescape(feedback.group(1) if feedback else title.group(1) if title else 'No feedback'),
+              'cookie_names=' + ','.join(cookie.name for cookie in session.cookies), flush=True)
     check(f'{username}: login redirect có state/code', callback.get('state') == [state] and bool(callback.get('code')))
     exchange = session.post(f'{auth}/auth/realms/{realm}/protocol/openid-connect/token', data={
         'grant_type': 'authorization_code', 'client_id': 'flask-app', 'redirect_uri': redirect,

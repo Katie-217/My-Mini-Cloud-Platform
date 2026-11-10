@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 
 import dns.resolver
@@ -50,5 +51,12 @@ proxied = requests.get(grafana + '/api/datasources/proxy/uid/prometheus/api/v1/q
 check('Grafana query thật qua datasource proxy', proxied.status_code == 200 and bool(proxied.json()['data']['result']))
 status = requests.get('http://application-backend-server:8081/status', timeout=15).json()
 check('Status có 9 nhóm, runtime count Unknown', status['groups_total'] == 9 and status['container_runtime_count'] is None)
-check('Status không báo mọi service healthy khi web/proxy chưa chạy', status['overall'] == 'degraded' and status['services_reachable'] < status['services_checked'])
-print(f'RESULT: {count} DNS/monitoring checks PASS; web probe chờ web/proxy triển khai.')
+check('Status count khớp từng probe thực tế', status['services_reachable'] == sum(x['status'] == 'healthy' for x in status['services']))
+if '--with-web' in sys.argv:
+    check('12 service probes truy cập được', status['overall'] == 'healthy' and status['services_reachable'] == 12)
+    web_targets = [target for target in targets if target['labels']['job'] == 'web']
+    check('HTTP exporter scrape được cả 2 web', len(web_targets) == 2 and all(target['health'] == 'up' for target in web_targets))
+    for target in web_targets:
+        result = requests.get(prometheus + '/api/v1/query', params={'query': 'probe_success{job="web",instance="' + target['labels']['instance'] + '"}'}, timeout=10).json()
+        check(f'HTTP probe_success=1: {target["labels"]["instance"]}', bool(result['data']['result']) and result['data']['result'][0]['value'][1] == '1')
+print(f'RESULT: {count} DNS/monitoring checks PASS')

@@ -54,6 +54,12 @@ Tất cả service dùng network `cloud-net`, restart `unless-stopped` cho tiế
 chạy lâu dài. Init job restart `no`, phải hoàn tất trước service phụ thuộc.
 Container để Compose sinh tên `mycloud-<service>-1`, tránh tên toàn cục.
 
+Cấu hình mục tiêu có **12 container thường trực cho 9 nhóm dịch vụ**:
+thêm 1 web replica, Node Exporter và Blackbox Exporter so với một container
+đại diện mỗi nhóm. Exporter phụ trợ Monitoring, replica phụ trợ nhóm Web;
+không tạo nhóm server nghiệp vụ mới. Ba init jobs và test runner tạm thời
+được thống kê riêng. Giao diện theo [ui-requirements.md](ui-requirements.md).
+
 | Nhóm / service | Image dự kiến | Port nội bộ → host | Persistence / source |
 | --- | --- | --- | --- |
 | web-frontend-server1/2 | `mycloud-web:1.0.0`, nền `nginx:1.28-alpine` | 80 → không publish | `web/`, chung nội dung |

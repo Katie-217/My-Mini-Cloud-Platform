@@ -1,0 +1,203 @@
+"""Kiểm thử UI thật qua gateway; chỉ dọn record/object do chính test tạo."""
+import base64
+import json
+import subprocess
+import sys
+import uuid
+from pathlib import Path
+from urllib.parse import urlsplit
+
+import requests
+from playwright.sync_api import sync_playwright, expect
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+root = Path(__file__).resolve().parents[1]
+env = dict(line.split('=', 1) for line in (root / '.env').read_text(encoding='utf-8-sig').splitlines()
+           if line.strip() and not line.startswith('#') and '=' in line)
+base = env.get('PUBLIC_URL', 'http://localhost').rstrip('/')
+evidence = root / 'docs' / 'evidence'
+runtime = root / '.runtime' / 'frontend-test'
+runtime.mkdir(parents=True, exist_ok=True)
+student_code = 'E' + uuid.uuid4().hex[:7]
+student_id = None
+objects = []
+checks = []
+errors = []
+screenshots = []
+
+
+def check(name, condition=True):
+    assert condition, name
+    checks.append(name)
+    print('PASS:', name, flush=True)
+
+
+def pdf_fixture():
+    objects = [b'<< /Type /Catalog /Pages 2 0 R >>',
+               b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+               b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 300] /Contents 4 0 R >>',
+               b'<< /Length 0 >>\nstream\n\nendstream']
+    data = b'%PDF-1.4\n'
+    offsets = []
+    for index, obj in enumerate(objects, 1):
+        offsets.append(len(data))
+        data += f'{index} 0 obj\n'.encode() + obj + b'\nendobj\n'
+    start = len(data)
+    data += b'xref\n0 5\n0000000000 65535 f \n'
+    for offset in offsets:
+        data += f'{offset:010d} 00000 n \n'.encode()
+    data += b'trailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n' + str(start).encode() + b'\n%%EOF\n'
+    return data
+
+
+with sync_playwright() as p:
+    browser = p.chromium.launch(channel='msedge', headless=True)
+    context = browser.new_context(viewport={'width': 1440, 'height': 1000}, accept_downloads=True)
+    page = context.new_page()
+    page.on('pageerror', lambda error: errors.append(str(error)))
+    try:
+        page.goto(base + '/', wait_until='domcontentloaded')
+        expect(page.locator('#status-overall-text')).to_contain_text('Healthy', timeout=20000)
+        expect(page.locator('#stat-runtime')).to_have_text('Unknown')
+        expect(page.locator('.metric-value').first).to_contain_text('%', timeout=15000)
+        check('Portal đọc status, runtime Unknown và metric thật')
+        check('Portal có đủ 9 card, latency và timestamp', page.locator('.service-probe-meta').count() == 9)
+        page.screenshot(path=str(evidence / 'portal-desktop.png'))
+        page.locator('[data-service-key="database"]').click()
+        expect(page.locator('#modal-service-content')).to_contain_text('127.0.0.1,1433')
+        page.keyboard.press('Escape')
+        expect(page.locator('#service-modal')).not_to_have_class('show')
+        check('Card SQL mở hướng dẫn SSMS, modal đóng bằng Escape')
+        page.locator('#infrastructure .services-grid').screenshot(path=str(evidence / 'portal-services.png'), style='.site-header { visibility: hidden !important; }')
+        screenshots.append('portal-desktop.png')
+        screenshots.append('portal-services.png')
+
+        for path in ('/blog/', '/blog/posts/', '/blog/blog1.html', '/blog/blog2.html', '/blog/blog3.html'):
+            response = page.goto(base + path, wait_until='domcontentloaded')
+            check('Blog route ' + path, response.status == 200)
+            page.wait_for_function('Array.from(document.images).every(img => img.complete && img.naturalWidth > 0)')
+        page.goto(base + '/blog/posts/')
+        check('Danh sách Blog đủ 3 bài', page.locator('.blog-card').count() == 3)
+        page.screenshot(path=str(evidence / 'blog-posts.png'), full_page=True)
+        screenshots.append('blog-posts.png')
+
+        page.goto(base + '/app/', wait_until='domcontentloaded')
+        expect(page.locator('#topbar-status-pill')).to_have_text('API Connected', timeout=15000)
+        initial_students = requests.get(base + '/api/students-db', timeout=10).json()
+        expect(page.locator('#stat-total-students')).to_have_text(str(len(initial_students)))
+        check('Student overview lấy dữ liệu SQL Server thật')
+        page.locator('.sidebar-item[data-tab="add-student"]').click()
+        page.locator('#add-student-id').fill(student_code)
+        page.locator('#add-fullname').fill('Kiểm thử Nguyễn Ánh')
+        page.locator('#add-dob').fill('2004-01-02')
+        major = page.locator('#add-major option').evaluate_all('(items) => items.map(x=>x.value).find(Boolean)')
+        page.locator('#add-major').select_option(major)
+        page.locator('#add-gpa').fill('3.75')
+        png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9ioAAAAASUVORK5CYII=')
+        page.locator('#add-avatar-file').set_input_files({'name': 'qa-avatar.png', 'mimeType': 'image/png', 'buffer': png})
+        with page.expect_response(lambda r: urlsplit(r.url).path == '/api/students-db' and r.request.method == 'POST') as created:
+            page.locator('#add-student-form button[type="submit"]').click()
+        check('Form thêm sinh viên thực hiện POST', created.value.status == 201)
+        record = created.value.json()
+        student_id = record['id']
+        objects.append(('profile-pics', record['avatar_key']))
+        row = page.locator('#students-table-body tr').filter(has_text=student_code)
+        expect(row).to_be_visible(timeout=15000)
+        page.wait_for_function('(code) => {const rows=[...document.querySelectorAll("#students-table-body tr")];const img=rows.find(r=>r.textContent.includes(code))?.querySelector("img");return img && img.complete && img.naturalWidth > 0;}', arg=student_code)
+        check('Avatar upload MinIO và hiển thị từ API download')
+        row.get_by_role('button', name='Xem', exact=True).click()
+        expect(page.locator('#view-student-content')).to_contain_text(student_code)
+        page.keyboard.press('Escape')
+        row.get_by_role('button', name='Sửa', exact=True).click()
+        page.locator('#edit-fullname').fill('Kiểm thử <b>Nguyễn Ánh</b>')
+        page.locator('#edit-gpa').fill('3.95')
+        with page.expect_response(lambda r: urlsplit(r.url).path == f'/api/students-db/{student_id}' and r.request.method == 'PUT') as updated:
+            page.locator('#edit-student-form button[type="submit"]').click()
+        check('Form sửa thực hiện PUT thật', updated.value.status == 200)
+        expect(row).to_contain_text('Kiểm thử <b>Nguyễn Ánh</b>')
+        check('Tên chứa HTML hiển thị dạng text an toàn', row.locator('b').count() == 0)
+        page.locator('#search-student-input').fill(student_code)
+        expect(page.locator('#students-table-body tr:not(#students-loading):not(#students-empty)')).to_have_count(1)
+        page.screenshot(path=str(evidence / 'student-crud.png'), full_page=True)
+        screenshots.append('student-crud.png')
+        row.get_by_role('button', name='Xóa', exact=True).click()
+        with page.expect_response(lambda r: urlsplit(r.url).path == f'/api/students-db/{student_id}' and r.request.method == 'DELETE') as deleted:
+            page.locator('#btn-confirm-delete').click()
+        check('Xác nhận xóa thực hiện DELETE thật', deleted.value.status == 200)
+        expect(row).to_have_count(0)
+        student_id = None
+
+        page.locator('.sidebar-item[data-tab="storage"]').click()
+        pdf = pdf_fixture()
+        page.locator('#doc-file-input').set_input_files({'name': 'qa-report.pdf', 'mimeType': 'application/pdf', 'buffer': pdf})
+        with page.expect_response(lambda r: urlsplit(r.url).path == '/api/files' and r.request.method == 'POST') as uploaded:
+            page.locator('#upload-document-form button[type="submit"]').click()
+        check('Upload PDF từ giao diện', uploaded.value.status == 201)
+        key = uploaded.value.json()['key']
+        objects.append(('documents', key))
+        file_row = page.locator('#files-table-body tr').filter(has_text=key)
+        expect(file_row).to_be_visible()
+        with page.expect_download() as download:
+            file_row.get_by_role('link', name='Tải về').click()
+        check('Download UI giữ nguyên PDF bytes', Path(download.value.path()).read_bytes() == pdf)
+
+        page.locator('.sidebar-item[data-tab="account"]').click()
+        page.locator('#btn-keycloak-login').click()
+        page.locator('#username').fill('sv01')
+        page.locator('#password').fill(env['DEMO_USER_PASSWORD'])
+        page.locator('#kc-login').click()
+        page.wait_for_url(base + '/app/**', timeout=20000)
+        expect(page.locator('#secure-test-result')).to_contain_text('sv01', timeout=20000)
+        check('Student login, callback PKCE và /secure hoạt động', 'code=' not in page.url)
+        check('State và verifier được dọn', page.evaluate('sessionStorage.getItem("pkce_state")===null && sessionStorage.getItem("pkce_code_verifier")===null'))
+        page.locator('#btn-keycloak-logout').click()
+        page.wait_for_url(base + '/app/', timeout=20000)
+        page.locator('.sidebar-item[data-tab="account"]').click()
+        expect(page.locator('#btn-keycloak-login')).to_be_visible()
+        check('Logout xóa token khỏi tab', page.evaluate('sessionStorage.getItem("mycloud_access_token")===null'))
+        page.locator('#btn-keycloak-login').click()
+        expect(page.locator('#username')).to_be_visible(timeout=15000)
+        check('Logout đã kết thúc cả phiên SSO Keycloak')
+
+        for path in ('/', '/blog/posts/', '/app/'):
+            page.set_viewport_size({'width': 390, 'height': 844})
+            page.goto(base + path, wait_until='domcontentloaded')
+            check('Không tràn viewport mobile ' + path, page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1'))
+        page.goto(base + '/')
+        expect(page.locator('#status-overall-text')).to_contain_text('Healthy')
+        page.screenshot(path=str(evidence / 'portal-mobile.png'), full_page=True)
+        screenshots.append('portal-mobile.png')
+
+        degraded = requests.get(base + '/api/status', timeout=15).json()
+        next(s for s in degraded['services'] if s['id'] == 'web2')['status'] = 'unhealthy'
+        degraded['overall'] = 'degraded'
+        context.route('**/api/status', lambda route: route.fulfill(json=degraded))
+        page.reload()
+        expect(page.locator('#badge-srv-web')).to_have_text('Unhealthy')
+        check('UI fault test: web2 lỗi làm cả nhóm Web unhealthy')
+        context.unroute('**/api/status')
+        context.route('**/api/metrics-summary', lambda route: route.fulfill(status=503, json={'status': 'unavailable'}))
+        page.reload()
+        expect(page.locator('.metric-value').first).to_have_text('Chưa có dữ liệu')
+        check('UI fault test: metrics 503 không tạo số liệu giả')
+        context.unroute('**/api/metrics-summary')
+        check('Không có JavaScript pageerror', not errors)
+    finally:
+        context.close()
+        browser.close()
+        if student_id is not None:
+            response = requests.get(base + f'/api/students-db/{student_id}', timeout=10)
+            if response.ok and response.json().get('student_id') == student_code:
+                requests.delete(base + f'/api/students-db/{student_id}', timeout=10).raise_for_status()
+        for bucket, key in objects:
+            subprocess.run(['docker', 'compose', '-f', str(root/'docker-compose.yml'), '-p', 'mycloud',
+                            'exec', '-T', 'application-backend-server', 'python', '-c',
+                            'import sys; from integrations import storage_client; storage_client().remove_object(sys.argv[1],sys.argv[2])',
+                            bucket, key], check=True, cwd=root)
+
+report = {'checks_passed': len(checks), 'checks': checks, 'javascript_errors': errors,
+          'screenshots': screenshots, 'fixture_cleanup': True,
+          'fault_tests': 'Browser response interception only; no service stopped.'}
+(evidence/'frontend-e2e.json').write_text(json.dumps(report, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
+print(f'RESULT: {len(checks)} frontend browser checks PASS; fixture cleanup complete.')

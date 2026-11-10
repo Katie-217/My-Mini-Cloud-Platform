@@ -406,6 +406,47 @@ body.portal-body {
   margin-bottom: 2rem;
 }
 
+/* Bảng phân giải tên miền dạng bảng viền chuyên nghiệp */
+.dns-data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+  text-align: left;
+  border: 1px solid var(--portal-border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 0.75rem;
+}
+
+.dns-data-table th {
+  background-color: #f1f5f9;
+  padding: 0.85rem 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+  border-bottom: 2px solid var(--portal-border);
+  white-space: nowrap;
+}
+
+.dns-data-table td {
+  padding: 0.95rem 1.15rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.dns-data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dns-data-table tbody tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+.dns-data-table tbody tr:hover {
+  background-color: #eff6ff;
+}
+
 .dns-router-box {
   background-color: #ffffff;
   border: 1px solid #bfdbfe;

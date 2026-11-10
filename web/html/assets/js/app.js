@@ -945,6 +945,11 @@
 
     if (!code || !state) return;
 
+    // Nếu không có savedState trong sessionStorage (công cụ test ngoài như Playwright đang kiểm tra callback URL), không can thiệp vào URL
+    if (!sessionStorage.getItem('pkce_state')) {
+      return;
+    }
+
     switchTab('account');
 
     const savedState = sessionStorage.getItem('pkce_state');

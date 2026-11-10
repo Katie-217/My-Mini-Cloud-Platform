@@ -90,23 +90,6 @@
         <span>Kiến Trúc Hạ Tầng</span>
       </button>
 
-      <button type="button" class="portal-nav-item" data-tab="monitoring">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-        </svg>
-        <span>Giám Sát Metrics</span>
-      </button>
-
-      <button type="button" class="portal-nav-item" data-tab="documentation">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-          <line x1="16" y1="13" x2="8" y2="13"></line>
-          <line x1="16" y1="17" x2="8" y2="17"></line>
-        </svg>
-        <span>Hướng Dẫn Demo</span>
-      </button>
-
       <div class="portal-nav-divider"></div>
 
       <a href="/app/" class="portal-nav-item" style="color: #60a5fa;">
@@ -471,30 +454,29 @@
       <!-- ================================================================= -->
       <section class="portal-tab-pane" id="tab-dns">
         
-        <!-- Bảng Danh Sách Link Mở Web & Cho Phép Copy -->
+        <!-- Bảng Danh Sách Link Mở Web & Cho Phép Copy (Dạng Bảng) -->
         <div class="dns-list-card">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
-            <div>
-              <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a;">Bảng Phân Giải Tên Miền Nội Bộ (Zone: cloud.local)</h3>
-              <p style="font-size: 0.85rem; color: #64748b;">Cung cấp danh sách các liên kết mở web và cho phép copy nhanh đường dẫn</p>
-            </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Bảng Phân Giải Tên Miền Nội Bộ (Zone: cloud.local)</h3>
             <span class="badge badge-healthy">Bind9 Authoritative DNS :1053</span>
           </div>
 
-          <table class="table" style="margin-bottom: 0;">
-            <thead>
-              <tr>
-                <th>Tên Miền (FQDN)</th>
-                <th>Địa Chỉ IP (A Record)</th>
-                <th>Dịch Vụ Đích</th>
-                <th>Cổng</th>
-                <th style="text-align: right;">Thao Tác</th>
-              </tr>
-            </thead>
-            <tbody id="dns-records-table-body">
-              <!-- Rendered dynamically by portal.js -->
-            </tbody>
-          </table>
+          <div style="width: 100%; overflow-x: auto;">
+            <table class="dns-data-table">
+              <thead>
+                <tr>
+                  <th>Tên Miền (FQDN)</th>
+                  <th>Địa Chỉ IP (A Record)</th>
+                  <th>Dịch Vụ Đích</th>
+                  <th>Cổng</th>
+                  <th style="text-align: right;">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="dns-records-table-body">
+                <!-- Rendered dynamically by portal.js -->
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Bộ Điều Phối Hạ Tầng Tìm Kiếm -->
@@ -785,71 +767,6 @@
 +-----------------------------------------------------------------------------------------------+
             </pre>
           </div>
-        </div>
-      </section>
-
-      <!-- ================================================================= -->
-      <!-- TAB 8: MONITORING (Giám sát Metrics) -->
-      <!-- ================================================================= -->
-      <section class="portal-tab-pane" id="tab-monitoring">
-        <div class="dns-list-card">
-          <h2 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">Hạ Tầng Giám Sát Tài Nguyên &amp; Trực Quan Hóa</h2>
-          <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 1.5rem;">
-            Tích hợp Prometheus TSDB, Node Exporter, Blackbox Exporter và Grafana Dashboards.
-          </p>
-
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
-            
-            <div style="border: 1px solid var(--portal-border); border-radius: 12px; padding: 1.25rem;">
-              <h3 style="font-size: 1.05rem; font-weight: 700; color: #ea580c; margin-bottom: 0.5rem;">Grafana Dashboard (Port 3000)</h3>
-              <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
-                Hiển thị 3 biểu đồ chính: Tỷ lệ sử dụng CPU (%), Dung lượng RAM khả dụng (MB) và Lưu lượng mạng Network I/O.
-              </p>
-              <a href="http://localhost:3000" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Mở Grafana UI &rarr;</a>
-            </div>
-
-            <div style="border: 1px solid var(--portal-border); border-radius: 12px; padding: 1.25rem;">
-              <h3 style="font-size: 1.05rem; font-weight: 700; color: #e11d48; margin-bottom: 0.5rem;">Prometheus TSDB (Port 9090)</h3>
-              <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
-                Lưu trữ chuỗi thời gian metric scrapes với chu kỳ 15 giây. Xem trạng thái targets UP và truy vấn PromQL.
-              </p>
-              <a href="http://localhost:9090/targets" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Mở Prometheus Targets &rarr;</a>
-            </div>
-
-            <div style="border: 1px solid var(--portal-border); border-radius: 12px; padding: 1.25rem;">
-              <h3 style="font-size: 1.05rem; font-weight: 700; color: #2563eb; margin-bottom: 0.5rem;">Blackbox HTTP Prober (Port 9115)</h3>
-              <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
-                Kiểm tra tính sẵn sàng HTTP 200 của các container Web Replicas và Nginx Reverse Proxy Gateway.
-              </p>
-              <a href="http://localhost:9115" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Mở Blackbox Exporter &rarr;</a>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      <!-- ================================================================= -->
-      <!-- TAB 9: DOCUMENTATION (Hướng dẫn Demo 10 bước) -->
-      <!-- ================================================================= -->
-      <section class="portal-tab-pane" id="tab-documentation">
-        <div class="dns-list-card">
-          <h2 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">Kịch Bản Nghiệm Thu &amp; Thuyết Trình 10 Bước</h2>
-          <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 1.5rem;">
-            Trình tự kiểm tra tính đúng đắn cho đồ án MyMiniCloud theo chuẩn hồ sơ kỹ thuật:
-          </p>
-
-          <ol style="padding-left: 1.25rem; color: #334155; font-size: 0.9rem; line-height: 1.7;">
-            <li><strong>Khởi tạo Docker Stack:</strong> Kiểm tra 12 container đang chạy ổn định qua lệnh <code>docker compose ps</code>.</li>
-            <li><strong>Xác thực Web Gateway:</strong> Truy cập <code>http://localhost/</code> mở Portal Control với thanh nav bên trái.</li>
-            <li><strong>Kiểm tra Thẻ Nimbus:</strong> Chuyển sang tab <strong>Services</strong> xem 9 nhóm dịch vụ hiển thị đầy đủ icon, status dot xanh và URL.</li>
-            <li><strong>Kiểm tra Cân Bằng Tải:</strong> Mở tab <strong>Cân Bằng Tải</strong>, chọn ứng dụng bất kỳ và nhấn "Bắn 10 Request Liên Tiếp" để quan sát tỷ lệ phân phối chia đều giữa 2 server web.</li>
-            <li><strong>Phân giải DNS &amp; Copy Link:</strong> Chuyển sang tab <strong>DNS &amp; Routing</strong>, click "Copy Link" và nhập vào ô tìm kiếm để bộ điều phối trả về log phân giải và probe HTTP.</li>
-            <li><strong>Kiểm tra Xác Thực &amp; API:</strong> Chuyển sang tab <strong>Auth &amp; Keycloak</strong> và <strong>API Explorer</strong> để thử nghiệm token và các endpoint REST.</li>
-            <li><strong>Khám phá Blog Chuyên đề:</strong> Mở <code>/blog/</code> kiểm tra giao diện nền trắng, banner giới thiệu mục đích và các bài viết card ngang.</li>
-            <li><strong>Ứng dụng Sinh viên:</strong> Mở <code>/app/</code> kiểm tra giao diện Dashboard, danh sách sinh viên và form thêm sinh viên trực tiếp.</li>
-            <li><strong>Kéo thả tệp &amp; Lưu trữ MinIO:</strong> Tại tab File Storage của <code>/app/</code>, kéo thả tài liệu PDF để lưu trữ vào MinIO S3.</li>
-            <li><strong>Trực quan hóa Grafana:</strong> Mở <code>http://localhost:3000</code> xác minh biểu đồ CPU, RAM và lưu lượng mạng cập nhật theo thời gian thực.</li>
-          </ol>
         </div>
       </section>
 

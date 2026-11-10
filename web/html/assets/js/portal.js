@@ -257,9 +257,7 @@
       dns: { title: 'DNS & Traffic Dispatcher', desc: 'Phân giải tên miền nội bộ, sao chép liên kết và điều phối yêu cầu' },
       auth: { title: 'Keycloak SSO & Identity', desc: 'Kiểm tra xác thực tập trung OIDC PKCE và xác minh JWT Access Token' },
       apidoc: { title: 'Interactive API Explorer', desc: 'Kiểm thử trực tiếp các API endpoint của hệ thống microservices' },
-      architecture: { title: 'System Architecture', desc: 'Sơ đồ luồng kết nối phân tầng giữa các microservices' },
-      monitoring: { title: 'Monitoring & Metrics', desc: 'Giám sát Prometheus và trực quan hóa Grafana' },
-      documentation: { title: 'Demo Guide', desc: 'Kịch bản nghiệm thu 10 bước cho thuyết trình đồ án' }
+      architecture: { title: 'System Architecture', desc: 'Sơ đồ luồng kết nối phân tầng giữa các microservices' }
     };
 
     if (titles[tabId]) {
@@ -608,12 +606,12 @@
     DNS_RECORDS.forEach(rec => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><strong style="color: #0f172a; font-family: var(--font-mono);">${escapeHtml(rec.domain)}</strong></td>
-        <td><code>${escapeHtml(rec.ip)}</code></td>
-        <td>${escapeHtml(rec.service)}</td>
-        <td><span class="badge badge-healthy">Port ${escapeHtml(rec.targetPort)}</span></td>
+        <td><strong style="color: #0f172a; font-family: var(--font-mono); font-size: 0.9rem;">${escapeHtml(rec.domain)}</strong></td>
+        <td><code style="background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 4px; color: #0f172a; font-weight: 600;">${escapeHtml(rec.ip)}</code></td>
+        <td><span style="font-weight: 500; color: #334155;">${escapeHtml(rec.service)}</span></td>
+        <td><span class="badge badge-healthy" style="font-weight: 700;">Port ${escapeHtml(rec.targetPort)}</span></td>
         <td style="text-align: right; white-space: nowrap;">
-          <a href="${escapeHtml(rec.localUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-right: 0.35rem;">
+          <a href="${escapeHtml(rec.localUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-right: 0.4rem;">
             Mở Web
           </a>
           <button type="button" class="btn btn-secondary btn-sm" data-copy-link="${escapeHtml(rec.localUrl)}">

@@ -1,0 +1,7 @@
+[
+  {"id":1,"name":"Nguyễn Minh An","major":"Khoa học máy tính","gpa":3.6},
+  {"id":2,"name":"Trần Bảo Linh","major":"Hệ thống thông tin","gpa":3.45},
+  {"id":3,"name":"Lê Hoàng Nam","major":"Điện toán đám mây","gpa":3.8},
+  {"id":4,"name":"Phạm Khánh Vy","major":"Kỹ thuật phần mềm","gpa":3.7},
+  {"id":5,"name":"Vũ Gia Huy","major":"An toàn thông tin","gpa":3.3}
+]

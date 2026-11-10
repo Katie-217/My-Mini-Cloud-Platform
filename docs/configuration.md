@@ -77,6 +77,17 @@ Xem [ngoại lệ build MinIO](minio-build-notes.md).
 
 ## Xem và xử lý lỗi
 
+Nếu toàn bộ Blog/Grafana/MinIO/Prometheus đều không mở được, kiểm tra Docker
+Desktop đang chạy Linux engine trước. Lỗi pipe `dockerDesktopLinuxEngine` không
+tồn tại nghĩa là chưa kết nối được engine; không phải lỗi SQL hoặc mật khẩu.
+Bật Docker Desktop, rồi chạy `scripts/start.ps1 -NoBuild -RequireFrontend`.
+Mở Portal bằng `http://localhost/`, dùng Ctrl+F5 sau khi cập nhật giao diện.
+
+Card DNS mở hướng dẫn `dig` vì Bind9 port1053 dùng giao thức DNS, không phục vụ
+HTTP. Blackbox port9115 chỉ nội bộ; xem kết quả tại Prometheus Targets và query
+`probe_success{job="web"}`. Card Grafana mở thẳng `/d/mycloud-system`, yêu cầu
+login bằng credential `.env` nếu chưa có session. Không cần publish thêm exporter.
+
 Tại repo, PowerShell:
 
 ```powershell

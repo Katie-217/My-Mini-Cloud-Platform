@@ -104,6 +104,8 @@ container SQL/MinIO và đối chiếu record/file; không xóa named volume.
 
 [Kết quả chi tiết](docs/testing.md), [ảnh và metadata](docs/evidence/README.md),
 [kịch bản demo 12–15 phút](docs/demo-script.md).
+[Hướng dẫn chạy lệnh và chụp minh chứng theo phần Kỳ vọng của đề](docs/screenshot-guide.md)
+có response mong đợi, cấu hình cần chụp và cách chứng minh kết nối giữa các server.
 
 ## Cấu trúc và cộng tác
 

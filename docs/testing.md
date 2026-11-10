@@ -19,14 +19,15 @@ Ngày thực hiện: 10/11/2026. Đây là trạng thái hiện hành, sau các 
 | Database/schema/seed | PASS | Job init hoàn tất; API đọc tối thiểu 3 seed tiếng Việt |
 | API và CRUD thật | PASS | `scripts/test-backend.py`: 23 checks PASS |
 | Least privilege SQL runtime login | PASS | USER_NAME=`cloud_app`, SELECT/INSERT=1, CREATE TABLE=0, sysadmin=0 |
-| Persistence sau restart SQL | PASS | `scripts/test-persistence.py`: tạo qua API, restart đúng SQL container của mycloud, đọc lại khớp toàn bộ object, xóa đúng record test |
+| Persistence SQL Server | PASS | Restart/recreate container mới giữ record/Unicode/timestamp; ID container đã đổi, chỉ xóa record test |
+| Persistence MinIO | PASS | ID container mới; PNG/PDF ở cả hai bucket giữ nguyên byte sau recreate; chỉ dọn object test |
 | Init chạy lại an toàn | PASS | `docker compose run --rm database-init` Exited (0); chạy lại test API kiểm tra seed/CRUD |
 | SSMS đăng nhập bằng GUI | NOT TESTED | Port SQL publish thành công; chưa thao tác SSMS |
 | Gateway / round robin | PASS | 41 gateway checks, GET/POST/PUT/DELETE, 20 request chia 10/10; cả hai web cùng image ID |
 | Nội dung Portal/Blog/Student frontend | NOT TESTED | Chờ Gemini bàn giao; web trả HTTP 503 trung thực khi nội dung chưa ghép |
 | Keycloak / `/secure` nội bộ | PASS | 2 user login form thật, state/code, PKCE code exchange, JWT/JWKS, sai chữ ký/thiếu token bị từ chối |
 | MinIO upload/download | PASS | Avatar PNG/PDF, stat/list/download đúng byte; anonymous 403; 24 checks auth/storage PASS |
-| MinIO Console HTML | PASS | `http://localhost:9001/` HTTP 200 và HTML thật; chưa kiểm thử GUI quản trị trong browser |
+| MinIO Console GUI | PASS | Đăng nhập Edge thật, thấy cả hai bucket và đã chụp ảnh |
 | Keycloak qua `/auth/` public | PASS | Edge thật localhost: 2 user login, cookie, state, PKCE, token và secure API qua proxy |
 | Student JavaScript callback/login/logout | NOT TESTED | Browser test chặn callback để kiểm tra auth độc lập; chưa nghiệm thu JS frontend |
 | Bind9 authoritative DNS | PASS | Record khớp IP service thật; host 1053 UDP/TCP và container dig đều đúng |
@@ -34,9 +35,9 @@ Ngày thực hiện: 10/11/2026. Đây là trạng thái hiện hành, sau các 
 | Portal metrics/status backend | PASS | `/metrics-summary` có số liệu CPU/RAM/network thật; `/status` có latency_ms và checked_at đo theo probe |
 | Target web | PASS | 21 DNS/monitoring checks; 2 web targets UP và probe_success=1 |
 | Script vận hành PowerShell | PASS | start.ps1 -NoBuild và health-check.ps1 chạy thành công; preflight kiểm tra ownership/subnet/ports |
-| Bash scripts | PASS: SYNTAX | bash -n thành công; chưa chạy lifecycle qua Bash trên Ubuntu |
-| Stop scripts | NOT TESTED: LIFECYCLE | Đã kiểm tra cú pháp, chưa dừng hệ thống đang dùng để demo |
-| Grafana visualization trong browser | NOT TESTED | Datasource/PromQL có data; chưa chụp dashboard GUI |
+| Bash syntax | PASS | bash -n thành công |
+| Bash lifecycle / stop scripts | NOT TESTED | Chưa chạy start/stop qua Bash trên Ubuntu hoặc dừng toàn bộ mycloud |
+| Grafana visualization trong browser | PASS | Login Edge thật, 3 panel có canvas/data, không có No data; ảnh đã xem lại |
 | Kiểm thử dừng Node Exporter và phục hồi | NOT TESTED | Cơ chế kiểm duyệt tự động chặn lệnh dừng container: blocked by policy; không có container bị dừng bởi test |
 | Docker Hub push / AWS | NOT TESTED | Chưa có phạm vi/credential tương ứng |
 
@@ -148,3 +149,20 @@ review/ghép code Gemini sẽ phục vụ nội dung thật; không ghi đè `we
   vẫn NOT TESTED. Không suy từ cú pháp hợp lệ thành đã chạy thành công.
 - `scripts/check-secrets.py`: soát file tracked hoặc `--staged`, đối chiếu secret
   local và private key, không xuất giá trị. `.env` và `.runtime/` được Git ignore.
+
+## Persistence và ảnh minh chứng cuối lượt cấu hình
+
+- Tạo record riêng qua API và upload PNG/PDF riêng vào hai bucket, lưu marker
+  trong `/tmp` app container. Recreate chỉ `relational-database-server` và
+  `object-storage-server` bằng Compose project mycloud; xác nhận cả hai ID đổi.
+- `test-persistence.py verify`: đọc lại record khớp toàn bộ object, Unicode,
+  timestamp; `test-storage-persistence.py verify`: tải lại PNG/PDF đúng byte.
+- Sau kiểm tra chỉ xóa record/object có ID/key do bài test tạo. Không xóa volume.
+  Hạ tầng phục hồi 12/12 reachable và metric thật sau recreate.
+- `capture-admin-ui.py`: login Edge thật vào Grafana và MinIO. Grafana có 3
+  panel với canvas, không No data; MinIO hiển thị hai bucket. Đã xem lại ảnh.
+- [Ảnh Grafana](evidence/grafana-dashboard.png), [ảnh MinIO](evidence/minio-console.png),
+  [metadata đã lọc](evidence/local-infrastructure.json).
+- Kiểm tra cuối: 12 container thường trực, 3 init jobs Exited (0), 5 named
+  volumes mycloud; 37 container ngoài project không chạy. Không dùng prune,
+  không thay đổi SQLEXPRESS/ICS hoặc tài nguyên ngoài mycloud.

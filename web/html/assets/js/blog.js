@@ -1,13 +1,14 @@
 /**
  * MyMiniCloud - Personal Engineering Blog JavaScript
- * Quản lý chuyển tab giao diện (Home / Articles / About) và bộ lọc chuyên mục
+ * Quản lý chuyển tab giao diện (Home / Articles) và bộ lọc chuyên mục
  */
 
 (function () {
   'use strict';
 
   function switchBlogTab(tabId) {
-    document.querySelectorAll('.blog-pill-tab').forEach(btn => {
+    // Đồng bộ nút nav trên header và các nút tab khác
+    document.querySelectorAll('[data-tab]').forEach(btn => {
       if (btn.getAttribute('data-tab') === tabId) {
         btn.classList.add('active');
       } else {
@@ -50,8 +51,8 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    // 1. Chuyển tab Pills (Home, Articles, About)
-    document.querySelectorAll('.blog-pill-tab[data-tab]').forEach(btn => {
+    // 1. Chuyển tab trên Header (Home, Articles)
+    document.querySelectorAll('[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => {
         const tab = btn.getAttribute('data-tab');
         switchBlogTab(tab);
@@ -75,10 +76,10 @@
       });
     });
 
-    // 4. Kiểm tra URL hash khi mở trang
+    // 4. Kiểm tra URL hash khi mở trang (#articles)
     const hash = window.location.hash.replace('#', '');
-    if (hash === 'articles' || hash === 'about') {
-      switchBlogTab(hash);
+    if (hash === 'articles') {
+      switchBlogTab('articles');
     }
   });
 })();

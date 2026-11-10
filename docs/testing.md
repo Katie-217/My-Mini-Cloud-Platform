@@ -27,7 +27,11 @@ Ngày thực hiện: 10/11/2026. Đây là trạng thái hiện hành, sau các 
 | MinIO upload/download | PASS | Avatar PNG/PDF, stat/list/download đúng byte; anonymous 403; 24 checks auth/storage PASS |
 | MinIO Console HTML | PASS | `http://localhost:9001/` HTTP 200 và HTML thật; chưa kiểm thử GUI quản trị trong browser |
 | Keycloak qua `/auth/` public và frontend callback | NOT TESTED | Chờ Nginx và frontend; test hiện tại gọi service nội bộ với issuer/redirect URI public |
-| Bind9 / Prometheus / Grafana | NOT TESTED | Chưa triển khai |
+| Bind9 authoritative DNS | PASS | Record khớp IP service thật; host 1053 UDP/TCP và container dig đều đúng |
+| Prometheus + Grafana datasource/dashboard API | PASS | 17 DNS/monitoring checks; node/prometheus/blackbox UP, 3 panel có sample thật, Grafana query qua datasource proxy |
+| Portal metrics/status backend | PASS | `/metrics-summary` có số liệu CPU/RAM/network thật; `/status` có latency_ms và checked_at đo theo probe |
+| Target web / visualization trong browser | NOT TESTED | Chờ web replicas và frontend; chưa chụp dashboard GUI |
+| Kiểm thử dừng Node Exporter và phục hồi | NOT TESTED | Cơ chế kiểm duyệt tự động chặn lệnh dừng container: blocked by policy; không có container bị dừng bởi test |
 | Docker Hub push / AWS | NOT TESTED | Chưa có phạm vi/credential tương ứng |
 
 23 checks backend bao gồm health truy vấn DB, hello, JSON 5 mẫu, seed, Unicode,
@@ -75,3 +79,21 @@ không đồng nghĩa backend API đã có phân quyền production.
 
 MinIO build từ source chính thức vì hai registry upstream từ chối pull. Console
 HTML/S3 đã hoạt động thật; xem [minio-build-notes.md](minio-build-notes.md).
+
+## DNS, monitoring và API dành cho Portal
+
+- `python scripts/test-dns-host.py`: host localhost:1053 trả authoritative A record
+  `app-backend.cloud.local=172.30.50.20` qua UDP và TCP, PASS.
+- `docker compose exec -T internal-dns-server dig '@127.0.0.1' app-backend.cloud.local +short`:
+  trả đúng 172.30.50.20. Khi dùng PowerShell, đặt đối số bắt đầu bằng `@` trong dấu nháy.
+- `docker compose run --rm --no-deps integration-check python /checks/test-monitoring.py`:
+  17 checks PASS, gồm record Bind9 khớp service, metric thật và Grafana datasource proxy.
+- `/metrics-summary` nội bộ đã trả đủ CPU %, memory bytes/%, network bytes/s;
+  `/status` trả 9 nhóm, các probe có duration và timestamp, runtime count vẫn null.
+  Khi web/proxy chưa triển khai, overall degraded đúng thực tế.
+- Phạm vi CPU/RAM là Linux VM/kernel Docker Desktop; network là namespace của
+  Node Exporter. Giao diện phải ghi rõ phạm vi, không gán thành toàn bộ Windows host.
+- Lỗi Bind9 đã sửa: image có `/etc/bind/named.conf` mặc định không include các
+  file options/local mount rời. Đã thêm `dns/named.conf` include tường minh, mount
+  file chính và recreate đúng container DNS của `mycloud`. `named-checkconf` và
+  truy vấn thực tế đã thành công. Không sửa Windows ICS hoặc DNS của host.

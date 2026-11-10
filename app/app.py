@@ -178,3 +178,5 @@ def change_student(student_id):
 
 from integrations import integrations
 app.register_blueprint(integrations)
+from status import status_api
+app.register_blueprint(status_api)

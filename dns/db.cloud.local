@@ -1,0 +1,13 @@
+$TTL 60
+@ IN SOA ns.cloud.local. hostmaster.cloud.local. (
+    2026111001 300 60 604800 60
+)
+  IN NS ns.cloud.local.
+ns IN A 172.30.50.53
+web IN A 172.30.50.10
+web-frontend-server IN A 172.30.50.10
+app IN A 172.30.50.20
+app-backend IN A 172.30.50.20
+minio IN A 172.30.50.30
+keycloak IN A 172.30.50.40
+grafana IN A 172.30.50.50

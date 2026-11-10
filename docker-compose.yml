@@ -47,7 +47,8 @@ services:
     image: mycloud-app:1.0.0
     build: ./app
     environment: *app-env
-    networks: [cloud-net]
+    networks:
+      cloud-net: {ipv4_address: 172.30.50.20}
     depends_on:
       database-init: {condition: service_completed_successfully}
     restart: unless-stopped
@@ -70,7 +71,8 @@ services:
       KC_PROXY_HEADERS: xforwarded
       KC_HEALTH_ENABLED: "true"
     volumes: ["keycloak-data:/opt/keycloak/data"]
-    networks: [cloud-net]
+    networks:
+      cloud-net: {ipv4_address: 172.30.50.40}
     restart: unless-stopped
 
   auth-init:
@@ -95,7 +97,8 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Run scripts/init-env.py}
     ports: ["127.0.0.1:9000:9000", "127.0.0.1:9001:9001"]
     volumes: ["minio-data:/data"]
-    networks: [cloud-net]
+    networks:
+      cloud-net: {ipv4_address: 172.30.50.30}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:9000/minio/health/ready"]
@@ -122,9 +125,76 @@ services:
       <<: *app-env
       PYTHONPATH: /app
       DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:?Run scripts/init-env.py}
+      GRAFANA_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GRAFANA_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Run scripts/init-env.py}
     volumes: ["./scripts:/checks:ro"]
     networks: [cloud-net]
     restart: "no"
+
+  internal-dns-server:
+    image: internetsystemsconsortium/bind9:9.18
+    ports: ["127.0.0.1:1053:53/tcp", "127.0.0.1:1053:53/udp"]
+    volumes:
+      - ./dns/named.conf:/etc/bind/named.conf:ro
+      - ./dns/named.conf.options:/etc/bind/named.conf.options:ro
+      - ./dns/named.conf.local:/etc/bind/named.conf.local:ro
+      - ./dns/db.cloud.local:/etc/bind/db.cloud.local:ro
+    networks:
+      cloud-net: {ipv4_address: 172.30.50.53}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "dig +time=2 +tries=1 @127.0.0.1 cloud.local SOA +short | grep -q ns.cloud.local"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  monitoring-node-exporter-server:
+    image: prom/node-exporter:v1.9.1
+    networks: [cloud-net]
+    restart: unless-stopped
+
+  monitoring-http-exporter-server:
+    image: prom/blackbox-exporter:v0.26.0
+    command: ["--config.file=/etc/blackbox/blackbox.yml"]
+    volumes: ["./monitor/blackbox.yml:/etc/blackbox/blackbox.yml:ro"]
+    networks: [cloud-net]
+    restart: unless-stopped
+
+  monitoring-prometheus-server:
+    image: prom/prometheus:v3.2.1
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus", "--storage.tsdb.retention.time=3d"]
+    ports: ["127.0.0.1:9090:9090"]
+    volumes:
+      - ./monitor/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks: [cloud-net]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:9090/-/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  monitoring-grafana-dashboard-server:
+    image: grafana/grafana:11.6.0
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Run scripts/init-env.py}
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports: ["127.0.0.1:3000:3000"]
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      cloud-net: {ipv4_address: 172.30.50.50}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
 networks:
   cloud-net:
@@ -140,3 +210,7 @@ volumes:
     name: mycloud_keycloak-data
   minio-data:
     name: mycloud_minio-data
+  prometheus-data:
+    name: mycloud_prometheus-data
+  grafana-data:
+    name: mycloud_grafana-data

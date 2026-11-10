@@ -1,0 +1,38 @@
+{
+  "uid": "mycloud-system",
+  "title": "System Health of MSSV_PLACEHOLDER",
+  "tags": ["mycloud", "Linux VM", "node-exporter"],
+  "schemaVersion": 40,
+  "version": 1,
+  "refresh": "5s",
+  "timezone": "browser",
+  "time": {"from": "now-15m", "to": "now"},
+  "panels": [
+    {
+      "id": 1, "type": "timeseries", "title": "CPU Usage — Linux VM (%)",
+      "description": "Counter CPU của Linux kernel trong Docker Desktop; không phải CPU Windows hoặc từng container.",
+      "gridPos": {"x": 0, "y": 0, "w": 12, "h": 9},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[2m])))", "legendFormat": "CPU"}]
+    },
+    {
+      "id": 2, "type": "timeseries", "title": "Memory Usage — Linux kernel",
+      "gridPos": {"x": 12, "y": 0, "w": 12, "h": 9},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "bytes", "min": 0}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes", "legendFormat": "Used memory"}]
+    },
+    {
+      "id": 3, "type": "timeseries", "title": "Network Traffic — Node Exporter namespace",
+      "description": "Traffic interface trong namespace của Node Exporter; không mặc định là toàn Windows host hoặc mọi container.",
+      "gridPos": {"x": 0, "y": 9, "w": 24, "h": 9},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "Bps", "min": 0}, "overrides": []},
+      "targets": [
+        {"refId": "A", "expr": "sum(rate(node_network_receive_bytes_total{device!=\"lo\"}[2m]))", "legendFormat": "Receive"},
+        {"refId": "B", "expr": "sum(rate(node_network_transmit_bytes_total{device!=\"lo\"}[2m]))", "legendFormat": "Transmit"}
+      ]
+    }
+  ]
+}

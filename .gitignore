@@ -14,3 +14,14 @@ storage/data/*
 *.log
 .DS_Store
 Thumbs.db
+
+# Local coordination, plans, prompts and source assignment documents.
+/AGENTS.md
+/docs/*plan*.md
+/docs/*prompt*.md
+/docs/*survey*.md
+/docs/frontend-handoff.md
+/docs/frontend-review.md
+/docs/ui-requirements.md
+/docs/*.pdf
+/docs/evidence/

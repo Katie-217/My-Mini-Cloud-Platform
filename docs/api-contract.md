@@ -1,4 +1,4 @@
-# Hợp đồng API dùng chung cho Codex và Gemini
+# Hợp đồng API MyMiniCloud
 
 Phiên bản 1 — 10/11/2026. Frontend chỉ gọi cùng origin, không hardcode hostname container.
 Nginx strip `/api/` khi chuyển đến Flask; backend có route không prefix.

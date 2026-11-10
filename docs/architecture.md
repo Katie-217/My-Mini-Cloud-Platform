@@ -1,20 +1,13 @@
 # Kiến trúc MyMiniCloud — project Docker `mycloud`
 
-## Nguồn yêu cầu và quyết định
+## Quyết định kiến trúc
 
-Đã đọc PDF `Báo Cáo Cuối Kỳ.docx.pdf` đủ 27 trang, master prompt cập nhật và tài
-liệu khảo sát. Thứ tự ưu tiên: yêu cầu người dùng mới nhất → master implementation
-plan mới → PDF đề bài → tài liệu kế hoạch trước đó. Tài liệu khảo sát gốc giữ nguyên.
-
-Các khác biệt có chủ đích:
-
-- SQL Server 2022 Developer theo người dùng, thay các ví dụ MariaDB/MySQL của PDF.
-  `AUTO_INCREMENT` đổi thành `IDENTITY`, giữ `studentdb.dbo.students` và API.
+- SQL Server 2022 Developer, bảng `studentdb.dbo.students` dùng `IDENTITY`.
 - 9 nhóm dịch vụ dùng nhiều container: 2 web replica, exporter và init jobs phụ trợ.
 - HTTP exporter kiểm tra web; không scrape HTML cổng 80 như metrics.
-- File MinIO private, download qua backend thay URL public bucket trong ví dụ PDF.
+- File MinIO private, download qua backend.
 - Dùng Grafana visualization + Compose logs; chưa triển khai log tập trung Loki.
-- Không dùng các lệnh dừng/xóa toàn bộ container minh họa trong PDF trang 11.
+- Các script vận hành chỉ thao tác project mycloud.
 - Local trước; AWS và Docker Hub chỉ được PASS khi có kiểm thử thật.
 
 ## Sơ đồ và luồng request
@@ -58,7 +51,7 @@ Cấu hình mục tiêu có **12 container thường trực cho 9 nhóm dịch v
 thêm 1 web replica, Node Exporter và Blackbox Exporter so với một container
 đại diện mỗi nhóm. Exporter phụ trợ Monitoring, replica phụ trợ nhóm Web;
 không tạo nhóm server nghiệp vụ mới. Ba init jobs và test runner tạm thời
-được thống kê riêng. Giao diện theo [ui-requirements.md](ui-requirements.md).
+được thống kê riêng.
 
 | Nhóm / service | Image dự kiến | Port nội bộ → host | Persistence / source |
 | --- | --- | --- | --- |
@@ -117,7 +110,7 @@ và host 1053. Windows không tự dùng zone này để duyệt web; Portal v�
 - Web source chưa ghép sẽ trả 503 ở các URL giao diện, trong khi `/health`
   kiểm tra Nginx vẫn trả 200. Phân biệt readiness hạ tầng và nghiệm thu UI.
   Source hiện đã ghép/review, cả ba UI 200 và 27 checks Edge PASS;
-  xem [frontend-review.md](frontend-review.md).
+  xem [kết quả kiểm thử](testing.md).
 - Nginx dùng resolver Docker với upstream `resolve`; cấu hình tham chiếu
   [upstream module](https://nginx.org/en/docs/http/ngx_http_upstream_module.html)
   và [proxy_pass](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass).
@@ -130,10 +123,6 @@ và host 1053. Windows không tự dùng zone này để duyệt web; Portal v�
 | Backend, SQL, auth/storage, Docker/DNS/metrics/proxy | Codex | Service thật, readiness, persistence, log và kiểm thử |
 | Review, merge, Docker E2E và báo cáo | Codex | Đọc diff, kiểm tra bảo mật/contract, chạy thật, ghi bằng chứng |
 
-PDF trang 21–27 được đối chiếu: 3 bài Blog → Gemini; JSON 5 mẫu → app/students.json;
-studentdb → T-SQL; realm/client/users → auth-init; avatar/PDF → MinIO;
-DNS record → Bind9; target web → HTTP exporter; 3 biểu đồ → Grafana provisioning;
-`/student/` → proxy alias; round robin → header nhận diện hai web.
-
 Docker Hub push và AWS EC2 vẫn NOT TESTED cho đến khi có repo/credential/phạm vi
-triển khai tương ứng; không cản việc hoàn thành local. Remote Git sẽ do người dùng cung cấp.
+triển khai tương ứng; không cản việc hoàn thành local. Remote origin đã được cấu hình,
+chưa push source.

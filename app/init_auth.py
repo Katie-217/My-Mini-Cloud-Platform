@@ -42,7 +42,7 @@ if not clients.json():
     session.post(client_url, json=config, timeout=10).raise_for_status()
 else:
     session.put(client_url + '/' + clients.json()[0]['id'], json=config, timeout=10).raise_for_status()
-for username in ('sv01', 'sv02'):
+for username in ('sv01', 'sv02', '521H0092', '523H0065'):
     users_url = f'{root}/{realm}/users'
     found = session.get(users_url, params={'username': username, 'exact': 'true'}, timeout=10)
     found.raise_for_status()

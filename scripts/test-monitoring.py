@@ -38,6 +38,8 @@ source = requests.get(grafana + '/api/datasources/uid/prometheus', auth=credenti
 check('Grafana datasource Prometheus được provisioning', source.status_code == 200 and source.json()['type'] == 'prometheus')
 dashboard = requests.get(grafana + '/api/dashboards/uid/mycloud-system', auth=credentials, timeout=10)
 check('Dashboard có tối thiểu 3 panel', dashboard.status_code == 200 and len(dashboard.json()['dashboard']['panels']) >= 3)
+check('Dashboard ghi nhận cả hai MSSV',
+      all(code in dashboard.json()['dashboard']['title'] for code in ('521H0092', '523H0065')))
 for panel in dashboard.json()['dashboard']['panels']:
     for target in panel['targets']:
         for attempt in range(20):

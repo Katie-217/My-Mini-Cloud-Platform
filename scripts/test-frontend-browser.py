@@ -19,6 +19,7 @@ env = dict(line.split('=', 1) for line in (root / '.env').read_text(encoding='ut
            if line.strip() and not line.startswith('#') and '=' in line)
 base = env.get('PUBLIC_URL', 'http://localhost').rstrip('/')
 evidence = root / 'docs' / 'evidence'
+evidence.mkdir(parents=True, exist_ok=True)
 runtime = root / '.runtime' / 'frontend-test'
 runtime.mkdir(parents=True, exist_ok=True)
 student_code = 'E' + uuid.uuid4().hex[:7]

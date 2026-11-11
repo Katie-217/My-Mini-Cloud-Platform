@@ -82,7 +82,7 @@ Xem credential trong `.env` trên máy, không đưa lên Git hoặc gửi vào 
 | MinIO | `MINIO_ROOT_USER` | `MINIO_ROOT_PASSWORD` |
 | Grafana | `GRAFANA_ADMIN_USER` | `GRAFANA_ADMIN_PASSWORD` |
 
-Realm hiện là `MSSV_PLACEHOLDER`; đổi `OIDC_REALM` theo MSSV rồi khởi chạy lại
+Realm chung của nhóm là `521H0092-523H0065`; đặt `OIDC_REALM` tương ứng rồi khởi chạy lại
 bootstrap. Cập nhật tiêu đề dashboard trong `grafana/dashboards/system-health.json`.
 Giữ `.env` cùng dữ liệu volume; thay password phải theo quy trình từng dịch vụ,
 không xóa `.env`/volume để reset. SQL runtime không dùng tài khoản sa.

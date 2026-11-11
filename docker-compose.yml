@@ -8,7 +8,7 @@ x-app-env: &app-env
   DB_PASSWORD: ${DB_PASSWORD:?Run scripts/init-env.py}
   DB_TRUST_CERTIFICATE: ${DB_TRUST_CERTIFICATE:-yes}
   PUBLIC_URL: ${PUBLIC_URL:-http://localhost}
-  OIDC_REALM: ${OIDC_REALM:-MSSV_PLACEHOLDER}
+  OIDC_REALM: ${OIDC_REALM:-521H0092-523H0065}
   MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Run scripts/init-env.py}
   MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Run scripts/init-env.py}
 

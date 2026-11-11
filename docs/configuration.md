@@ -39,7 +39,8 @@ readiness và seed idempotent. Không trông chờ thư mục init tự chạy t
 ## Keycloak
 
 - Console: `http://localhost/auth/admin/`; admin/password đọc `.env`.
-- Realm: `MSSV_PLACEHOLDER`, client public `flask-app`, users sv01 và sv02.
+- Realm chung: `521H0092-523H0065`, ghi nhận cả hai thành viên; client public
+  `flask-app`, users sv01 và sv02. Backend chỉ tin cậy issuer của realm đã cấu hình.
 - Demo password lấy `DEMO_USER_PASSWORD`; không ghi vào source hoặc ảnh.
 - Login dùng Authorization Code + PKCE S256, state, redirect `/app/`.
 - Backend kiểm tra RS256, JWKS, issuer, audience flask-app và exp; `/secure` 401

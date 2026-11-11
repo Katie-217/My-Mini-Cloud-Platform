@@ -6,7 +6,7 @@ import requests
 
 base = 'http://authentication-identity-server:8080/auth'
 public = os.getenv('PUBLIC_URL', 'http://localhost').rstrip('/')
-realm = os.getenv('OIDC_REALM', 'MSSV_PLACEHOLDER')
+realm = os.getenv('OIDC_REALM', '521H0092-523H0065')
 for attempt in range(90):
     try:
         response = requests.post(base + '/realms/master/protocol/openid-connect/token', data={

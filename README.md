@@ -102,7 +102,7 @@ docker compose run --rm --no-deps -e TEST_PUBLIC_BASE=http://api-gateway-proxy-s
 docker compose run --rm --no-deps integration-check python /checks/test-monitoring.py --with-web
 ```
 
-Browser QA toàn bộ UI: `python scripts/test-frontend-browser.py` (27 checks).
+Browser QA toàn bộ UI: `python scripts/test-frontend-browser.py` (32 checks).
 Kiểm tra auth độc lập: `python scripts/test-auth-browser.py` và
 `python scripts/capture-admin-ui.py`, cần Playwright, requests và Microsoft Edge.
 Đã chạy với Playwright 1.59.0, requests 2.33.1 trên Python Windows hiện có.
@@ -132,6 +132,8 @@ Tài liệu giao việc, kế hoạch/prompt, khảo sát nội bộ, PDF đề 
 bàn giao được giữ trong repo. Tạo file mẫu để thử storage:
 `python scripts/create-demo-files.py` (output trong `.runtime/demo-files/`).
 
-Mỗi phần làm trên nhánh tính năng, commit có mô tả liệt kê tiếng Việt. Hiện chỉ
-commit local; origin đã trỏ tới GitHub, chưa push và chưa triển khai AWS/Docker Hub.
+Mỗi phần làm trên nhánh tính năng, commit tiếng Anh ngắn gọn và push lên GitHub.
+Hai image `katie217/mycloud-web:1.0.0`
+và `katie217/mycloud-app:1.0.0` đã phát hành, pull theo digest và kiểm thử thật.
+AWS EC2 vẫn NOT TESTED.
 [Hướng dẫn Docker Hub](docs/docker-hub.md).

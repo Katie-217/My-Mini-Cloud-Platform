@@ -123,6 +123,6 @@ và host 1053. Windows không tự dùng zone này để duyệt web; Portal v�
 | Backend, SQL, auth/storage, Docker/DNS/metrics/proxy | Codex | Service thật, readiness, persistence, log và kiểm thử |
 | Review, merge, Docker E2E và báo cáo | Codex | Đọc diff, kiểm tra bảo mật/contract, chạy thật, ghi bằng chứng |
 
-Docker Hub push và AWS EC2 vẫn NOT TESTED cho đến khi có repo/credential/phạm vi
-triển khai tương ứng; không cản việc hoàn thành local. Remote origin đã được cấu hình,
-chưa push source.
+Docker Hub đã PASS: hai image `katie217/mycloud-web:1.0.0` và
+`katie217/mycloud-app:1.0.0` đọc được public, pull theo digest và chạy kiểm thử thật;
+xem [docker-hub.md](docker-hub.md). Source đã push GitHub. AWS EC2 vẫn NOT TESTED.

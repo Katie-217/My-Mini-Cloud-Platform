@@ -50,6 +50,8 @@ def ui_evidence(match):
         'blog-ui': 'Blog phục vụ qua gateway localhost',
         'keycloak-ui': 'Keycloak login form trước khi nhập credential',
         'auth-ui': 'Portal Xác thực hiển thị realm chung và nút đăng nhập SSO',
+        'public-pdf-ui': 'Tài liệu PDF được công khai với nút mở/copy/bỏ công khai; fixture đã dọn',
+        'public-avatar-ui': 'Chi tiết sinh viên có avatar công khai và URL MinIO; fixture đã dọn',
         'minio-ui': 'MinIO Console sau login thật, hai bucket private',
         'prometheus-ui': 'Prometheus Targets trên browser',
         'grafana-ui': 'Grafana sau login thật, ba biểu đồ dữ liệu',

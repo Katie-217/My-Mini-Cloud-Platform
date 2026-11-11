@@ -66,6 +66,54 @@
     return 'gpa-low';
   }
 
+  async function copyToClipboard(text, successMsg = 'Đã sao chép liên kết vào clipboard!') {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-999999px';
+        textarea.style.top = '-999999px';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (!ok) throw new Error('Không hỗ trợ sao chép tự động.');
+      }
+      showFloatingToast(successMsg, 'success');
+    } catch (err) {
+      window.prompt('Vui lòng sao chép liên kết bên dưới (Ctrl+C):', text);
+    }
+  }
+
+  function showFloatingToast(message, type = 'success') {
+    let toast = document.getElementById('app-floating-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'app-floating-toast';
+      toast.style.cssText = 'position:fixed; bottom:24px; right:24px; z-index:9999; padding:12px 20px; border-radius:8px; font-size:14px; font-weight:500; box-shadow:0 10px 25px -5px rgba(0,0,0,0.2); transition:all 0.3s ease; opacity:0; pointer-events:none;';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    if (type === 'success') {
+      toast.style.backgroundColor = '#059669';
+      toast.style.color = '#ffffff';
+    } else {
+      toast.style.backgroundColor = '#dc2626';
+      toast.style.color = '#ffffff';
+    }
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(10px)';
+    }, 3500);
+  }
+
   // =========================================================================
   // Điều hướng Tabs
   // =========================================================================
@@ -259,40 +307,147 @@
   }
 
   // Modal Chi Tiết
-  function openStudentDetailModal(id) {
-    const s = AppState.students.find(item => String(item.id) === String(id));
-    if (!s) return;
-
+  async function openStudentDetailModal(id) {
+    const localS = AppState.students.find(item => String(item.id) === String(id));
     const modal = document.getElementById('modal-student-detail');
     const content = document.getElementById('modal-detail-content');
     if (!modal || !content) return;
 
-    let avatarImg = '';
-    if (s.avatar_key) {
-      avatarImg = `<img src="/api/files/profile-pics/${encodeURIComponent(s.avatar_key)}" alt="Avatar" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb; margin-bottom: 1rem;">`;
+    function renderModalContent(s) {
+      let avatarImg = '';
+      if (s.avatar_key) {
+        avatarImg = `<img src="/api/files/profile-pics/${encodeURIComponent(s.avatar_key)}" alt="Avatar" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb; margin-bottom: 0.75rem;">`;
+      }
+
+      let avatarSharingHtml = '';
+      if (s.avatar_key) {
+        const isPub = !!s.avatar_is_public;
+        const unknown = s.avatar_is_public == null || !!s.avatar_sharing_error;
+        const pubUrl = s.avatar_public_url || '';
+        const badge = unknown
+          ? '<span class="badge badge-unknown">Chưa xác định</span>'
+          : isPub ? '<span class="badge badge-healthy">Công khai</span>'
+          : '<span class="badge badge-unknown">Riêng tư</span>';
+
+        let buttons = '';
+        if (unknown) {
+          buttons = '<span>Chưa kiểm tra được trạng thái chia sẻ.</span><button type="button" class="btn btn-secondary btn-sm" id="btn-retry-avatar-sharing">Thử lại</button>';
+        } else if (isPub) {
+          buttons = `
+            <a href="${escapeHtml(pubUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" title="Mở ảnh trực tiếp từ MinIO">Mở ảnh</a>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-avatar-link" title="Sao chép link công khai">Sao chép link</button>
+            <button type="button" class="btn btn-secondary btn-sm btn-row-danger" id="btn-unshare-avatar" title="Chuyển avatar về riêng tư">Bỏ công khai</button>
+          `;
+        } else {
+          buttons = `
+            <button type="button" class="btn btn-primary btn-sm" id="btn-share-avatar" title="Công khai avatar trực tiếp từ MinIO">Công khai avatar</button>
+          `;
+        }
+
+        avatarSharingHtml = `
+          <div style="margin-top: 1rem; padding: 0.85rem; background: var(--t-surface, #f8fafc); border-radius: 8px; border: 1px solid var(--t-border, #e2e8f0); text-align: left;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.85rem; font-weight: 600; color: #334155;">Chia sẻ Avatar (MinIO):</span>
+              ${badge}
+            </div>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              ${buttons}
+            </div>
+          </div>
+        `;
+      }
+
+      content.innerHTML = `
+        <div style="text-align: center; margin-bottom: 1.25rem;">
+          ${avatarImg}
+          <h4 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem;">${escapeHtml(s.fullname)}</h4>
+          <p style="color: #64748b; font-size: 0.9rem;">Mã SV: <strong>${escapeHtml(s.student_id)}</strong></p>
+        </div>
+
+        <table class="data-table" style="margin-bottom: 0;">
+          <tbody>
+            <tr><th>ID hệ thống:</th><td><code>#${escapeHtml(s.id)}</code></td></tr>
+            <tr><th>Ngày sinh:</th><td>${formatDate(s.dob)}</td></tr>
+            <tr><th>Chuyên ngành:</th><td>${escapeHtml(s.major)}</td></tr>
+            <tr><th>Điểm GPA:</th><td><span class="gpa-badge ${getGpaBadgeClass(s.gpa)}">${formatGpa(s.gpa)}</span> / 4.00</td></tr>
+            <tr><th>Ảnh thẻ (S3 Key):</th><td><code>${escapeHtml(s.avatar_key || 'Chưa cập nhật')}</code></td></tr>
+            <tr><th>Thời điểm tạo:</th><td>${formatDateTime(s.created_at)}</td></tr>
+          </tbody>
+        </table>
+
+        ${avatarSharingHtml}
+      `;
+
+      if (s.avatar_key) {
+        const retryBtn = document.getElementById('btn-retry-avatar-sharing');
+        if (retryBtn) retryBtn.addEventListener('click', () => openStudentDetailModal(id));
+        const shareBtn = document.getElementById('btn-share-avatar');
+        if (shareBtn) {
+          shareBtn.addEventListener('click', async () => {
+            shareBtn.disabled = true;
+            try {
+              const res = await fetch('/api/files/share', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bucket: 'profile-pics', key: s.avatar_key })
+              });
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              const data = await res.json();
+              s.avatar_is_public = true;
+              s.avatar_public_url = data.public_url;
+              renderModalContent(s);
+              showFloatingToast('Đã công khai avatar! Có thể mở hoặc sao chép link MinIO.', 'success');
+            } catch (err) {
+              alert('Lỗi công khai avatar: ' + err.message);
+              shareBtn.disabled = false;
+            }
+          });
+        }
+
+        const unshareBtn = document.getElementById('btn-unshare-avatar');
+        if (unshareBtn) {
+          unshareBtn.addEventListener('click', async () => {
+            unshareBtn.disabled = true;
+            try {
+              const res = await fetch('/api/files/unshare', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bucket: 'profile-pics', key: s.avatar_key })
+              });
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              s.avatar_is_public = false;
+              s.avatar_public_url = null;
+              renderModalContent(s);
+              showFloatingToast('Đã chuyển avatar về riêng tư.', 'success');
+            } catch (err) {
+              alert('Lỗi bỏ công khai avatar: ' + err.message);
+              unshareBtn.disabled = false;
+            }
+          });
+        }
+
+        const copyBtn = document.getElementById('btn-copy-avatar-link');
+        if (copyBtn && s.avatar_public_url) {
+          copyBtn.addEventListener('click', () => {
+            copyToClipboard(s.avatar_public_url, 'Đã sao chép link avatar MinIO vào clipboard!');
+          });
+        }
+      }
     }
 
-    content.innerHTML = `
-      <div style="text-align: center; margin-bottom: 1.5rem;">
-        ${avatarImg}
-        <h4 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem;">${escapeHtml(s.fullname)}</h4>
-        <p style="color: #64748b; font-size: 0.9rem;">Mã SV: <strong>${escapeHtml(s.student_id)}</strong></p>
-      </div>
-
-      <table class="data-table" style="margin-bottom: 0;">
-        <tbody>
-          <tr><th>ID hệ thống:</th><td><code>#${escapeHtml(s.id)}</code></td></tr>
-          <tr><th>Ngày sinh:</th><td>${formatDate(s.dob)}</td></tr>
-          <tr><th>Chuyên ngành:</th><td>${escapeHtml(s.major)}</td></tr>
-          <tr><th>Điểm GPA:</th><td><span class="gpa-badge ${getGpaBadgeClass(s.gpa)}">${formatGpa(s.gpa)}</span> / 4.00</td></tr>
-          <tr><th>Ảnh thẻ (S3 Key):</th><td><code>${escapeHtml(s.avatar_key || 'Chưa cập nhật')}</code></td></tr>
-          <tr><th>Thời điểm tạo:</th><td>${formatDateTime(s.created_at)}</td></tr>
-        </tbody>
-      </table>
-    `;
-
+    if (localS) {
+      renderModalContent(localS);
+    }
     modal.classList.add('show');
     modal.setAttribute('aria-hidden', 'false');
+
+    try {
+      const res = await fetch(`/api/students-db/${encodeURIComponent(id)}`, { cache: 'no-store' });
+      if (res.ok) {
+        const fresh = await res.json();
+        renderModalContent(fresh);
+      }
+    } catch (_) {}
   }
 
   // Modal Sửa
@@ -448,7 +603,7 @@
       const res = await fetch('/api/files?bucket=documents', { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      // API trả { bucket, files: [{ key, size, last_modified, download_url }] }
+      // API trả { bucket, files: [{ key, size, last_modified, download_url, is_public, public_url }] }
       const data = await res.json();
       const files = Array.isArray(data) ? data : (data.files || []);
 
@@ -458,7 +613,7 @@
       if (!Array.isArray(files) || files.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="4" style="text-align: center; padding: 2.5rem; color: #64748b;">
+            <td colspan="5" style="text-align: center; padding: 2.5rem; color: #64748b;">
               Chưa có tài liệu PDF nào được lưu trữ.
             </td>
           </tr>
@@ -472,6 +627,43 @@
         const timeFormatted = formatDateTime(f.last_modified);
         const fileKey = f.key || f.name || '';
         const downloadUrl = f.download_url || `/api/files/documents/${encodeURIComponent(fileKey)}`;
+        const isPub = !!f.is_public;
+        const pubUrl = f.public_url || '';
+
+        const statusBadge = isPub
+          ? '<span class="badge" style="background:#ecfdf5; color:#059669; font-weight:600;">Công khai</span>'
+          : '<span class="badge" style="background:#f1f5f9; color:#64748b; font-weight:600;">Riêng tư</span>';
+
+        let actionBtns = `
+          <a href="${escapeHtml(downloadUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" title="Tải về qua backend">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Tải về
+          </a>
+        `;
+
+        if (isPub) {
+          actionBtns += `
+            <a href="${escapeHtml(pubUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" title="Mở trực tiếp link public MinIO">
+              Mở file
+            </a>
+            <button type="button" class="btn btn-secondary btn-sm" data-action="copy-url" data-url="${escapeHtml(pubUrl)}" title="Sao chép link công khai">
+              Sao chép
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm btn-row-danger" data-action="unshare-file" data-bucket="documents" data-key="${escapeHtml(fileKey)}" title="Bỏ công khai">
+              Bỏ công khai
+            </button>
+          `;
+        } else {
+          actionBtns += `
+            <button type="button" class="btn btn-secondary btn-sm" data-action="share-file" data-bucket="documents" data-key="${escapeHtml(fileKey)}" title="Công khai tài liệu">
+              Công khai
+            </button>
+          `;
+        }
 
         tr.innerHTML = `
           <td>
@@ -484,26 +676,69 @@
             </div>
           </td>
           <td><code>${sizeFormatted}</code></td>
+          <td>${statusBadge}</td>
           <td>${timeFormatted}</td>
-          <td style="text-align: right;">
-            <a href="${escapeHtml(downloadUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              Tải về
-            </a>
+          <td style="text-align: right; white-space: nowrap;">
+            ${actionBtns}
           </td>
         `;
         tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll('[data-action="copy-url"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const url = btn.getAttribute('data-url');
+          if (url) copyToClipboard(url, 'Đã sao chép link MinIO công khai vào clipboard!');
+        });
+      });
+
+      tbody.querySelectorAll('[data-action="share-file"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const bucket = btn.getAttribute('data-bucket');
+          const key = btn.getAttribute('data-key');
+          btn.disabled = true;
+          try {
+            const shareRes = await fetch('/api/files/share', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bucket, key })
+            });
+            if (!shareRes.ok) throw new Error(`HTTP ${shareRes.status}`);
+            showFloatingToast('Đã công khai tài liệu! Có thể mở hoặc sao chép link MinIO.', 'success');
+            loadFilesList();
+          } catch (err) {
+            alert('Lỗi công khai tài liệu: ' + err.message);
+            btn.disabled = false;
+          }
+        });
+      });
+
+      tbody.querySelectorAll('[data-action="unshare-file"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const bucket = btn.getAttribute('data-bucket');
+          const key = btn.getAttribute('data-key');
+          btn.disabled = true;
+          try {
+            const unshareRes = await fetch('/api/files/unshare', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bucket, key })
+            });
+            if (!unshareRes.ok) throw new Error(`HTTP ${unshareRes.status}`);
+            showFloatingToast('Đã chuyển tài liệu về trạng thái riêng tư.', 'success');
+            loadFilesList();
+          } catch (err) {
+            alert('Lỗi bỏ công khai: ' + err.message);
+            btn.disabled = false;
+          }
+        });
       });
 
     } catch (err) {
       if (tbody) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="4" style="text-align: center; padding: 2rem; color: #dc2626;">
+            <td colspan="5" style="text-align: center; padding: 2rem; color: #dc2626;">
               Không thể tải danh sách tệp: ${escapeHtml(err.message)}
             </td>
           </tr>

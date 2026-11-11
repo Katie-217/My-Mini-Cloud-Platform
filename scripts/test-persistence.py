@@ -32,7 +32,7 @@ else:
         raise AssertionError('Database không phục hồi sau restart.')
     response = requests.get(base + f"/students-db/{expected['id']}", timeout=10)
     response.raise_for_status()
-    assert response.json() == expected, 'Bản ghi không giống trước restart.'
+    assert all(response.json().get(key) == value for key, value in expected.items()), 'Bản ghi không giống trước restart.'
     print('PASS: SQL Server restart giữ nguyên bản ghi, Unicode và timestamp.')
     removed = requests.delete(base + f"/students-db/{expected['id']}", timeout=10)
     removed.raise_for_status()

@@ -18,11 +18,13 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'DNS/monitoring verification failed.' }
     & docker @taskCompose run --rm --no-deps -e TEST_PUBLIC_BASE=http://api-gateway-proxy-server integration-check
     if ($LASTEXITCODE -ne 0) { throw 'Auth/storage verification failed.' }
+    & python (Join-Path $PSScriptRoot 'test-public-storage.py')
+    if ($LASTEXITCODE -ne 0) { throw 'Public object sharing verification failed.' }
     if ($Browser) {
         # Windows: .venv\Scripts\python.exe; macOS/Linux (pwsh): .venv/bin/python
         $taskPython = if ($PSVersionTable.PSEdition -eq 'Core' -and -not $IsWindows) { Join-Path $taskRoot '.venv/bin/python' } else { Join-Path $taskRoot '.venv\Scripts\python.exe' }
         if (-not (Test-Path -LiteralPath $taskPython)) { throw 'Run scripts/setup-tools.ps1 first.' }
-        foreach ($taskBrowserTest in @('test-portal-navigation.py', 'test-frontend-browser.py')) {
+        foreach ($taskBrowserTest in @('test-portal-navigation.py', 'test-frontend-browser.py', 'test-ui-public-links.py')) {
             & $taskPython (Join-Path $PSScriptRoot $taskBrowserTest)
             if ($LASTEXITCODE -ne 0) { throw "Browser verification failed: $taskBrowserTest" }
         }

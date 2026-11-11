@@ -86,18 +86,44 @@ thành 0. Giá trị 0 thật vẫn hiển thị. Ghi đúng phạm vi đo, refr
 - Cho phép frontend lưu state/verifier trong `sessionStorage` khi redirect,
   access token giữ trong memory hoặc session của tab, không ghi token vào console/HTML/URL.
 
-## File Storage
+## File Storage & Public Object Links
 
 | Method / URL | Yêu cầu và kết quả |
 | --- | --- |
-| GET `/api/files?bucket=documents` | `{ "bucket":"documents", "files":[{"key":"...","size":123,"last_modified":"...","download_url":"/api/files/documents/..."}] }` |
-| POST `/api/files` | multipart `file` và `bucket`; 201 `{ "bucket", "key", "download_url" }` |
-| GET `/api/files/documents/<key>` | Binary file với Content-Disposition; 404 nếu thiếu |
+| GET `/api/files?bucket=documents` | `{ "bucket":"documents", "files":[{"key":"...","size":123,"last_modified":"...","download_url":"/api/files/documents/...","is_public":true,"public_url":"http://localhost:9000/documents/public/..."}] }` |
+| POST `/api/files` | multipart `file` và `bucket`; 201 `{ "bucket", "key", "download_url", "is_public": false, "public_url": null }` |
+| GET `/api/files/<bucket>/<key>` | Binary file với Content-Disposition (qua backend); 404 nếu thiếu |
+| POST `/api/files/share` | JSON `{ "bucket": "...", "key": "..." }`; 200 `{ "bucket", "key", "is_public": true, "public_url": "http://localhost:9000/<bucket>/public/<key>" }` |
+| POST `/api/files/unshare` | JSON/Query `bucket` và `key`; 200 `{ "bucket", "key", "is_public": false, "public_url": null }` |
+| DELETE `/api/files/share` | JSON/Query `bucket` và `key`; 200 `{ "bucket", "key", "is_public": false, "public_url": null }` |
+| GET `/api/files/status` | Query `bucket` và `key`; 200 `{ "bucket", "key", "is_public": bool, "public_url": str \| null }` |
 
 Bucket chỉ nhận `profile-pics` (PNG/JPEG) và `documents` (PDF), tối đa 10 MiB.
 Backend kiểm tra định dạng thực tế và tạo key an toàn; không tự gửi Content-Type
-khi frontend dùng `FormData`. Bucket MinIO private; download đi qua backend.
-API file công khai trong demo local giống CRUD; tài liệu phải nêu giới hạn.
+khi frontend dùng `FormData`.
+
+### Cơ chế chia sẻ trực tiếp từ MinIO (Public Object Links)
+- MinIO cấu hình Bucket Policy cấp quyền anonymous `s3:GetObject` duy nhất tại
+  prefix `profile-pics/public/*` và `documents/public/*`. Toàn bộ thao tác khác
+  (ListBucket, PutObject, DeleteObject) của anonymous đều bị 403 Forbidden.
+- Object gốc luôn được giữ nguyên tại `{bucket}/{key}`.
+- Khi người dùng chọn "Công khai", backend sao chép object sang `{bucket}/public/{key}`
+  (thao tác idempotent, không tạo file trùng). Trả về URL trực tiếp không hết hạn,
+  không chứa chữ ký (`X-Amz-Signature`). Mở qua trình duyệt ẩn danh không cần xác thực.
+- URL công khai sử dụng endpoint cấu hình qua `MINIO_PUBLIC_URL` (mặc định `http://localhost:9000`),
+  không trả hostname nội bộ Docker `object-storage-server`.
+- Khi người dùng chọn "Bỏ công khai", backend xóa bản sao `{bucket}/public/{key}`;
+  object gốc `{bucket}/{key}` vẫn tồn tại và tải bình thường qua backend API.
+- Danh sách tài liệu (`GET /api/files`) tự động lọc bỏ prefix `public/`, không tạo dòng trùng lặp.
+- API chi tiết sinh viên (`GET /api/students-db/<id>`) trả thêm `avatar_is_public` và `avatar_public_url`.
+- Nếu chưa kiểm tra được MinIO, chi tiết sinh viên trả `avatar_is_public=null`
+  và `avatar_sharing_error`; UI hiển thị “Chưa xác định”. Không suy lỗi storage thành private.
+- Body chia sẻ phải là JSON object. Khi MinIO từ chối xóa bản sao hoặc đọc trạng
+  thái, API trả 503; không trả thành công giả. Public copy có `Cache-Control: no-store`
+  để các lần mở lại hỏi server sau khi bỏ công khai. File đã tải về trước đó vẫn
+  thuộc người nhận; thao tác bỏ công khai chặn các lần truy cập mới qua link.
+- API CRUD/file/share đang công khai trong bản demo local. Quyền S3 anonymous bị
+  giới hạn không có nghĩa Flask API đã có phân quyền production.
 
 ## URL giao diện quản trị local
 

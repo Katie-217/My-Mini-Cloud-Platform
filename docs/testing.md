@@ -1,5 +1,23 @@
 # Kết quả kiểm thử MyMiniCloud
 
+## URL public MinIO — 11/11/2026
+
+- PASS: 63 kiểm tra API cho PNG/PDF, anonymous GET200 đúng SHA256, original
+  private403, list/put/delete bị chặn, bản sao idempotent, thu hồi URL và giữ file gốc.
+- PASS: lỗi xóa hoặc đọc trạng thái MinIO trả503, không báo private giả;
+  JSON sai kiểu/malformed trả400. MINIO_PUBLIC_URL đã truyền qua Compose.
+- PASS: 20 kiểm tra browser, gồm clipboard thật, context ẩn danh hiển thị PNG,
+  đọc PDF, thu hồi link, giữ avatar/sinh viên và viewport mobile sáng/tối.
+- PASS: verify.ps1 -Browser hoàn tất 286 checks, DNS host UDP/TCP, 12/12 probe,
+  ba UI HTTP200. Test tạo và dọn đúng fixture riêng, không chọn file người dùng.
+- PASS: chạy lại storage-init hai lần giữ public copy và original private.
+- Chức năng mới đã build/chạy local; image Docker Hub 1.0.0 chưa chứa tính năng
+  này. Chưa push image mới hoặc triển khai AWS trong lượt nghiệm thu.
+
+Lệnh, cách đọc response và ảnh mới được nhúng trong bước 6.1 của
+[hướng dẫn tổng hợp](screenshot-guide.html). API và giới hạn xem
+[storage-public-links.md](storage-public-links.md).
+
 ## Nghiệm thu Docker Hub — 11/11/2026
 
 - PASS: hai repository `katie217/mycloud-web:1.0.0` và `katie217/mycloud-app:1.0.0`

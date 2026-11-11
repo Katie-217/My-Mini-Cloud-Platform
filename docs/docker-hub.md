@@ -92,7 +92,24 @@ Sau khi pull, có thể kiểm thử nhanh tính toàn vẹn của image:
 
 ---
 
-## 5. Lưu Ý Về Môi Trường & Bảo Mật
+## 5. Danh Sách Image Đã Phát Hành Thực Tế
+
+Dưới đây là thông tin phát hành chính thức của hai custom image trên Docker Hub:
+
+| Image Repository | Tag | Kiến trúc | Image Digest (Index) | Kết Quả Nghiệm Thu |
+| :--- | :---: | :---: | :--- | :---: |
+| [katie217/mycloud-web](https://hub.docker.com/r/katie217/mycloud-web) | `1.0.0` | `linux/amd64` | `sha256:4e097e8237955ea77c3d96ae64c5aa8258cd862153b99642cbcad4f72a5f92b0` | **PASS (Push + Pull + Smoke Test)** |
+| [katie217/mycloud-app](https://hub.docker.com/r/katie217/mycloud-app) | `1.0.0` | `linux/amd64` | `sha256:3b3270f9da843e338f214485c6b697d47bfef8c87a122b178320cbc556416456` | **PASS (Push + Pull + Smoke Test)** |
+
+Lệnh pull trực tiếp:
+```powershell
+docker pull katie217/mycloud-web:1.0.0
+docker pull katie217/mycloud-app:1.0.0
+```
+
+---
+
+## 6. Lưu Ý Về Môi Trường & Bảo Mật
 
 - **Môi trường Compose local**: File `docker-compose.yml` hiện tại vẫn giữ cấu hình `build: ./web` và `build: ./app` để phục vụ phát triển và kiểm thử local ổn định. Chỉ chuyển sang image Docker Hub khi triển khai lên môi trường độc lập (như AWS EC2).
 - **Không chứa dữ liệu nhạy cảm**: Cả hai Dockerfile đều sử dụng `.dockerignore` để loại trừ hoàn toàn `.env`, credentials, runtime logs, git history và test artifacts khỏi image phát hành.

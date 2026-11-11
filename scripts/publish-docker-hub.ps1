@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Script build, tag, push và verify các custom image Docker Hub cho MyMiniCloud.
 .DESCRIPTION

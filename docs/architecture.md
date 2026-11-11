@@ -5,7 +5,9 @@
 - SQL Server 2022 Developer, bảng `studentdb.dbo.students` dùng `IDENTITY`.
 - 9 nhóm dịch vụ dùng nhiều container: 2 web replica, exporter và init jobs phụ trợ.
 - HTTP exporter kiểm tra web; không scrape HTML cổng 80 như metrics.
-- File MinIO private, download qua backend.
+- File gốc MinIO private, download qua backend; file được chọn chia sẻ có bản sao
+  dưới `public/` và URL S3 trực tiếp không hết hạn. Anonymous chỉ được GetObject
+  tại prefix này. Bỏ chia sẻ xóa bản sao, giữ nguyên file gốc.
 - Dùng Grafana visualization + Compose logs; chưa triển khai log tập trung Loki.
 - Các script vận hành chỉ thao tác project mycloud.
 - Local trước; AWS và Docker Hub chỉ được PASS khi có kiểm thử thật.

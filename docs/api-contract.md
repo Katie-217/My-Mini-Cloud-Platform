@@ -116,6 +116,14 @@ khi frontend dùng `FormData`.
   object gốc `{bucket}/{key}` vẫn tồn tại và tải bình thường qua backend API.
 - Danh sách tài liệu (`GET /api/files`) tự động lọc bỏ prefix `public/`, không tạo dòng trùng lặp.
 - API chi tiết sinh viên (`GET /api/students-db/<id>`) trả thêm `avatar_is_public` và `avatar_public_url`.
+- Nếu chưa kiểm tra được MinIO, chi tiết sinh viên trả `avatar_is_public=null`
+  và `avatar_sharing_error`; UI hiển thị “Chưa xác định”. Không suy lỗi storage thành private.
+- Body chia sẻ phải là JSON object. Khi MinIO từ chối xóa bản sao hoặc đọc trạng
+  thái, API trả 503; không trả thành công giả. Public copy có `Cache-Control: no-store`
+  để các lần mở lại hỏi server sau khi bỏ công khai. File đã tải về trước đó vẫn
+  thuộc người nhận; thao tác bỏ công khai chặn các lần truy cập mới qua link.
+- API CRUD/file/share đang công khai trong bản demo local. Quyền S3 anonymous bị
+  giới hạn không có nghĩa Flask API đã có phân quyền production.
 
 ## URL giao diện quản trị local
 

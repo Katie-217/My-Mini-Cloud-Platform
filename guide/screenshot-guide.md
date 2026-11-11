@@ -340,8 +340,8 @@ kiểm auth độc lập UI, không thay nghiệm thu toàn bộ JavaScript Stud
 
 **Ý nghĩa:** -F gửi multipart file/bucket, không phải JSON; --fail làm curl lỗi
 khi HTTP lỗi; -o lưu file download; Get-FileHash tính SHA256. Key do API tạo riêng.
-Hai SHA256 bằng nhau chứng minh byte không đổi. S3 anonymous403 là đúng với private
-bucket, trong khi backend download200.415 là sai định dạng, không phải lỗi mạng.
+Hai SHA256 bằng nhau chứng minh byte không đổi. S3 anonymous403 là đúng với file
+gốc private; bản sao được chọn công khai dưới public/ trả200.415 là sai định dạng.
 
 Trong Student App: thêm sinh viên demo có avatar PNG/JPEG; tab Lưu trữ tệp
 upload PDF thật. Chụp thông báo thành công, avatar và file trong danh sách.
@@ -392,6 +392,54 @@ object do bài test tạo. Console chụp sau khi dọn; bucket rỗng không ph
 
 <!-- evidence:storage -->
 <!-- ui:minio-ui -->
+
+### 6.1. URL public trực tiếp MinIO, sao chép và bỏ công khai
+
+Trong Student App → **Tài liệu**, chọn đúng PDF vừa upload → **Công khai**.
+Chụp nhãn Công khai, nút **Mở file**, **Sao chép**, **Bỏ công khai**.
+Sao chép link và mở trong cửa sổ ẩn danh. URL dạng
+`http://localhost:9000/documents/public/<key>.pdf`, không có chữ ký hay thời hạn.
+Với avatar: Sinh viên → Chi tiết → **Công khai avatar** → **Mở ảnh/Sao chép link**.
+
+Lệnh dưới dùng `$upload` và `$pdfPath` từ bước upload trước, trong cùng cửa sổ:
+
+```powershell
+$shareBody = @{bucket='documents';key=$upload.key} | ConvertTo-Json
+$shared = Invoke-RestMethod -Method Post -Uri 'http://localhost/api/files/share' -ContentType 'application/json' -Body $shareBody
+$shared | Format-List
+New-Item -ItemType Directory -Force .runtime/screenshots | Out-Null
+$publicPdf = Join-Path $PWD '.runtime/screenshots/public-report.pdf'
+$publicHeaders = Join-Path $PWD '.runtime/screenshots/public-headers.txt'
+curl.exe -sS --fail -D $publicHeaders -o $publicPdf $shared.public_url
+Get-Content -LiteralPath $publicHeaders
+Get-FileHash -Algorithm SHA256 -LiteralPath $pdfPath,$publicPdf | Format-Table -AutoSize
+```
+
+**Ý nghĩa/kỳ vọng:** POST yêu cầu tạo bản sao công khai; response có
+`is_public=True` và URL MinIO port9000. Curl dùng URL trực tiếp không gửi token,
+ghi header/body ra runtime. Cần HTTP200, Content-Type application/pdf,
+Cache-Control no-store và hai SHA256 bằng nhau. Đây là Browser/curl → MinIO,
+khác với đường download qua Flask. Link localhost chỉ mở trên máy đang chạy Docker.
+
+Chụp xong, bỏ công khai và kiểm tra cả hai đường:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri 'http://localhost/api/files/unshare' -ContentType 'application/json' -Body $shareBody
+curl.exe -sI $shared.public_url
+curl.exe -sI "http://localhost/api/files/documents/$($upload.key)"
+```
+
+**Kỳ vọng:** response bỏ công khai có is_public=False; URL public trả404/403,
+file gốc qua Flask vẫn200. Bỏ công khai chặn lần truy cập mới, không xóa file
+người nhận đã tải về. Chỉ prefix public/* cấp quyền đọc anonymous; không cấp
+ListBucket/PutObject/DeleteObject, không công khai mọi file có sẵn.
+
+Ảnh và transcript dưới dùng fixture riêng, đã dọn sau nghiệm thu; URL trong ảnh
+minh họa trạng thái tại thời điểm chạy. Kết quả mới: 63 kiểm tra API và 20 browser.
+
+<!-- evidence:public-storage -->
+<!-- ui:public-pdf-ui -->
+<!-- ui:public-avatar-ui -->
 
 ## 7. DNS Bind9 và phân biệt Docker DNS
 

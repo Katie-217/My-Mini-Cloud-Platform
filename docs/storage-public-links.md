@@ -29,6 +29,11 @@ Hệ thống thiết lập **Bucket Policy** chỉ cấp quyền đọc nặc da
 > [!NOTE]
 > Địa chỉ `http://localhost:9000` là endpoint MinIO truy cập trực tiếp trên máy host chạy Docker. Trên môi trường phân tán hoặc production có tên miền riêng, endpoint này được điều chỉnh qua biến môi trường `MINIO_PUBLIC_URL`.
 
+`MINIO_PUBLIC_URL` có trong `.env.example` và được Compose truyền vào backend.
+Sau khi đổi giá trị, tạo lại service app để nạp cấu hình mới. Endpoint chỉ nhận
+HTTP/HTTPS, không chứa credential/path/query. `localhost` không phải URL truy cập
+từ máy khác qua Internet.
+
 ---
 
 ## 2. Quy trình demo và kiểm thử từng bước
@@ -69,6 +74,10 @@ Hệ thống thiết lập **Bucket Policy** chỉ cấp quyền đọc nặc da
 4. Kết quả mong đợi: Trình duyệt nhận mã HTTP `404 Not Found` hoặc `403 Forbidden` do bản sao công khai đã bị xóa.
 5. Kiểm tra nút **"Tải về"** trên giao diện: Vẫn tải được file gốc qua API backend bình thường.
 
+Public copy dùng `Cache-Control: no-store`. Bỏ công khai chặn truy cập mới;
+không xóa được bản người nhận đã tải về. Nếu thao tác MinIO lỗi, API trả lỗi và
+UI giữ trạng thái cũ; trạng thái không xác định của avatar không được ghi là riêng tư.
+
 ---
 
 ## 3. Công khai ảnh thẻ đại diện (Avatar) sinh viên
@@ -78,3 +87,28 @@ Hệ thống thiết lập **Bucket Policy** chỉ cấp quyền đọc nặc da
 4. Người dùng có thể nhấn **"Mở ảnh"** hoặc **"Sao chép link"** để chia sẻ ảnh trực tiếp từ MinIO mà không làm thay đổi hay mất dữ liệu của sinh viên.
 5. Nhấn **"Bỏ công khai"** để thu hồi quyền truy cập công khai bất kỳ lúc nào.
 
+## 4. Chạy kiểm thử và nghiệm thu
+
+Tại thư mục source của bản mới:
+
+```powershell
+python scripts/test-public-storage.py
+.\.venv\Scripts\python.exe scripts/test-ui-public-links.py
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 -Browser
+```
+
+- API: 63 checks PASS, gồm PNG/PDF, byte/SHA256, public GET 200, original GET 403,
+  anonymous list/put/delete bị chặn, thu hồi link, idempotence, JSON/key sai và
+  lỗi MinIO không trả private giả.
+- Browser: 20 checks PASS, gồm upload PDF, hai nút sao chép thực sự ghi clipboard,
+  context ẩn danh đọc file/hiển thị PNG, bỏ công khai và giữ nguyên avatar/sinh viên,
+  viewport mobile sáng/tối và trạng thái lỗi storage.
+- Bộ verify đầy đủ: 286 checks PASS và DNS host UDP/TCP; ba UI 200, 12/12 probe.
+- Chạy lại storage-init hai lần vẫn giữ nguyên bản sao public và original private.
+
+Mỗi test chỉ dùng record/object UUID do chính lượt chạy tạo và dọn trong finally;
+không chọn tài liệu có sẵn của người dùng. Log/ảnh lưu trong `.runtime/public-storage/`,
+không commit. Xem hướng dẫn tổng hợp có ảnh tại [screenshot-guide.html](screenshot-guide.html).
+
+Hai image Docker Hub `1.0.0` là bản trước chức năng này. Chưa phát hành image mới
+trong lượt nghiệm thu; lần phát hành tiếp theo dùng tag version mới.

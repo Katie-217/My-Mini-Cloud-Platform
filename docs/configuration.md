@@ -66,11 +66,14 @@ kiểm tra hạ tầng độc lập bằng cách intercept callback.
 
 ## MinIO và file
 
-Console 9001 dùng credential root local trong `.env`. Hai bucket private:
+Console 9001 dùng credential root local trong `.env`. File gốc trong hai bucket private:
 `profile-pics` nhận PNG/JPEG, `documents` nhận PDF; API giới hạn file 10 MiB.
 Upload trong Console hoặc Student App; list/download qua `/api/files`.
 Backend kiểm tra signature đầu file, không phải trình quét malware hoặc parser
-kiểm định toàn bộ tài liệu. Không tự đặt bucket public.
+kiểm định toàn bộ tài liệu. Prefix `public/` cấp anonymous GetObject cho bản sao
+được chọn chia sẻ, còn file gốc giữ private. URL lấy từ `MINIO_PUBLIC_URL`
+(mặc định `http://localhost:9000`), đã nối vào Compose; xem
+[hướng dẫn công khai/bỏ công khai](storage-public-links.md).
 
 API CRUD/file công khai cho demo local; bảo vệ token được minh họa tại `/secure`.
 Không coi bucket private đồng nghĩa API đã có phân quyền production.

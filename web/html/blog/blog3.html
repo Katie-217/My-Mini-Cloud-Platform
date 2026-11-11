@@ -189,7 +189,7 @@ upstream web_pool {
 }
         </div>
         <p>
-          Khi người dùng nhấn Reload hoặc chạy thử nghiệm tải trong Portal Control, Nginx phân phối luân phiên từng request đến Server 1 rồi đến Server 2 với tỷ lệ cân bằng 50/50 hoàn hảo.
+          Khi cả hai replica khỏe và dùng cấu hình cùng trọng số, Nginx phân phối request theo Round Robin. Một chuỗi 20 request kiểm thử riêng nhận 10 request ở mỗi replica; các request từ trình duyệt, healthcheck hoặc replica lỗi có thể làm số đếm quan sát khác đi.
         </p>
 
         <h2 id="tich-hop-da-dich-vu">3. Tích hợp đa dịch vụ: SQL Server, MinIO S3, Keycloak PKCE &amp; Prometheus</h2>
@@ -197,10 +197,10 @@ upstream web_pool {
           Khác với các đồ án đơn lẻ, MyMiniCloud chứng minh khả năng liên kết sâu giữa các thành phần doanh nghiệp:
         </p>
         <ol>
-          <li><strong>Lưu trữ quan hệ (RDBMS):</strong> Container <code class="inline-code">database-sqlserver-2022</code> chạy SQL Server 2022 trên Linux, lưu trữ danh mục sinh viên và điểm số theo mô hình ACID chuẩn mực.</li>
-          <li><strong>Lưu trữ phi cấu trúc (Object Storage):</strong> Container <code class="inline-code">object-storage-server</code> chạy MinIO S3 tương thích AWS S3 API, tiếp nhận ảnh đại diện và hồ sơ sinh viên tải lên qua bucket <code class="inline-code">profile-pics</code>.</li>
-          <li><strong>Bảo mật phân quyền (IAM SSO):</strong> Container <code class="inline-code">authentication-identity-server</code> cung cấp Keycloak realm <code class="inline-code">mini-cloud</code>, hỗ trợ đăng nhập một lần (Single Sign-On) và cấp phát JWT token có chữ ký số.</li>
-          <li><strong>Giám sát hạ tầng (Observability):</strong> Bộ đôi Prometheus (:9090) và Grafana (:3000) tự động cào metrics từ cAdvisor và Node Exporter, vẽ biểu đồ CPU, RAM, Network I/O thời gian thực.</li>
+          <li><strong>Lưu trữ quan hệ (RDBMS):</strong> Service <code class="inline-code">relational-database-server</code> chạy SQL Server 2022 trên Linux. Dữ liệu nằm trong <code class="inline-code">studentdb.dbo.students</code>, được lưu bền vững ở volume <code class="inline-code">mycloud_mssql-data</code> gắn vào <code class="inline-code">/var/opt/mssql</code>. Student App gọi Flask API để đọc và cập nhật dữ liệu.</li>
+          <li><strong>Lưu trữ phi cấu trúc (Object Storage):</strong> Service <code class="inline-code">object-storage-server</code> chạy MinIO S3, lưu ảnh trong bucket <code class="inline-code">profile-pics</code> và PDF trong <code class="inline-code">documents</code>. Hai bucket private; giao diện tải file qua Flask API.</li>
+          <li><strong>Xác thực (IAM SSO):</strong> Service <code class="inline-code">authentication-identity-server</code> cung cấp Keycloak realm chung <code class="inline-code">521H0092-523H0065</code> cho hai thành viên, với client public <code class="inline-code">flask-app</code>, hai user demo sv01/sv02 và Authorization Code + PKCE. Flask xác minh JWT tại <code class="inline-code">/api/secure</code>; CRUD và file API vẫn công khai trong bản demo local.</li>
+          <li><strong>Giám sát hạ tầng (Observability):</strong> Prometheus (:9090) scrape Node Exporter và Blackbox Exporter. Blackbox kiểm tra hai web replica; Grafana (:3000) truy vấn Prometheus để vẽ CPU, RAM và Network. CPU/RAM thuộc Linux VM của Docker Desktop, network thuộc namespace Node Exporter.</li>
         </ol>
 
         <h2 id="bang-boc-tach-dich-vu">4. Bảng bóc tách chi tiết 9 nhóm dịch vụ MyMiniCloud</h2>
@@ -209,8 +209,8 @@ upstream web_pool {
             <thead>
               <tr>
                 <th>Nhóm dịch vụ</th>
-                <th>Container Service</th>
-                <th>FQDN nội bộ</th>
+                <th>Compose service</th>
+                <th>Bind9 / Docker DNS</th>
                 <th>Cổng nội bộ</th>
                 <th>Vai trò kiến trúc</th>
               </tr>
@@ -218,8 +218,8 @@ upstream web_pool {
             <tbody>
               <tr>
                 <td><strong>Nhóm 1: Web Hosting</strong></td>
-                <td>web-frontend-server1, 2</td>
-                <td>web.cloud.local</td>
+                <td>web-frontend-server1, web-frontend-server2</td>
+                <td>web.cloud.local → gateway; Docker DNS gọi riêng từng replica</td>
                 <td>80</td>
                 <td>Cụm Nginx Web Replicas phục vụ Portal, App, Blog</td>
               </tr>
@@ -232,8 +232,8 @@ upstream web_pool {
               </tr>
               <tr>
                 <td><strong>Nhóm 3: SQL Database</strong></td>
-                <td>database-sqlserver-2022</td>
-                <td>sqlserver.cloud.local</td>
+                <td>relational-database-server</td>
+                <td>relational-database-server (Docker DNS; chưa có record Bind9 riêng)</td>
                 <td>1433</td>
                 <td>Cơ sở dữ liệu quan hệ SQL Server 2022 Linux</td>
               </tr>
@@ -242,33 +242,33 @@ upstream web_pool {
                 <td>object-storage-server</td>
                 <td>minio.cloud.local</td>
                 <td>9000, 9001</td>
-                <td>MinIO S3 Object Storage lưu trữ ảnh đại diện</td>
+                <td>MinIO lưu ảnh và PDF trong hai bucket private</td>
               </tr>
               <tr>
                 <td><strong>Nhóm 5: Identity IAM</strong></td>
                 <td>authentication-identity-server</td>
                 <td>keycloak.cloud.local</td>
                 <td>8080</td>
-                <td>Keycloak SSO Realm mini-cloud (OIDC / OAuth 2.0)</td>
+                <td>Keycloak realm 521H0092-523H0065 (OIDC / OAuth 2.0)</td>
               </tr>
               <tr>
                 <td><strong>Nhóm 6: Reverse Proxy</strong></td>
                 <td>api-gateway-proxy-server</td>
-                <td>gateway.cloud.local</td>
+                <td>web.cloud.local</td>
                 <td>80</td>
                 <td>Cổng tiếp nhận duy nhất &amp; Cân bằng tải Round Robin</td>
               </tr>
               <tr>
                 <td><strong>Nhóm 7: Internal DNS</strong></td>
-                <td>dns-bind9-server</td>
-                <td>dns.cloud.local</td>
-                <td>1053</td>
+                <td>internal-dns-server</td>
+                <td>ns.cloud.local</td>
+                <td>53 UDP/TCP (host: 1053)</td>
                 <td>Phân giải tên miền cục bộ zone cloud.local</td>
               </tr>
               <tr>
                 <td><strong>Nhóm 8: Metrics Prometheus</strong></td>
                 <td>monitoring-prometheus-server</td>
-                <td>prometheus.cloud.local</td>
+                <td>monitoring-prometheus-server (Docker DNS; chưa có record Bind9 riêng)</td>
                 <td>9090</td>
                 <td>Thu thập và lưu trữ time-series metrics</td>
               </tr>
@@ -282,6 +282,7 @@ upstream web_pool {
             </tbody>
           </table>
         </div>
+        <p>Bind9 quản lý zone <code class="inline-code">cloud.local</code>; Docker DNS phân giải tên service trong <code class="inline-code">cloud-net</code>. Tên container thực tế do Compose sinh theo dạng <code class="inline-code">mycloud-&lt;service&gt;-1</code>. Web tĩnh không truy vấn database; Student App truy cập dữ liệu qua <code class="inline-code">/api/students-db</code>.</p>
 
       </div>
 

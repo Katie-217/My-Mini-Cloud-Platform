@@ -16,6 +16,14 @@ Named volumes: `mycloud_mssql-data`, `mycloud_keycloak-data`, `mycloud_minio-dat
 
 ## Database và SSMS
 
+Dữ liệu người dùng thao tác qua `http://localhost/app/` nằm tại
+`studentdb.dbo.students` trong service `relational-database-server`. SQL Server lưu
+file dữ liệu/log dưới `/var/opt/mssql`, được gắn volume `mycloud_mssql-data`.
+Volume do Docker Desktop quản lý trong Linux VM, không nằm trong thư mục source
+Windows. Thư mục `db/init/` chỉ chứa script schema/seed; `app/students.json` là
+5 mẫu của endpoint `/student`, không phải dữ liệu CRUD. Avatar/PDF nằm trong
+volume MinIO `mycloud_minio-data`; SQL chỉ lưu `avatar_key` tham chiếu ảnh.
+
 1. Mở SSMS trên Windows, server type Database Engine.
 2. Server name `127.0.0.1,1433`, SQL Server Authentication.
 3. Login/password từ `.env`: `DB_USER`, `DB_PASSWORD`; chọn database `studentdb`.
@@ -48,10 +56,13 @@ readiness và seed idempotent. Không trông chờ thư mục init tự chạy t
 - Tạo user mới qua Admin Console → realm → Users → Add user, đặt credential
   riêng; không dùng tài khoản admin làm tài khoản frontend.
 
-Mở `/app/` → tab Account → đăng nhập Keycloak. Student JavaScript đã được kiểm
-thử thật bằng Edge: callback PKCE, backend xác minh token và logout kết thúc cả
-phiên SSO. Chạy lại bằng `scripts/test-frontend-browser.py`. Script auth-browser
-cũ vẫn kiểm tra hạ tầng độc lập bằng cách intercept callback.
+Mở `http://localhost/#auth` → tab **Xác thực** → **Đăng nhập Keycloak SSO**.
+Đăng nhập sv01 hoặc sv02 bằng `DEMO_USER_PASSWORD` trong `.env`. Keycloak trả
+callback về `/app/`, JavaScript đổi code bằng PKCE rồi quay lại `/#auth` để hiện
+kết quả `/api/secure`. Nút **Đăng xuất / Xóa Token** kết thúc cả phiên Keycloak;
+sau đó có thể đăng nhập bằng user còn lại. Không dùng tài khoản admin cho bước này.
+Chạy lại bằng `scripts/test-frontend-browser.py`. Script auth-browser cũ vẫn
+kiểm tra hạ tầng độc lập bằng cách intercept callback.
 
 ## MinIO và file
 

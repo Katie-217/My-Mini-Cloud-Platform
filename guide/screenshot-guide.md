@@ -26,11 +26,11 @@ IP động trên máy mới có thể khác; không dùng ảnh mẫu để đá
 5. Microsoft Edge dùng cho browser tests; SSMS tùy chọn để chụp SQL GUI.
    Backend/SQL/ODBC chạy trong Docker, không cần cài SQL Server/ODBC trên host.
 
-Thay GITHUB_REPO_URL bằng link thật sau khi được cung cấp:
+Clone repository của nhóm:
 
 ```powershell
 Set-Location D:\
-git clone GITHUB_REPO_URL mycloud
+git clone https://github.com/Katie-217/My-Mini-Cloud-Platform.git mycloud
 Set-Location .\mycloud
 git status
 python scripts/init-env.py
@@ -59,8 +59,10 @@ không đổi policy toàn máy; -NoProfile bỏ cấu hình PowerShell cá nhâ
 | Gateway | Port80, /api/, /auth/, /student/ và Round Robin |
 
 Mở .env bằng editor để xem tài khoản từng server. Không lấy env từ máy khác hoặc
-xóa/tạo lại khi đã có volume. Trước lần chạy đầu có thể đổi OIDC_REALM theo MSSV
-và title trong grafana/dashboards/system-health.json. Mặc định vẫn dùng placeholder.
+xóa/tạo lại khi đã có volume. Realm chung mặc định là `521H0092-523H0065`,
+ghi nhận cả hai thành viên. Dashboard có tiêu đề `System Health of 521H0092 & 523H0065`.
+Máy đã chạy realm cũ: đặt `OIDC_REALM=521H0092-523H0065` trong `.env`, rồi chạy
+lại `scripts/setup.ps1`. Bootstrap tạo realm chung; realm cũ vẫn giữ trong volume.
 PUBLIC_URL=http://localhost phục vụ demo tại máy đó; đổi host cần chỉnh cả OIDC
 issuer/redirect và truy cập port quản trị đang bind loopback.
 
@@ -93,7 +95,7 @@ Nếu vừa sửa HTML/JS hoặc chưa có image, bỏ `-NoBuild` để build l�
 Không chụp `.env`, resolved `docker compose config` hoặc token/password.
 Credential xem riêng trong `.env` bằng editor, không dùng `Get-Content .env` khi chụp.
 
-Realm và tiêu đề dashboard còn `MSSV_PLACEHOLDER`: phải thay bằng MSSV thật trước
+Realm và tiêu đề dashboard phải ghi nhận cả `521H0092` và `523H0065` trước
 khi chụp bản nộp cuối. Đừng ghi placeholder là đã đáp ứng yêu cầu cá nhân hóa.
 
 ## 1. Cấu hình Docker, network và volume
@@ -288,20 +290,28 @@ client_id=flask-app và token_endpoint. Secure không token trả **401** và JS
 Mở `http://localhost/auth/admin/`, đăng nhập bằng KEYCLOAK_ADMIN và
 KEYCLOAK_ADMIN_PASSWORD từ `.env`. Chụp:
 
-1. Realm hiện tại → Users: đủ **sv01, sv02**.
+1. Chọn realm **521H0092-523H0065** → Users: đủ **sv01, sv02**.
 2. Clients → **flask-app**: client public (Client authentication Off),
    Standard flow bật, PKCE S256 và redirect URI `/app/`.
 3. Nếu cần minh chứng thao tác tạo user theo đề: Users → Add user, đặt một tên
    mới riêng (không tạo trùng sv01/sv02), Save → Credentials → Set password.
    Chụp sau khi lưu, không chụp trường password.
 
-Mở `http://localhost/app/` → Đăng nhập Keycloak → login **sv01** bằng
-DEMO_USER_PASSWORD. Chụp kết quả backend xác minh `/api/secure`: HTTP200,
-`message=Secure resource OK`, `preferred_username=sv01`, subject có giá trị.
-Logout rồi thử **sv02** để có ảnh thứ hai.
+1. Mở `http://localhost/#auth` hoặc Portal → tab **Xác thực**.
+2. Kiểm tra Realm Name là **521H0092-523H0065**, Client ID là **flask-app**.
+3. Bấm **Đăng nhập Keycloak SSO**, nhập username **sv01** và giá trị
+   `DEMO_USER_PASSWORD` đọc từ `.env` local. Không nhập tên biến làm mật khẩu.
+4. Keycloak chuyển qua `/app/` để xử lý callback PKCE, rồi quay về Portal
+   `/#auth`. Kết quả `/api/secure` phải hiện **HTTP 200**, `message=Secure resource OK`,
+   `preferred_username=sv01` và subject có giá trị. Chụp phần kết quả này.
+5. Bấm **Đăng xuất / Xóa Token**; cần hiện thông báo đã đăng xuất Keycloak.
+   Đăng nhập lại bằng **sv02** để chụp minh chứng thứ hai. Không cần tự xóa cookie.
+
+Nếu đang mở tab Portal từ trước khi cập nhật realm, đăng xuất và nhấn **Ctrl+F5**
+để bỏ phiên/giao diện cũ. Không cần xóa volume hoặc tạo lại mật khẩu.
 
 Muốn thấy rõ HTTP status/JSON trong DevTools Console mà không in token, chạy
-trong tab Student App **sau khi đã login**:
+trong tab Portal **sau khi đã login**:
 
 ```javascript
 (async () => {
@@ -322,6 +332,7 @@ Flask lấy JWKS Keycloak và xác minh chữ ký RS256/issuer/audience/hạn to
 kiểm auth độc lập UI, không thay nghiệm thu toàn bộ JavaScript Student.
 
 <!-- evidence:auth -->
+<!-- ui:auth-ui -->
 <!-- ui:keycloak-ui -->
 <!-- evidence:secure-login -->
 
@@ -358,10 +369,11 @@ curl.exe -sI "http://localhost:9000/documents/$pdfKey"
 anonymous **403**. Bucket private; backend cung cấp đường đọc file của demo local.
 File đã upload phải xuất hiện thật trong Console, không chỉ có thông báo UI.
 
-Nếu muốn upload bằng lệnh (chọn PDF có sẵn trên máy):
+Nếu muốn upload bằng lệnh, tạo file mẫu bằng script đi kèm repo:
 
 ```powershell
-$pdfPath = 'C:\duong-dan\bao-cao.pdf'
+python scripts/create-demo-files.py
+$pdfPath = (Resolve-Path .runtime/demo-files/report.pdf).Path
 $uploadJson = curl.exe -sS -F 'bucket=documents' -F "file=@$pdfPath;type=application/pdf" http://localhost/api/files
 $upload = $uploadJson | ConvertFrom-Json
 $upload | Format-List
@@ -371,11 +383,11 @@ curl.exe -sS --fail -o $downloadPath "http://localhost$($upload.download_url)"
 Get-FileHash -Algorithm SHA256 -LiteralPath $pdfPath,$downloadPath | Format-Table
 ```
 
-**Kỳ vọng:** hai SHA256 bằng nhau. Chỉ chạy khi đã thay đường dẫn PDF thật.
+**Kỳ vọng:** hai SHA256 bằng nhau. Có thể thay pdfPath bằng PDF thật của bạn.
 **Luồng:** Browser/curl → gateway → Flask multipart → MinIO S3 → object metadata;
 download theo chiều ngược lại. Không dùng bucket demo/index.html của ví dụ cơ bản.
 
-Ảnh lệnh dưới dùng PDF báo cáo sẵn trong docs, tải lại và so hash rồi chỉ dọn
+Ảnh lệnh dưới dùng PDF mẫu do script tạo, tải lại và so hash rồi chỉ dọn
 object do bài test tạo. Console chụp sau khi dọn; bucket rỗng không phủ nhận upload.
 
 <!-- evidence:storage -->
@@ -631,6 +643,7 @@ hoặc chạy browser test tương ứng trên bản mới.
 | setup-tools.ps1 | Cài tools pinned vào .venv, không cần activate |
 | verify.ps1 | Backend 23, gateway 41, DNS host, monitoring 21, auth/storage 24 checks |
 | verify.ps1 -Browser | Thêm 29 kiểm tra điều hướng trình duyệt, cần Edge/tools |
+| create-demo-files.py | Tạo PDF/PNG mẫu trong runtime, không cần PDF đề gốc |
 | capture-handoff.py | Chạy lệnh thật/chụp UI và transcript vào runtime |
 | build-handoff.py | Nhúng ảnh vào đúng các bước trong cùng hướng dẫn HTML |
 
@@ -670,7 +683,7 @@ riêng/seed mới, không tự mang dữ liệu từ máy tác giả. Không xó
 | Init job Exited (0) | Bình thường; exit khác 0 đọc logs init |
 | Build/pull lỗi | Internet/registry/build log; MinIO build tag nguồn upstream; không bỏ lỗi bằng -NoBuild |
 
-Ảnh thu thập ngày 10/11/2026 theo UTC+7 trên máy dự án, gồm CRUD, upload/download,
+Ảnh thu thập theo timestamp UTC+7 hiển thị tại từng phần trên máy dự án, gồm CRUD, upload/download,
 persistence sau restart, DNS, monitoring, Round Robin và GUI Grafana/MinIO/Keycloak.
 Setup đã chạy trên engine/image/volume hiện có; cài OS/tools hoặc deploy trên máy
 riêng của partner cần partner chạy rồi xác nhận. SSMS GUI/Docker Hub/AWS vẫn NOT TESTED.

@@ -165,6 +165,10 @@ def browser_capture(browser):
     page.locator('[data-tab="services"]').click()
     page.locator('.nimbus-service-card').first.wait_for()
     page.screenshot(path=str(OUT / 'portal-ui.png'), full_page=True)
+    page.locator('[data-tab="auth"]').click()
+    page.wait_for_function('(realm) => document.getElementById("auth-info-realm").textContent === realm',
+                           arg=cfg['OIDC_REALM'])
+    page.screenshot(path=str(OUT / 'auth-ui.png'), full_page=True)
     page.goto('http://localhost/blog/')
     page.wait_for_function('Array.from(document.images).every(i=>i.complete && i.naturalWidth>0)')
     page.screenshot(path=str(OUT / 'blog-ui.png'), full_page=True)

@@ -96,7 +96,7 @@ và host 1053. Windows không tự dùng zone này để duyệt web; Portal v�
 - Health SQL thực hiện SELECT, app đợi migration và seed hoàn tất.
 - Portal probe endpoint thực tế với timeout; `container_runtime_count` Unknown
   khi không đọc runtime. Không mount Docker socket.
-- Keycloak issuer public `http://localhost/auth/realms/MSSV_PLACEHOLDER`, JWKS
+- Keycloak issuer public `http://localhost/auth/realms/521H0092-523H0065`, JWKS
   lấy qua service nội bộ; cấu hình proxy giữ `/auth` và ghi đè forwarded headers.
 - Realm, mật khẩu bootstrap, demo users lấy từ `.env` đã ignore; tài khoản app SQL
   có quyền trên database riêng, không dùng `sa` để CRUD.

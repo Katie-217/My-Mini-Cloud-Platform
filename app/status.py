@@ -42,8 +42,19 @@ PROBES = [
 def probe(spec):
     started = time.perf_counter()
     key, name, group, service, technology, endpoint, url = spec
+    probe_type = 'sql' if endpoint == 'sql' else 'dns' if endpoint == 'dns' else 'http'
+    labels = {'sql': 'SQL Query', 'dns': 'DNS Query (A)', 'http': 'HTTP GET'}
+    target = ('SELECT TOP (1) id FROM dbo.students' if probe_type == 'sql' else
+              '@internal-dns-server app-backend.cloud.local A' if probe_type == 'dns' else endpoint)
     result = dict(id=key, name=name, group=group, service=service, technology=technology,
-                  status='unhealthy', detail='Probe không thành công', url=url, network='cloud-net')
+                  status='unhealthy', detail='Probe không thành công', url=url, network='cloud-net',
+                  probe_type=probe_type, probe_label=labels[probe_type], probe_target=target)
+    if key == 'app':
+        result['probe_label'] = 'HTTP GET + SQL'
+    elif key == 'auth':
+        result['probe_label'] = 'OIDC Discovery (HTTP)'
+    elif key in ('node', 'http'):
+        result['probe_label'] = 'HTTP Metrics'
     try:
         if endpoint == 'sql':
             conn = connection()

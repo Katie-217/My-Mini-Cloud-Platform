@@ -33,7 +33,7 @@
       port: 'Cổng nội bộ 80 (TCP)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'Không (Stateless Container)',
-      healthcheck: 'HTTP GET / & /app/ & /blog/ (Blackbox Prober)',
+      healthcheck: 'HTTP GET /health trên cả hai replica; Blackbox Exporter cũng probe /health',
       tech: 'Nginx 1.28-alpine',
       urlPort: null,
       urlPath: '/',
@@ -56,7 +56,7 @@
       port: 'Cổng nội bộ 8081 (TCP)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'Không (Stateless Microservice)',
-      healthcheck: 'HTTP GET /hello (Interval 10s, Timeout 3s)',
+      healthcheck: 'HTTP GET :8081/health, kiểm tra cả truy vấn SQL Server',
       tech: 'Python 3.12 · Flask · Gunicorn',
       urlPort: null,
       urlPath: '/api/hello',
@@ -79,7 +79,7 @@
       port: 'Cổng nội bộ 1433 (TCP TDS)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'mssql-data (Named Docker Volume)',
-      healthcheck: 'TCP Ping :1433 & Query SELECT 1 qua sqlcmd',
+      healthcheck: 'Portal: SELECT TOP (1) id FROM dbo.students qua ODBC; Docker: SELECT 1 qua sqlcmd',
       tech: 'SQL Server 2022',
       urlPort: null,
       urlPath: '/api/students-db',
@@ -102,7 +102,7 @@
       port: 'Cổng nội bộ 8080 (TCP HTTP)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'keycloak-data (Embedded H2 storage)',
-      healthcheck: 'HTTP GET /health/ready (Quarkus MicroProfile)',
+      healthcheck: 'Portal: HTTP OIDC discovery của realm; Docker: /auth/health/ready trên management :9000',
       tech: 'Keycloak 26.1.4',
       urlPort: null,
       urlPath: '/auth/',
@@ -125,7 +125,7 @@
       port: 'Port 9000 (S3 API) & Port 9001 (Web Console)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'minio-data (Named Docker Volume)',
-      healthcheck: 'HTTP GET /minio/health/live',
+      healthcheck: 'HTTP GET :9000/minio/health/ready',
       tech: 'MinIO (S3 compatible)',
       urlPort: 9001,
       role: 'Lưu trữ đối tượng (S3 API). Quản trị 2 bucket: profile-pics (ảnh sinh viên) và documents (tài liệu PDF).',
@@ -147,7 +147,7 @@
       port: 'Port 1053 (Host UDP/TCP) & Port 53 (Internal)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'dns/named.conf.local & dns/db.cloud.local',
-      healthcheck: 'DNS query @127.0.0.1 app-backend.cloud.local',
+      healthcheck: 'DNS query A @internal-dns-server app-backend.cloud.local; đối chiếu IP backend thật',
       tech: 'Bind9 9.18',
       urlPort: null,
       role: 'Dịch vụ phân giải tên miền nội bộ có thẩm quyền cho zone cloud.local (app-backend, minio, keycloak...). Host port 1053.',
@@ -169,7 +169,7 @@
       port: 'Port 9090 (Host & Container TCP)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'prometheus-data & monitor/prometheus.yml',
-      healthcheck: 'HTTP GET /-/healthy',
+      healthcheck: 'HTTP GET :9090/-/ready; Node/Blackbox Exporter kiểm tra HTTP /metrics',
       tech: 'Prometheus 3.2.1',
       urlPort: 9090,
       urlPath: '/targets',
@@ -216,7 +216,7 @@
       port: 'Port 80 (Host Public Port)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'proxy/nginx.conf',
-      healthcheck: 'HTTP GET / (Localhost probe)',
+      healthcheck: 'HTTP GET /health trên api-gateway-proxy-server',
       tech: 'Nginx 1.28-alpine',
       urlPort: null,
       urlPath: '/',
@@ -930,8 +930,8 @@
         <tr>
           <td style="color: #64748b; font-family: var(--font-mono); font-size: 0.8rem;">${escapeHtml(timeStr)}</td>
           <td><strong style="color: #0f172a;">${escapeHtml(item.name || item.id)}</strong></td>
-          <td><span class="activity-muted">${escapeHtml(item.type || 'HTTP Probe')}</span></td>
-          <td><code>${escapeHtml(item.target || item.id)}</code></td>
+          <td><span class="activity-muted">${escapeHtml(item.probe_label || 'Chưa có loại probe')}</span></td>
+          <td><code>${escapeHtml(item.probe_target || item.service || item.id)}</code></td>
           <td class="activity-latency">${escapeHtml(latencyStr)}</td>
           <td><span class="badge ${badgeClass}">${escapeHtml(statusText)}</span></td>
         </tr>

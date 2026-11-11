@@ -143,8 +143,9 @@ def get_student(student_id):
             result['avatar_is_public'] = is_pub
             result['avatar_public_url'] = get_public_url('profile-pics', result['avatar_key']) if is_pub else None
         except Exception:
-            result['avatar_is_public'] = False
+            result['avatar_is_public'] = None
             result['avatar_public_url'] = None
+            result['avatar_sharing_error'] = 'Chưa kiểm tra được trạng thái chia sẻ MinIO.'
     else:
         result['avatar_is_public'] = False
         result['avatar_public_url'] = None

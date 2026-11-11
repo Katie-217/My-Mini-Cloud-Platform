@@ -3,7 +3,7 @@ import io
 import os
 import re
 import uuid
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 import jwt
 from flask import Blueprint, Response, jsonify, request, stream_with_context
@@ -14,6 +14,12 @@ from minio.error import S3Error
 integrations = Blueprint('integrations', __name__)
 PUBLIC_URL = os.getenv('PUBLIC_URL', 'http://localhost').rstrip('/')
 MINIO_PUBLIC_URL = os.getenv('MINIO_PUBLIC_URL', 'http://localhost:9000').rstrip('/')
+_public_endpoint = urlsplit(MINIO_PUBLIC_URL)
+if (_public_endpoint.scheme not in ('http', 'https') or not _public_endpoint.hostname
+        or _public_endpoint.username or _public_endpoint.password
+        or _public_endpoint.path or _public_endpoint.query or _public_endpoint.fragment):
+    raise ValueError('MINIO_PUBLIC_URL phải là endpoint HTTP/HTTPS, không chứa credential, path hoặc query.')
+_public_endpoint.port  # Validate a configured port before serving links.
 REALM = os.getenv('OIDC_REALM', '521H0092-523H0065')
 ISSUER = f'{PUBLIC_URL}/auth/realms/{REALM}'
 AUTH_INTERNAL = 'http://authentication-identity-server:8080/auth'
@@ -49,8 +55,17 @@ def is_object_public(client, bucket, key):
     try:
         client.stat_object(bucket, f'public/{key}')
         return True
-    except Exception:
-        return False
+    except S3Error as error:
+        if error.code in ('NoSuchKey', 'NoSuchObject'):
+            return False
+        raise
+
+
+def sharing_request():
+    data = request.get_json() if request.is_json else None
+    if not isinstance(data, dict):
+        raise ValueError('Body phải là JSON object chứa bucket và key.')
+    return data
 
 
 @integrations.get('/auth/config')
@@ -82,20 +97,13 @@ def list_files():
     bucket = validate_bucket(request.args.get('bucket', 'documents'))
     client = storage_client()
 
-    all_objects = list(client.list_objects(bucket, recursive=True))
-    public_keys = set()
-    root_objects = []
-
-    for obj in all_objects:
-        if obj.object_name.startswith('public/'):
-            pub_key = obj.object_name[len('public/'):]
-            if pub_key:
-                public_keys.add(pub_key)
-        else:
-            root_objects.append(obj)
+    public_keys = {obj.object_name[len('public/'):] for obj in
+                   client.list_objects(bucket, prefix='public/', recursive=True)}
 
     files = []
-    for obj in root_objects:
+    for obj in client.list_objects(bucket):
+        if obj.is_dir or obj.object_name.startswith('public/'):
+            continue
         is_pub = obj.object_name in public_keys
         files.append({
             'key': obj.object_name,
@@ -164,20 +172,24 @@ def download_file(bucket, key):
 
 @integrations.post('/files/share')
 def share_file():
-    data = request.get_json(silent=True) or {}
+    data = sharing_request()
     bucket = validate_bucket(data.get('bucket'))
     key = validate_object_key(data.get('key'))
     client = storage_client()
 
     try:
-        client.stat_object(bucket, key)
+        original = client.stat_object(bucket, key)
     except S3Error as err:
         if err.code in ('NoSuchKey', 'NoSuchObject'):
             return jsonify(error='Không tìm thấy file gốc.'), 404
         raise
 
     public_key = f'public/{key}'
-    client.copy_object(bucket, public_key, CopySource(bucket, key))
+    client.copy_object(bucket, public_key, CopySource(bucket, key),
+                       metadata={'Content-Type': original.content_type,
+                                 'Cache-Control': 'no-store',
+                                 'X-Content-Type-Options': 'nosniff'},
+                       metadata_directive='REPLACE')
 
     return jsonify(
         bucket=bucket,
@@ -188,7 +200,7 @@ def share_file():
 
 
 def handle_unshare():
-    data = request.get_json(silent=True) or {}
+    data = sharing_request() if request.is_json else {}
     bucket_val = data.get('bucket') or request.args.get('bucket')
     key_val = data.get('key') or request.args.get('key')
     bucket = validate_bucket(bucket_val)
@@ -203,10 +215,9 @@ def handle_unshare():
         raise
 
     public_key = f'public/{key}'
-    try:
-        client.remove_object(bucket, public_key)
-    except Exception:
-        pass
+    # MinIO remove_object is already idempotent for missing keys. An actual
+    # delete failure must propagate; otherwise the URL can remain readable.
+    client.remove_object(bucket, public_key)
 
     return jsonify(
         bucket=bucket,

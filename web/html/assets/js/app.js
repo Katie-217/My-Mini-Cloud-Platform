@@ -322,13 +322,17 @@
       let avatarSharingHtml = '';
       if (s.avatar_key) {
         const isPub = !!s.avatar_is_public;
+        const unknown = s.avatar_is_public == null || !!s.avatar_sharing_error;
         const pubUrl = s.avatar_public_url || '';
-        const badge = isPub 
-          ? '<span class="badge" style="background:#ecfdf5; color:#059669; font-weight:600;">Công khai</span>' 
-          : '<span class="badge" style="background:#f1f5f9; color:#64748b; font-weight:600;">Riêng tư</span>';
+        const badge = unknown
+          ? '<span class="badge badge-unknown">Chưa xác định</span>'
+          : isPub ? '<span class="badge badge-healthy">Công khai</span>'
+          : '<span class="badge badge-unknown">Riêng tư</span>';
 
         let buttons = '';
-        if (isPub) {
+        if (unknown) {
+          buttons = '<span>Chưa kiểm tra được trạng thái chia sẻ.</span><button type="button" class="btn btn-secondary btn-sm" id="btn-retry-avatar-sharing">Thử lại</button>';
+        } else if (isPub) {
           buttons = `
             <a href="${escapeHtml(pubUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" title="Mở ảnh trực tiếp từ MinIO">Mở ảnh</a>
             <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-avatar-link" title="Sao chép link công khai">Sao chép link</button>
@@ -341,7 +345,7 @@
         }
 
         avatarSharingHtml = `
-          <div style="margin-top: 1rem; padding: 0.85rem; background: var(--app-surface-hover, #f8fafc); border-radius: 8px; border: 1px solid var(--app-border, #e2e8f0); text-align: left;">
+          <div style="margin-top: 1rem; padding: 0.85rem; background: var(--t-surface, #f8fafc); border-radius: 8px; border: 1px solid var(--t-border, #e2e8f0); text-align: left;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
               <span style="font-size: 0.85rem; font-weight: 600; color: #334155;">Chia sẻ Avatar (MinIO):</span>
               ${badge}
@@ -375,6 +379,8 @@
       `;
 
       if (s.avatar_key) {
+        const retryBtn = document.getElementById('btn-retry-avatar-sharing');
+        if (retryBtn) retryBtn.addEventListener('click', () => openStudentDetailModal(id));
         const shareBtn = document.getElementById('btn-share-avatar');
         if (shareBtn) {
           shareBtn.addEventListener('click', async () => {

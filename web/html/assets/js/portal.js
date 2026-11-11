@@ -25,7 +25,7 @@
       id: 'web',
       name: 'Nginx Web Replicas',
       domain: 'web.cloud.local',
-      ip: '172.30.50.11, 172.30.50.12',
+      ip: '172.30.50.10 (gateway)',
       groupNum: 1,
       category: 'Web Server',
       service: 'web-frontend-server1, web-frontend-server2',
@@ -33,8 +33,8 @@
       port: 'Cổng nội bộ 80 (TCP)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'Không (Stateless Container)',
-      healthcheck: 'HTTP GET / & /app/ & /blog/ (Blackbox Prober)',
-      tech: 'Nginx 1.28-alpine (HTML5 Static / SPA)',
+      healthcheck: 'HTTP GET /health trên cả hai replica; Blackbox Exporter cũng probe /health',
+      tech: 'Nginx 1.28-alpine',
       urlPort: null,
       urlPath: '/',
       role: 'Phục vụ nội dung Portal Control, Student App và Tech Blog. Chạy 2 bản sao cân bằng tải Round Robin qua Reverse Proxy.',
@@ -56,8 +56,8 @@
       port: 'Cổng nội bộ 8081 (TCP)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'Không (Stateless Microservice)',
-      healthcheck: 'HTTP GET /hello (Interval 10s, Timeout 3s)',
-      tech: 'Python 3.12 / Flask 3.0 / Gunicorn',
+      healthcheck: 'HTTP GET :8081/health, kiểm tra cả truy vấn SQL Server',
+      tech: 'Python 3.12 · Flask · Gunicorn',
       urlPort: null,
       urlPath: '/api/hello',
       role: 'Microservice API RESTful cung cấp nghiệp vụ quản lý sinh viên, tích hợp SQL Server, MinIO S3 và Keycloak SSO.',
@@ -70,8 +70,8 @@
     {
       id: 'database',
       name: 'SQL Server 2022',
-      domain: 'sql.cloud.local',
-      ip: '172.30.50.15',
+      domain: 'relational-database-server',
+      ip: 'IP động',
       groupNum: 3,
       category: 'Database Server',
       service: 'relational-database-server',
@@ -79,8 +79,8 @@
       port: 'Cổng nội bộ 1433 (TCP TDS)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'mssql-data (Named Docker Volume)',
-      healthcheck: 'TCP Ping :1433 & Query SELECT 1 qua sqlcmd',
-      tech: 'Microsoft SQL Server 2022 (RDBMS)',
+      healthcheck: 'Portal: SELECT TOP (1) id FROM dbo.students qua ODBC; Docker: SELECT 1 qua sqlcmd',
+      tech: 'SQL Server 2022',
       urlPort: null,
       urlPath: '/api/students-db',
       role: 'Cơ sở dữ liệu quan hệ lưu trữ thông tin sinh viên trên database studentdb qua kết nối ODBC Driver 18.',
@@ -102,11 +102,11 @@
       port: 'Cổng nội bộ 8080 (TCP HTTP)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'keycloak-data (Embedded H2 storage)',
-      healthcheck: 'HTTP GET /health/ready (Quarkus MicroProfile)',
-      tech: 'Keycloak 26.1.4 (Quarkus / Java 21)',
+      healthcheck: 'Portal: HTTP OIDC discovery của realm; Docker: /auth/health/ready trên management :9000',
+      tech: 'Keycloak 26.1.4',
       urlPort: null,
       urlPath: '/auth/',
-      role: 'Xác thực tập trung theo chuẩn OpenID Connect (OIDC) / OAuth 2.0 PKCE. Quản trị Realm mini-cloud và client flask-app.',
+      role: 'Xác thực tập trung theo chuẩn OpenID Connect (OIDC) / OAuth 2.0 PKCE. Realm đặt theo MSSV (OIDC_REALM), client flask-app.',
       checkGuide: 'Truy cập cổng 80 qua route /auth/ hoặc gọi endpoint OIDC config /api/auth/config.',
       testCommand: 'curl -s http://localhost/api/auth/config',
       logoBg: '#f0fdf4',
@@ -125,8 +125,8 @@
       port: 'Port 9000 (S3 API) & Port 9001 (Web Console)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'minio-data (Named Docker Volume)',
-      healthcheck: 'HTTP GET /minio/health/live',
-      tech: 'MinIO RELEASE.2024-04 (S3 Compatible)',
+      healthcheck: 'HTTP GET :9000/minio/health/ready',
+      tech: 'MinIO (S3 compatible)',
       urlPort: 9001,
       role: 'Lưu trữ đối tượng (S3 API). Quản trị 2 bucket: profile-pics (ảnh sinh viên) và documents (tài liệu PDF).',
       checkGuide: 'Mở MinIO Console cổng 9001 hoặc kiểm tra danh sách tệp qua /api/files?bucket=documents.',
@@ -138,7 +138,7 @@
     {
       id: 'dns',
       name: 'Bind9 Internal DNS',
-      domain: 'dns.cloud.local',
+      domain: 'ns.cloud.local',
       ip: '172.30.50.53',
       groupNum: 6,
       category: 'Name Service',
@@ -147,8 +147,8 @@
       port: 'Port 1053 (Host UDP/TCP) & Port 53 (Internal)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'dns/named.conf.local & dns/db.cloud.local',
-      healthcheck: 'DNS query @127.0.0.1 app-backend.cloud.local',
-      tech: 'Bind9 9.18 (Authoritative DNS)',
+      healthcheck: 'DNS query A @internal-dns-server app-backend.cloud.local; đối chiếu IP backend thật',
+      tech: 'Bind9 9.18',
       urlPort: null,
       role: 'Dịch vụ phân giải tên miền nội bộ có thẩm quyền cho zone cloud.local (app-backend, minio, keycloak...). Host port 1053.',
       checkGuide: 'Dùng lệnh dig truy vấn qua cổng 1053 để xác minh phân giải bản ghi A.',
@@ -160,8 +160,8 @@
     {
       id: 'monitoring',
       name: 'Prometheus Server',
-      domain: 'prometheus.cloud.local',
-      ip: '172.30.50.90',
+      domain: 'monitoring-prometheus-server',
+      ip: 'IP động',
       groupNum: 7,
       category: 'Monitoring & Exporters',
       service: 'monitoring-prometheus-server',
@@ -169,8 +169,8 @@
       port: 'Port 9090 (Host & Container TCP)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'prometheus-data & monitor/prometheus.yml',
-      healthcheck: 'HTTP GET /-/healthy',
-      tech: 'Prometheus 3.2.1 (Time Series TSDB)',
+      healthcheck: 'HTTP GET :9090/-/ready; Node/Blackbox Exporter kiểm tra HTTP /metrics',
+      tech: 'Prometheus 3.2.1',
       urlPort: 9090,
       urlPath: '/targets',
       role: 'Thu thập số liệu đo lường định kỳ từ Node Exporter và kiểm tra trạng thái HTTP từ 2 Web Server.',
@@ -207,7 +207,7 @@
     {
       id: 'proxy',
       name: 'Nginx API Gateway',
-      domain: 'gateway.cloud.local',
+      domain: 'api-gateway-proxy-server',
       ip: '172.30.50.10',
       groupNum: 9,
       category: 'Reverse Proxy & LB',
@@ -216,8 +216,8 @@
       port: 'Port 80 (Host Public Port)',
       network: 'cloud-net (Subnet 172.30.50.0/24)',
       volume: 'proxy/nginx.conf',
-      healthcheck: 'HTTP GET / (Localhost probe)',
-      tech: 'Nginx 1.28-alpine (Reverse Proxy)',
+      healthcheck: 'HTTP GET /health trên api-gateway-proxy-server',
+      tech: 'Nginx 1.28-alpine',
       urlPort: null,
       urlPath: '/',
       role: 'Điểm tiếp nhận lưu lượng duy nhất cổng 80. Định tuyến /, /blog/, /app/ (Round Robin), /api/* và /auth/*.',
@@ -307,7 +307,7 @@
     // Nhóm 2: Student API (JSON Reference mẫu 5 sinh viên theo đề)
     {
       id: 'ep-students-json',
-      group: 'Student API (JSON Reference - Đề Bài)',
+      group: 'Student API (JSON theo đề bài)',
       method: 'GET',
       path: '/api/student',
       summary: 'Lấy danh sách 5 sinh viên mẫu từ file JSON theo yêu cầu đề bài',
@@ -501,15 +501,15 @@
     // Cập nhật tiêu đề Topbar
     const titleEl = document.getElementById('portal-topbar-title');
     const titles = {
-      dashboard: 'Dashboard Overview',
-      services: 'Services & DNS Infrastructure',
-      architecture: 'Architecture & Network Flow',
-      monitoring: 'Monitoring & System Logs',
-      loadbalancing: 'Load Balancing (Nginx Web Replicas)',
+      dashboard: 'Tổng quan hệ thống',
+      services: 'Dịch vụ & DNS',
+      architecture: 'Kiến trúc & mạng',
+      monitoring: 'Giám sát tài nguyên',
+      loadbalancing: 'Cân bằng tải (Round Robin)',
       'api-explorer': 'Flask REST API Explorer',
       'api-docs': 'Flask REST API Explorer',
-      auth: 'Authentication (Keycloak OIDC PKCE)',
-      dns: 'DNS Records (Zone: cloud.local)'
+      auth: 'Xác thực Keycloak (OIDC)',
+      dns: 'Bản ghi DNS (cloud.local)'
     };
 
     if (titles[tabId] && titleEl) {
@@ -619,7 +619,6 @@
         const monCpuEl = document.getElementById('mon-stat-cpu');
         const monRamAvailEl = document.getElementById('mon-stat-ram-avail');
         const monRamTotalEl = document.getElementById('mon-stat-ram-total');
-        const monTargetsEl = document.getElementById('mon-stat-targets-up');
 
         if (mData.cpu_percent !== undefined) {
           const cpuVal = parseFloat(mData.cpu_percent);
@@ -628,29 +627,25 @@
           if (monCpuEl) monCpuEl.textContent = cpuText;
         }
 
-        let availMbText = '-- MB';
-        let totalMbText = '-- MB';
+        const toGb = (bytes) => `${(bytes / (1024 ** 3)).toFixed(2)} GB`;
+        let availMbText = '-- GB';
+        let totalMbText = '-- GB';
 
         if (mData.memory_available_bytes !== undefined) {
-          const availMb = mData.memory_available_bytes / (1024 * 1024);
-          availMbText = `${availMb.toFixed(2)} MB`;
+          availMbText = toGb(mData.memory_available_bytes);
         } else if (mData.memory_total_bytes !== undefined && mData.memory_used_bytes !== undefined) {
-          const availMb = (mData.memory_total_bytes - mData.memory_used_bytes) / (1024 * 1024);
-          availMbText = `${availMb.toFixed(2)} MB`;
+          availMbText = toGb(mData.memory_total_bytes - mData.memory_used_bytes);
         } else if (mData.memory_percent !== undefined) {
-          const mPct = parseFloat(mData.memory_percent);
-          availMbText = `${mPct.toFixed(2)}% Used`;
+          availMbText = `${parseFloat(mData.memory_percent).toFixed(2)}% đã dùng`;
         }
 
         if (mData.memory_total_bytes !== undefined) {
-          const totMb = mData.memory_total_bytes / (1024 * 1024);
-          totalMbText = `${totMb.toFixed(2)} MB`;
+          totalMbText = toGb(mData.memory_total_bytes);
         }
 
         if (ramEl) ramEl.textContent = availMbText;
         if (monRamAvailEl) monRamAvailEl.textContent = availMbText;
         if (monRamTotalEl) monRamTotalEl.textContent = totalMbText;
-        if (monTargetsEl) monTargetsEl.textContent = '4 / 4 UP';
 
       } else {
         throw new Error('Metric chưa sẵn sàng');
@@ -662,7 +657,41 @@
       });
     }
 
+    await fetchPrometheusTargets();
     updateQuickAppUrls();
+  }
+
+  // Lấy targets thật từ Prometheus (port 9090 bind loopback, Prometheus cho phép CORS).
+  // Không hiển thị số/trạng thái mẫu khi chưa đọc được.
+  async function fetchPrometheusTargets() {
+    const countEl = document.getElementById('mon-stat-targets-up');
+    const tbody = document.getElementById('mon-targets-table-body');
+    try {
+      const res = await fetch(`${window.location.protocol}//${window.location.hostname}:9090/api/v1/targets?state=active`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const targets = ((await res.json()).data || {}).activeTargets || [];
+      const upCount = targets.filter(t => t.health === 'up').length;
+      if (countEl) countEl.textContent = `${upCount} / ${targets.length} UP`;
+      if (tbody) {
+        tbody.innerHTML = targets.length === 0
+          ? '<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 2rem;">Prometheus chưa có target nào.</td></tr>'
+          : targets.map(t => {
+              const isUp = t.health === 'up';
+              const lastError = t.lastError ? ` title="${escapeHtml(t.lastError)}"` : '';
+              return `
+                <tr>
+                  <td><code>${escapeHtml(t.labels.job || '')}</code></td>
+                  <td><code class="mon-target-endpoint" title="${escapeHtml(t.scrapeUrl || '')}">${escapeHtml(t.labels.instance || '')}</code></td>
+                  <td>${(t.scrapeUrl || '').includes('/probe') ? 'Blackbox HTTP probe' : 'Scrape /metrics'}</td>
+                  <td>${escapeHtml(t.scrapeInterval || '')}</td>
+                  <td><span class="badge ${isUp ? 'badge-healthy' : 'badge-unhealthy'}"${lastError}>${isUp ? 'UP' : escapeHtml((t.health || 'unknown').toUpperCase())}</span></td>
+                </tr>`;
+            }).join('');
+      }
+    } catch (e) {
+      if (countEl) countEl.textContent = 'Chưa có dữ liệu';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 2rem;">Không đọc được Prometheus :9090 (chỉ truy cập được từ máy chạy Docker).</td></tr>';
+    }
   }
 
   function updateQuickAppUrls() {
@@ -761,7 +790,7 @@
 
           <div class="nimbus-card-middle">
             <h3 class="nimbus-service-title">${escapeHtml(s.name)}</h3>
-            <p class="nimbus-service-sub">${escapeHtml(s.category)} &bull; <code>${escapeHtml(s.tech)}</code></p>
+            <p class="nimbus-service-sub">${escapeHtml(s.category)} &bull; ${escapeHtml(s.tech)}</p>
             
             <!-- DNS Domain Badge -->
             <div style="font-family: var(--font-mono); font-size: 0.775rem; color: #1d4ed8; background: #eff6ff; padding: 0.3rem 0.6rem; border-radius: 6px; display: inline-block; margin-bottom: 0.5rem; border: 1px solid #bfdbfe;">
@@ -901,9 +930,9 @@
         <tr>
           <td style="color: #64748b; font-family: var(--font-mono); font-size: 0.8rem;">${escapeHtml(timeStr)}</td>
           <td><strong style="color: #0f172a;">${escapeHtml(item.name || item.id)}</strong></td>
-          <td><span style="font-family: var(--font-mono); font-size: 0.775rem; color: #475569;">${escapeHtml(item.type || 'HTTP Probe')}</span></td>
-          <td><code>${escapeHtml(item.target || item.id)}</code></td>
-          <td style="font-family: var(--font-mono); font-weight: 600; color: #2563eb;">${escapeHtml(latencyStr)}</td>
+          <td><span class="activity-muted">${escapeHtml(item.probe_label || 'Chưa có loại probe')}</span></td>
+          <td><code>${escapeHtml(item.probe_target || item.service || item.id)}</code></td>
+          <td class="activity-latency">${escapeHtml(latencyStr)}</td>
           <td><span class="badge ${badgeClass}">${escapeHtml(statusText)}</span></td>
         </tr>
       `;
@@ -945,17 +974,14 @@
           } catch (e) {}
         }
 
-        // Fallback nhận diện nếu header vắng mặt
-        if (!serverName) {
-          serverName = (LBState.totalRequests % 2 === 0) ? 'web-frontend-server1' : 'web-frontend-server2';
-        }
+        // Không đoán replica: thiếu header thì ghi "không xác định" và không cộng vào server nào.
+        if (!serverName) serverName = 'không xác định';
 
-        recordLBResult(serverName, selectedPath, `${res.status} OK`, elapsedMs);
+        recordLBResult(serverName, selectedPath, `${res.status} ${res.ok ? 'OK' : 'ERR'}`, elapsedMs);
 
       } catch (err) {
         const elapsedMs = (performance.now() - startTime).toFixed(2);
-        const fallbackServer = (LBState.totalRequests % 2 === 0) ? 'web-frontend-server1' : 'web-frontend-server2';
-        recordLBResult(fallbackServer, selectedPath, 'ERR', elapsedMs);
+        recordLBResult('không xác định', selectedPath, 'ERR (network)', elapsedMs);
       }
 
       if (count > 1) {
@@ -973,7 +999,7 @@
 
     if (serverName.includes('server2')) {
       LBState.server2Count++;
-    } else {
+    } else if (serverName.includes('server1')) {
       LBState.server1Count++;
     }
 
@@ -996,7 +1022,7 @@
         box2.classList.add('active-pulse');
         setTimeout(() => box2.classList.remove('active-pulse'), 300);
       }
-    } else {
+    } else if (serverName.includes('server1')) {
       if (box1) {
         box1.classList.add('active-pulse');
         setTimeout(() => box1.classList.remove('active-pulse'), 300);
@@ -1034,7 +1060,7 @@
         tbody.innerHTML = `
           <tr>
             <td colspan="5" style="text-align: center; color: #94a3b8; padding: 2rem;">
-              Chưa có request kiểm thử nào. Nhấn "Send 1 Request" hoặc "Send 10 Requests" để bắt đầu theo dõi.
+              Chưa có request nào. Bấm "Gửi 10 request" để bắt đầu.
             </td>
           </tr>
         `;
@@ -1045,7 +1071,7 @@
             <td style="color: #475569;">${item.time}</td>
             <td><code style="background: #f1f5f9; padding: 0.2rem 0.5rem; border-radius: 4px; color: #0f172a; font-weight: 600;">${escapeHtml(item.path)}</code></td>
             <td>
-              <span class="badge ${item.server.includes('server2') ? 'badge-healthy' : 'badge-unhealthy'}" style="font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700;">
+              <span class="badge ${item.server.includes('server2') ? 'lb-srv-2' : (item.server.includes('server1') ? 'lb-srv-1' : 'badge-unhealthy')}" style="font-family: var(--font-mono); font-size: 0.8rem;">
                 ${escapeHtml(item.server)}
               </span>
             </td>
@@ -1090,10 +1116,10 @@
 
     Object.keys(groups).forEach(groupName => {
       const groupHeader = document.createElement('div');
-      groupHeader.style.cssText = 'font-size: 0.95rem; font-weight: 800; color: #1e293b; text-transform: uppercase; letter-spacing: 0.05em; margin: 1.5rem 0 0.75rem; padding-bottom: 0.35rem; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;';
+      groupHeader.className = 'swagger-group-title';
       groupHeader.innerHTML = `
         <span>${escapeHtml(groupName)}</span>
-        <span class="badge" style="background: #f1f5f9; color: #64748b; font-size: 0.75rem;">${groups[groupName].length} Endpoints</span>
+        <span class="swagger-group-count">${groups[groupName].length} endpoint</span>
       `;
       container.appendChild(groupHeader);
 
@@ -1119,7 +1145,7 @@
         if (ep.params && ep.params.length > 0) {
           paramInputHtml = `
             <div style="margin-bottom: 1rem;">
-              <div style="font-size: 0.825rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Tham Số (Parameters):</div>
+              <div style="font-size: 0.825rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Tham số (Parameters):</div>
               ${ep.params.map(p => `
                 <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.35rem;">
                   <label style="font-size: 0.8rem; font-family: var(--font-mono); font-weight: 600; width: 60px;">${p.name}:</label>
@@ -1297,6 +1323,62 @@
         oidcConfigData = await res.json();
       }
     } catch (e) {}
+    renderOidcInfo();
+  }
+
+  // Hiển thị issuer/realm/client thật từ /api/auth/config thay vì giá trị ghi cứng.
+  function renderOidcInfo() {
+    const ssoEl = document.getElementById('auth-info-sso');
+    const realmEl = document.getElementById('auth-info-realm');
+    const clientEl = document.getElementById('auth-info-client');
+    if (!oidcConfigData || !oidcConfigData.issuer) {
+      [ssoEl, realmEl, clientEl].forEach(el => { if (el) el.textContent = 'Chưa có dữ liệu'; });
+      return;
+    }
+    const issuer = oidcConfigData.issuer;
+    const marker = '/realms/';
+    if (ssoEl) ssoEl.textContent = issuer.slice(0, issuer.indexOf(marker) + 1) || issuer;
+    const realmName = decodeURIComponent(issuer.slice(issuer.indexOf(marker) + marker.length));
+    if (realmEl) realmEl.textContent = realmName;
+    document.querySelectorAll('[data-oidc-realm]').forEach(el => { el.textContent = realmName; });
+    if (clientEl) clientEl.textContent = oidcConfigData.client_id || '';
+  }
+
+  function randomUrlSafe(length) {
+    const bytes = new Uint8Array(length);
+    window.crypto.getRandomValues(bytes);
+    return base64UrlEncode(bytes).slice(0, length);
+  }
+
+  function base64UrlEncode(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    bytes.forEach(b => { binary += String.fromCharCode(b); });
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  // Khôi phục token sau khi /app/ hoàn tất callback PKCE (cùng tab, sessionStorage).
+  function restoreSsoSession() {
+    const error = sessionStorage.getItem('mycloud_auth_error');
+    const token = sessionStorage.getItem('mycloud_access_token');
+    if (sessionStorage.getItem('mycloud_logout_done')) {
+      sessionStorage.removeItem('mycloud_logout_done');
+      showToast('Đã đăng xuất Keycloak và xóa token.');
+    }
+    if (error) {
+      sessionStorage.removeItem('mycloud_auth_error');
+      showToast(`Đăng nhập Keycloak thất bại: ${error}`);
+      const resultBox = document.getElementById('auth-test-result-box');
+      if (resultBox) resultBox.textContent = `Đăng nhập Keycloak thất bại: ${error}`;
+    }
+    if (token) {
+      activeBearerToken = token;
+      updateAuthStatusUI(true);
+    }
+    if (window.location.hash === '#auth') {
+      switchPortalTab('auth');
+      if (token) testSecureApi();
+    }
   }
 
   function handleAuthorizeClick() {
@@ -1307,16 +1389,29 @@
     }
   }
 
-  function handleKeycloakLoginRedirect() {
+  // Authorization Code + PKCE S256. Keycloak chỉ cho redirect về /app/*;
+  // /app/ đổi code lấy token rồi trả người dùng về /#auth.
+  async function handleKeycloakLoginRedirect() {
+    if (!oidcConfigData || !oidcConfigData.authorization_endpoint) await loadOidcConfig();
     if (!oidcConfigData || !oidcConfigData.authorization_endpoint) {
       alert('Chưa nạp được cấu hình Keycloak OIDC. Vui lòng kiểm tra lại dịch vụ Keycloak.');
       return;
     }
-    const state = Math.random().toString(36).substring(2, 15);
-    sessionStorage.setItem('swagger_pkce_state', state);
-    const redirectUri = window.location.origin + '/app/';
-    const url = `${oidcConfigData.authorization_endpoint}?client_id=${encodeURIComponent(oidcConfigData.client_id)}&response_type=code&scope=openid%20profile&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
-    window.location.href = url;
+    const codeVerifier = randomUrlSafe(64);
+    const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
+    const state = randomUrlSafe(32);
+    sessionStorage.setItem('pkce_code_verifier', codeVerifier);
+    sessionStorage.setItem('pkce_state', state);
+
+    const authUrl = new URL(oidcConfigData.authorization_endpoint);
+    authUrl.searchParams.set('client_id', oidcConfigData.client_id || 'flask-app');
+    authUrl.searchParams.set('response_type', 'code');
+    authUrl.searchParams.set('redirect_uri', window.location.origin + '/app/');
+    authUrl.searchParams.set('scope', 'openid profile');
+    authUrl.searchParams.set('state', state);
+    authUrl.searchParams.set('code_challenge', base64UrlEncode(digest));
+    authUrl.searchParams.set('code_challenge_method', 'S256');
+    window.location.href = authUrl.toString();
   }
 
   function saveManualToken() {
@@ -1334,6 +1429,19 @@
 
   function clearToken() {
     activeBearerToken = null;
+    sessionStorage.removeItem('mycloud_access_token');
+    // Token từ SSO: kết thúc luôn phiên Keycloak để lần sau đăng nhập được user khác (sv01 -> sv02).
+    const idToken = sessionStorage.getItem('mycloud_id_token');
+    sessionStorage.removeItem('mycloud_id_token');
+    if (idToken && oidcConfigData && oidcConfigData.end_session_endpoint) {
+      sessionStorage.setItem('mycloud_logout_return', '1');
+      const logoutUrl = new URL(oidcConfigData.end_session_endpoint);
+      logoutUrl.searchParams.set('client_id', oidcConfigData.client_id || 'flask-app');
+      logoutUrl.searchParams.set('id_token_hint', idToken);
+      logoutUrl.searchParams.set('post_logout_redirect_uri', window.location.origin + '/app/');
+      window.location.href = logoutUrl.toString();
+      return;
+    }
     const input = document.getElementById('manual-token-input');
     if (input) input.value = '';
     updateAuthStatusUI(false);
@@ -1451,17 +1559,17 @@
     contentEl.innerHTML = `
       <table class="service-detail-table">
         <tbody>
-          <tr><th>Tên Dịch Vụ Compose</th><td><code>${escapeHtml(meta.service)}</code></td></tr>
+          <tr><th>Tên dịch vụ Compose</th><td><code>${escapeHtml(meta.service)}</code></td></tr>
           <tr><th>Docker Image</th><td><span class="service-tech-tag" style="background:#f1f5f9; color:#0f172a;">${escapeHtml(meta.image || meta.tech)}</span></td></tr>
-          <tr><th>Địa Chỉ IP (cloud-net)</th><td><code>${escapeHtml(meta.ip)}</code></td></tr>
-          <tr><th>Cổng Dịch Vụ</th><td>${escapeHtml(meta.port || 'Port 80')}</td></tr>
-          <tr><th>Tên Miền Nội Bộ (FQDN)</th><td><strong style="color: #2563eb;">${escapeHtml(meta.domain)}</strong></td></tr>
-          <tr><th>Mạng Kết Nối</th><td><code>${escapeHtml(meta.network || 'cloud-net (172.30.50.0/24)')}</code></td></tr>
-          <tr><th>Volume Dữ Liệu</th><td>${escapeHtml(meta.volume || 'Không')}</td></tr>
-          <tr><th>Cơ Chế Healthcheck</th><td>${escapeHtml(meta.healthcheck || 'HTTP Probe')}</td></tr>
-          <tr><th>Vai Trò Kiến Trúc</th><td>${escapeHtml(meta.role)}</td></tr>
-          <tr><th>Hướng Dẫn Kiểm Tra</th><td>${escapeHtml(meta.checkGuide)}</td></tr>
-          <tr><th>Lệnh Kiểm Tra Mẫu</th><td><pre class="code-block">${escapeHtml(meta.testCommand)}</pre></td></tr>
+          <tr><th>Địa chỉ IP (cloud-net)</th><td><code>${escapeHtml(meta.ip)}</code></td></tr>
+          <tr><th>Cổng dịch vụ</th><td>${escapeHtml(meta.port || 'Port 80')}</td></tr>
+          <tr><th>Tên miền nội bộ (FQDN)</th><td><strong style="color: #2563eb;">${escapeHtml(meta.domain)}</strong></td></tr>
+          <tr><th>Mạng kết nối</th><td><code>${escapeHtml(meta.network || 'cloud-net (172.30.50.0/24)')}</code></td></tr>
+          <tr><th>Volume dữ liệu</th><td>${escapeHtml(meta.volume || 'Không')}</td></tr>
+          <tr><th>Cơ chế Healthcheck</th><td>${escapeHtml(meta.healthcheck || 'HTTP Probe')}</td></tr>
+          <tr><th>Vai trò kiến trúc</th><td>${escapeHtml(meta.role)}</td></tr>
+          <tr><th>Hướng dẫn kiểm tra</th><td>${escapeHtml(meta.checkGuide)}</td></tr>
+          <tr><th>Lệnh kiểm tra mẫu</th><td><pre class="code-block">${escapeHtml(meta.testCommand)}</pre></td></tr>
         </tbody>
       </table>
     `;
@@ -1504,6 +1612,7 @@
     renderFlaskApiDocs();
     fetchSystemStatus();
     loadOidcConfig();
+    restoreSsoSession();
 
     // Polling trạng thái định kỳ mỗi 15 giây
     setInterval(() => {

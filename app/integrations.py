@@ -12,7 +12,7 @@ from minio.error import S3Error
 
 integrations = Blueprint('integrations', __name__)
 PUBLIC_URL = os.getenv('PUBLIC_URL', 'http://localhost').rstrip('/')
-REALM = os.getenv('OIDC_REALM', 'MSSV_PLACEHOLDER')
+REALM = os.getenv('OIDC_REALM', '521H0092-523H0065')
 ISSUER = f'{PUBLIC_URL}/auth/realms/{REALM}'
 AUTH_INTERNAL = 'http://authentication-identity-server:8080/auth'
 JWKS = jwt.PyJWKClient(f'{AUTH_INTERNAL}/realms/{REALM}/protocol/openid-connect/certs', timeout=5)

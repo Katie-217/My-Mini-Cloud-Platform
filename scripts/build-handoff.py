@@ -49,6 +49,7 @@ def ui_evidence(match):
         'portal-ui': 'Portal Services sau khi nhận probe thật',
         'blog-ui': 'Blog phục vụ qua gateway localhost',
         'keycloak-ui': 'Keycloak login form trước khi nhập credential',
+        'auth-ui': 'Portal Xác thực hiển thị realm chung và nút đăng nhập SSO',
         'minio-ui': 'MinIO Console sau login thật, hai bucket private',
         'prometheus-ui': 'Prometheus Targets trên browser',
         'grafana-ui': 'Grafana sau login thật, ba biểu đồ dữ liệu',
@@ -78,4 +79,8 @@ figure{margin:18px 0 28px}img{display:block;width:100%;height:auto;border:1px so
 page = '<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>MyMiniCloud — Setup và kiểm thử thủ công</title><style>' + css + '</style></head><body><main>' + body + '</main></body></html>'
 target = root / 'docs' / 'screenshot-guide.html'
 target.write_text(page, encoding='utf-8')
+guide = root / 'guide'
+guide.mkdir(exist_ok=True)
+(guide / 'screenshot-guide.md').write_text(source, encoding='utf-8')
+(guide / 'screenshot-guide.html').write_text(page, encoding='utf-8')
 print(f'PASS: {cases} executed response sections and {images} screenshots embedded in {target.name}; no external image files required.')

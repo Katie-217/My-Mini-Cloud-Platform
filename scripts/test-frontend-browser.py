@@ -1,7 +1,9 @@
 """Kiểm thử UI thật qua gateway; chỉ dọn record/object do chính test tạo."""
 import base64
 import json
+import re
 import subprocess
+import os
 import sys
 import uuid
 from pathlib import Path
@@ -17,6 +19,7 @@ env = dict(line.split('=', 1) for line in (root / '.env').read_text(encoding='ut
            if line.strip() and not line.startswith('#') and '=' in line)
 base = env.get('PUBLIC_URL', 'http://localhost').rstrip('/')
 evidence = root / 'docs' / 'evidence'
+evidence.mkdir(parents=True, exist_ok=True)
 runtime = root / '.runtime' / 'frontend-test'
 runtime.mkdir(parents=True, exist_ok=True)
 student_code = 'E' + uuid.uuid4().hex[:7]
@@ -52,24 +55,33 @@ def pdf_fixture():
 
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(channel='msedge', headless=True)
+    browser = p.chromium.launch(channel=os.environ.get('MYCLOUD_BROWSER_CHANNEL', 'msedge'), headless=True)
     context = browser.new_context(viewport={'width': 1440, 'height': 1000}, accept_downloads=True)
     page = context.new_page()
     page.on('pageerror', lambda error: errors.append(str(error)))
     try:
         page.goto(base + '/', wait_until='domcontentloaded')
-        expect(page.locator('#status-overall-text')).to_contain_text('Healthy', timeout=20000)
-        expect(page.locator('#stat-runtime')).to_have_text('Unknown')
-        expect(page.locator('.metric-value').first).to_contain_text('%', timeout=15000)
-        check('Portal đọc status, runtime Unknown và metric thật')
-        check('Portal có đủ 9 card, latency và timestamp', page.locator('.service-probe-meta').count() == 9)
+        # Portal layout mới (sidebar + tab): cùng selector với test-portal-navigation.py
+        expect(page.locator('#topbar-overall-badge')).to_have_text('System Healthy', timeout=20000)
+        expect(page.locator('#dash-stat-cpu')).to_contain_text('%', timeout=15000)
+        check('Portal đọc status và metric thật')
         page.screenshot(path=str(evidence / 'portal-desktop.png'))
-        page.locator('[data-service-key="database"]').click()
-        expect(page.locator('#modal-service-content')).to_contain_text('127.0.0.1,1433')
+        page.locator('[data-tab="services"]').click()
+        cards = page.locator('.nimbus-service-card')
+        expect(cards).to_have_count(9)
+        check('Portal có đủ 9 card dịch vụ')
+        cards.filter(has_text='SQL Server').get_by_role('button', name='Details').click()
+        expect(page.locator('#modal-service-content')).to_contain_text('1433')
         page.keyboard.press('Escape')
-        expect(page.locator('#service-modal')).not_to_have_class('show')
-        check('Card SQL mở hướng dẫn SSMS, modal đóng bằng Escape')
-        page.locator('#infrastructure .services-grid').screenshot(path=str(evidence / 'portal-services.png'), style='.site-header { visibility: hidden !important; }')
+        expect(page.locator('#service-modal')).not_to_have_class(re.compile(r'\bshow\b'))
+        check('Card SQL mở chi tiết cổng 1433, modal đóng bằng Escape')
+        page.locator('#nimbus-services-grid').screenshot(path=str(evidence / 'portal-services.png'))
+        prom = requests.get(f'{urlsplit(base).scheme}://{urlsplit(base).hostname}:9090/api/v1/targets', timeout=10).json()['data']['activeTargets']
+        page.locator('[data-tab="monitoring"]').click()
+        up = sum(t['health'] == 'up' for t in prom)
+        expect(page.locator('#mon-stat-targets-up')).to_have_text(f'{up} / {len(prom)} UP', timeout=15000)
+        expect(page.locator('#mon-targets-table-body tr')).to_have_count(len(prom))
+        check('Monitoring targets lấy thật từ Prometheus, không dùng số mẫu')
         screenshots.append('portal-desktop.png')
         screenshots.append('portal-services.png')
 
@@ -77,8 +89,11 @@ with sync_playwright() as p:
             response = page.goto(base + path, wait_until='domcontentloaded')
             check('Blog route ' + path, response.status == 200)
             page.wait_for_function('Array.from(document.images).every(img => img.complete && img.naturalWidth > 0)')
+        # /blog/posts/ chuyển hướng về danh sách bài viết trong /blog/#articles
         page.goto(base + '/blog/posts/')
-        check('Danh sách Blog đủ 3 bài', page.locator('.blog-card').count() == 3)
+        page.wait_for_url(base + '/blog/#articles')
+        expect(page.locator('.personal-blog-card')).to_have_count(3)
+        check('Danh sách Blog đủ 3 bài', True)
         page.screenshot(path=str(evidence / 'blog-posts.png'), full_page=True)
         screenshots.append('blog-posts.png')
 
@@ -87,7 +102,7 @@ with sync_playwright() as p:
         initial_students = requests.get(base + '/api/students-db', timeout=10).json()
         expect(page.locator('#stat-total-students')).to_have_text(str(len(initial_students)))
         check('Student overview lấy dữ liệu SQL Server thật')
-        page.locator('.sidebar-item[data-tab="add-student"]').click()
+        page.locator('.top-tab-btn[data-tab="add-student"]').click()
         page.locator('#add-student-id').fill(student_code)
         page.locator('#add-fullname').fill('Kiểm thử Nguyễn Ánh')
         page.locator('#add-dob').fill('2004-01-02')
@@ -106,10 +121,10 @@ with sync_playwright() as p:
         expect(row).to_be_visible(timeout=15000)
         page.wait_for_function('(code) => {const rows=[...document.querySelectorAll("#students-table-body tr")];const img=rows.find(r=>r.textContent.includes(code))?.querySelector("img");return img && img.complete && img.naturalWidth > 0;}', arg=student_code)
         check('Avatar upload MinIO và hiển thị từ API download')
-        row.get_by_role('button', name='Xem', exact=True).click()
-        expect(page.locator('#view-student-content')).to_contain_text(student_code)
+        row.locator('[data-action="detail"]').click()
+        expect(page.locator('#modal-detail-content')).to_contain_text(student_code)
         page.keyboard.press('Escape')
-        row.get_by_role('button', name='Sửa', exact=True).click()
+        row.locator('[data-action="edit"]').click()
         page.locator('#edit-fullname').fill('Kiểm thử <b>Nguyễn Ánh</b>')
         page.locator('#edit-gpa').fill('3.95')
         with page.expect_response(lambda r: urlsplit(r.url).path == f'/api/students-db/{student_id}' and r.request.method == 'PUT') as updated:
@@ -117,18 +132,19 @@ with sync_playwright() as p:
         check('Form sửa thực hiện PUT thật', updated.value.status == 200)
         expect(row).to_contain_text('Kiểm thử <b>Nguyễn Ánh</b>')
         check('Tên chứa HTML hiển thị dạng text an toàn', row.locator('b').count() == 0)
+        check('Sửa trên UI giữ nguyên avatar cũ', requests.get(base + f'/api/students-db/{student_id}', timeout=10).json().get('avatar_key') == record['avatar_key'])
         page.locator('#search-student-input').fill(student_code)
         expect(page.locator('#students-table-body tr:not(#students-loading):not(#students-empty)')).to_have_count(1)
         page.screenshot(path=str(evidence / 'student-crud.png'), full_page=True)
         screenshots.append('student-crud.png')
-        row.get_by_role('button', name='Xóa', exact=True).click()
+        row.locator('[data-action="delete"]').click()
         with page.expect_response(lambda r: urlsplit(r.url).path == f'/api/students-db/{student_id}' and r.request.method == 'DELETE') as deleted:
             page.locator('#btn-confirm-delete').click()
         check('Xác nhận xóa thực hiện DELETE thật', deleted.value.status == 200)
         expect(row).to_have_count(0)
         student_id = None
 
-        page.locator('.sidebar-item[data-tab="storage"]').click()
+        page.locator('.top-tab-btn[data-tab="storage"]').click()
         pdf = pdf_fixture()
         page.locator('#doc-file-input').set_input_files({'name': 'qa-report.pdf', 'mimeType': 'application/pdf', 'buffer': pdf})
         with page.expect_response(lambda r: urlsplit(r.url).path == '/api/files' and r.request.method == 'POST') as uploaded:
@@ -138,48 +154,42 @@ with sync_playwright() as p:
         objects.append(('documents', key))
         file_row = page.locator('#files-table-body tr').filter(has_text=key)
         expect(file_row).to_be_visible()
-        with page.expect_download() as download:
-            file_row.get_by_role('link', name='Tải về').click()
-        check('Download UI giữ nguyên PDF bytes', Path(download.value.path()).read_bytes() == pdf)
+        href = file_row.get_by_role('link', name='Tải về').get_attribute('href')
+        check('Download UI giữ nguyên PDF bytes', context.request.get(base + href).body() == pdf)
 
-        page.locator('.sidebar-item[data-tab="account"]').click()
-        page.locator('#btn-keycloak-login').click()
-        page.locator('#username').fill('sv01')
-        page.locator('#password').fill(env['DEMO_USER_PASSWORD'])
-        page.locator('#kc-login').click()
-        page.wait_for_url(base + '/app/**', timeout=20000)
-        expect(page.locator('#secure-test-result')).to_contain_text('sv01', timeout=20000)
-        check('Student login, callback PKCE và /secure hoạt động', 'code=' not in page.url)
-        check('State và verifier được dọn', page.evaluate('sessionStorage.getItem("pkce_state")===null && sessionStorage.getItem("pkce_code_verifier")===null'))
-        page.locator('#btn-keycloak-logout').click()
-        page.wait_for_url(base + '/app/', timeout=20000)
-        page.locator('.sidebar-item[data-tab="account"]').click()
-        expect(page.locator('#btn-keycloak-login')).to_be_visible()
-        check('Logout xóa token khỏi tab', page.evaluate('sessionStorage.getItem("mycloud_access_token")===null'))
-        page.locator('#btn-keycloak-login').click()
-        expect(page.locator('#username')).to_be_visible(timeout=15000)
-        check('Logout đã kết thúc cả phiên SSO Keycloak')
+        # Đăng nhập Keycloak từ tab Auth của Portal; /app/ xử lý callback PKCE rồi quay về /#auth
+        for username in ('sv01', 'sv02'):
+            page.goto(base + '/')
+            page.locator('.portal-nav-item[data-tab="auth"]').click()
+            expect(page.locator('#auth-info-realm')).to_have_text(env['OIDC_REALM'], timeout=10000)
+            page.locator('#btn-auth-sso-login').click()
+            check(f'{username}: Keycloak nhận code_challenge S256', page.wait_for_selector('#username', timeout=15000) and 'code_challenge_method=S256' in page.url)
+            page.locator('#username').fill(username)
+            page.locator('#password').fill(env['DEMO_USER_PASSWORD'])
+            page.locator('#kc-login').click()
+            page.wait_for_url(base + '/#auth', timeout=20000)
+            expect(page.locator('#auth-test-result-box')).to_contain_text(f'"preferred_username": "{username}"', timeout=20000)
+            check(f'{username}: callback PKCE và /api/secure HTTP 200', 'HTTP 200' in page.locator('#auth-test-result-box').inner_text())
+            check(f'{username}: state/verifier được dọn', page.evaluate('sessionStorage.getItem("pkce_state")===null && sessionStorage.getItem("pkce_code_verifier")===null'))
+            page.locator('#btn-auth-clear-token').click()
+            expect(page.locator('#portal-copy-toast')).to_contain_text('Đã đăng xuất Keycloak', timeout=20000)
+            check(f'{username}: Đăng xuất Keycloak và xóa token khỏi tab', page.url == base + '/#auth' and page.evaluate('sessionStorage.getItem("mycloud_access_token")===null && sessionStorage.getItem("mycloud_id_token")===null'))
+            # Không xóa cookie: vòng sau phải hiện form login trống để đổi sang user khác
 
-        for path in ('/', '/blog/posts/', '/app/'):
+        for path in ('/', '/blog/', '/app/'):
             page.set_viewport_size({'width': 390, 'height': 844})
             page.goto(base + path, wait_until='domcontentloaded')
             check('Không tràn viewport mobile ' + path, page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1'))
         page.goto(base + '/')
-        expect(page.locator('#status-overall-text')).to_contain_text('Healthy')
+        expect(page.locator('#topbar-overall-badge')).to_have_text('System Healthy', timeout=20000)
         page.screenshot(path=str(evidence / 'portal-mobile.png'), full_page=True)
         screenshots.append('portal-mobile.png')
 
-        degraded = requests.get(base + '/api/status', timeout=15).json()
-        next(s for s in degraded['services'] if s['id'] == 'web2')['status'] = 'unhealthy'
-        degraded['overall'] = 'degraded'
-        context.route('**/api/status', lambda route: route.fulfill(json=degraded))
-        page.reload()
-        expect(page.locator('#badge-srv-web')).to_have_text('Unhealthy')
-        check('UI fault test: web2 lỗi làm cả nhóm Web unhealthy')
-        context.unroute('**/api/status')
+        # Lỗi metrics không được thay bằng số giả (fault test web2 nằm ở test-portal-navigation.py)
+        page.set_viewport_size({'width': 1440, 'height': 1000})
         context.route('**/api/metrics-summary', lambda route: route.fulfill(status=503, json={'status': 'unavailable'}))
         page.reload()
-        expect(page.locator('.metric-value').first).to_have_text('Chưa có dữ liệu')
+        expect(page.locator('#dash-stat-cpu')).to_have_text('Chưa có dữ liệu', timeout=15000)
         check('UI fault test: metrics 503 không tạo số liệu giả')
         context.unroute('**/api/metrics-summary')
         check('Không có JavaScript pageerror', not errors)

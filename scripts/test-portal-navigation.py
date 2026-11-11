@@ -1,6 +1,7 @@
 """Kiểm tra liên kết Portal và trạng thái lỗi bằng Edge; không sửa dữ liệu."""
 import json
 import re
+import os
 import sys
 from pathlib import Path
 
@@ -26,7 +27,7 @@ def check(name, condition=True):
 
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(channel='msedge', headless=True)
+    browser = p.chromium.launch(channel=os.environ.get('MYCLOUD_BROWSER_CHANNEL', 'msedge'), headless=True)
     context = browser.new_context(viewport={'width': 1440, 'height': 1000})
     page = context.new_page()
     page.on('pageerror', lambda error: errors.append(str(error)))
@@ -34,8 +35,13 @@ with sync_playwright() as p:
         page.goto(base + '/')
         expect(page.locator('#topbar-overall-badge')).to_have_text('System Healthy', timeout=20000)
         expect(page.locator('#dash-stat-cpu')).to_contain_text('%', timeout=15000)
-        expect(page.locator('#dash-stat-ram')).to_contain_text('MB')
+        expect(page.locator('#dash-stat-ram')).to_contain_text('GB')
         check('Dashboard hiển thị CPU/RAM từ API thật')
+        activity = page.locator('#recent-activity-table-body tr')
+        expect(activity.filter(has_text='Database Server').locator('td').nth(2)).to_have_text('SQL Query')
+        expect(activity.filter(has_text='Internal DNS').locator('td').nth(2)).to_have_text('DNS Query (A)')
+        expect(activity.filter(has_text='Application Server').locator('td').nth(2)).to_have_text('HTTP GET + SQL')
+        check('Nhật ký healthcheck phân biệt SQL, DNS và HTTP theo backend')
         page.locator('a.portal-nav-item[href="/blog/"]').click()
         page.wait_for_url(base + '/blog/')
         check('Nút Blog trên sidebar mở đúng trang')

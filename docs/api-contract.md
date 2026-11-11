@@ -53,6 +53,12 @@ Ví dụ chỉ mô tả schema; không dùng các con số trên làm số liệ
 còn status và số reachable phải từ probe. `container_runtime_count=null` hiển thị
 Unknown/“Chưa đọc runtime”; không đổi thành số container đang chạy.
 
+Mỗi service có `probe_type` (`http`, `sql`, `dns`), `probe_label` và `probe_target`.
+Nhật ký dùng nhãn và đích từ backend: Database là `SQL Query` trên `dbo.students`,
+Bind9 là `DNS Query (A)`, app là `HTTP GET + SQL`, Keycloak là
+`OIDC Discovery (HTTP)` và hai exporter là `HTTP Metrics`. Đây là probe phục vụ
+Portal; Docker healthcheck có thể dùng endpoint riêng để kiểm tra process.
+
 Mỗi object `services[]` có thêm `latency_ms` (duration đo thật từ backend tới
 service), `checked_at` (ISO UTC) và `network: "cloud-net"`. Dùng các trường
 này cho response time và last checked trên card, không tự tạo số mili giây.

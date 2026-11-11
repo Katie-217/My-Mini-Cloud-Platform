@@ -38,6 +38,8 @@ source = requests.get(grafana + '/api/datasources/uid/prometheus', auth=credenti
 check('Grafana datasource Prometheus được provisioning', source.status_code == 200 and source.json()['type'] == 'prometheus')
 dashboard = requests.get(grafana + '/api/dashboards/uid/mycloud-system', auth=credentials, timeout=10)
 check('Dashboard có tối thiểu 3 panel', dashboard.status_code == 200 and len(dashboard.json()['dashboard']['panels']) >= 3)
+check('Dashboard ghi nhận cả hai MSSV',
+      all(code in dashboard.json()['dashboard']['title'] for code in ('521H0092', '523H0065')))
 for panel in dashboard.json()['dashboard']['panels']:
     for target in panel['targets']:
         for attempt in range(20):
@@ -52,6 +54,14 @@ check('Grafana query thật qua datasource proxy', proxied.status_code == 200 an
 status = requests.get('http://application-backend-server:8081/status', timeout=15).json()
 check('Status có 9 nhóm, runtime count Unknown', status['groups_total'] == 9 and status['container_runtime_count'] is None)
 check('Status count khớp từng probe thực tế', status['services_reachable'] == sum(x['status'] == 'healthy' for x in status['services']))
+by_id = {service['id']: service for service in status['services']}
+check('Database dùng SQL Query, DNS dùng DNS Query',
+      by_id['db']['probe_type'] == 'sql' and by_id['db']['probe_label'] == 'SQL Query'
+      and by_id['dns']['probe_type'] == 'dns' and by_id['dns']['probe_label'] == 'DNS Query (A)')
+check('HTTP probe có nhãn và đích thực tế, app kiểm tra cả SQL',
+      all(service['probe_type'] == 'http' and service['probe_target'].startswith('http')
+          and service['probe_label'] for service in status['services'] if service['id'] not in ('db', 'dns'))
+      and by_id['app']['probe_label'] == 'HTTP GET + SQL')
 if '--with-web' in sys.argv:
     check('12 service probes truy cập được', status['overall'] == 'healthy' and status['services_reachable'] == 12)
     web_targets = [target for target in targets if target['labels']['job'] == 'web']

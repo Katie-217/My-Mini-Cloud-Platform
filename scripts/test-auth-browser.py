@@ -2,6 +2,7 @@
 import base64
 import hashlib
 import secrets
+import os
 import sys
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlsplit
@@ -20,7 +21,7 @@ issuer = f'{public}/auth/realms/{realm}'
 evidence = root / '.runtime' / 'browser-evidence'
 evidence.mkdir(parents=True, exist_ok=True)
 with sync_playwright() as p:
-    browser = p.chromium.launch(channel='msedge', headless=True)
+    browser = p.chromium.launch(channel=os.environ.get('MYCLOUD_BROWSER_CHANNEL', 'msedge'), headless=True)
     try:
         for username in ('sv01', 'sv02'):
             context = browser.new_context(viewport={'width': 1280, 'height': 800})
@@ -57,4 +58,4 @@ with sync_playwright() as p:
             context.close()
     finally:
         browser.close()
-print('NOT TESTED: JavaScript callback/login/logout của Student frontend chờ Gemini bàn giao.')
+print('INFO: Nút đăng nhập SSO của Portal + callback PKCE ở /app/ được kiểm tra trong scripts/test-frontend-browser.py.')

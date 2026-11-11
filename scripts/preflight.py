@@ -26,8 +26,8 @@ def inspect(kind, name):
 
 
 platform = execute(['docker', 'info', '--format', '{{.OSType}}/{{.Architecture}}']).stdout.strip()
-if platform not in ('linux/x86_64', 'linux/amd64'):
-    raise SystemExit('FAIL: Cần Docker Linux x86_64 để chạy SQL Server đã chốt.')
+if platform not in ('linux/x86_64', 'linux/amd64', 'linux/aarch64', 'linux/arm64'):
+    raise SystemExit('FAIL: Cần Docker Linux x86_64 (hoặc ARM64 có Rosetta) để chạy SQL Server đã chốt.')
 model = json.loads(execute(compose + ['config', '--format', 'json']).stdout)
 assert model['name'] == 'mycloud', 'Compose project phải là mycloud'
 db = model['services']['relational-database-server']

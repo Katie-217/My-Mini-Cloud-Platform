@@ -5,6 +5,8 @@ $taskCompose = @('compose', '-f', (Join-Path $taskRoot 'docker-compose.yml'), '-
 Push-Location -LiteralPath $taskRoot
 try {
     & (Join-Path $PSScriptRoot 'health-check.ps1') -RequireFrontend
+    & python (Join-Path $PSScriptRoot 'test-project-requirements.py')
+    if ($LASTEXITCODE -ne 0) { throw 'Local project requirements verification failed.' }
     & (Join-Path $PSScriptRoot 'test-backend.ps1')
     foreach ($taskScript in @('test-proxy.py', 'test-dns-host.py')) {
         $taskArgs = @((Join-Path $PSScriptRoot $taskScript))
@@ -17,10 +19,13 @@ try {
     & docker @taskCompose run --rm --no-deps -e TEST_PUBLIC_BASE=http://api-gateway-proxy-server integration-check
     if ($LASTEXITCODE -ne 0) { throw 'Auth/storage verification failed.' }
     if ($Browser) {
-        $taskPython = Join-Path $taskRoot '.venv\Scripts\python.exe'
+        # Windows: .venv\Scripts\python.exe; macOS/Linux (pwsh): .venv/bin/python
+        $taskPython = if ($PSVersionTable.PSEdition -eq 'Core' -and -not $IsWindows) { Join-Path $taskRoot '.venv/bin/python' } else { Join-Path $taskRoot '.venv\Scripts\python.exe' }
         if (-not (Test-Path -LiteralPath $taskPython)) { throw 'Run scripts/setup-tools.ps1 first.' }
-        & $taskPython scripts/test-portal-navigation.py
-        if ($LASTEXITCODE -ne 0) { throw 'Portal navigation verification failed.' }
+        foreach ($taskBrowserTest in @('test-portal-navigation.py', 'test-frontend-browser.py')) {
+            & $taskPython (Join-Path $PSScriptRoot $taskBrowserTest)
+            if ($LASTEXITCODE -ne 0) { throw "Browser verification failed: $taskBrowserTest" }
+        }
     }
     Write-Output 'PASS: Requested verification completed. Test fixtures were cleaned by their own scripts.'
 }

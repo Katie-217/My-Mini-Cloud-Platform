@@ -1342,3 +1342,8 @@ body.portal-body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Bảng Prometheus targets: endpoint một dòng, URL đầy đủ xem bằng tooltip */
+.mon-target-endpoint {
+  white-space: nowrap;
+}

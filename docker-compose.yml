@@ -8,7 +8,7 @@ x-app-env: &app-env
   DB_PASSWORD: ${DB_PASSWORD:?Run scripts/init-env.py}
   DB_TRUST_CERTIFICATE: ${DB_TRUST_CERTIFICATE:-yes}
   PUBLIC_URL: ${PUBLIC_URL:-http://localhost}
-  OIDC_REALM: ${OIDC_REALM:-MSSV_PLACEHOLDER}
+  OIDC_REALM: ${OIDC_REALM:-521H0092-523H0065}
   MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Run scripts/init-env.py}
   MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Run scripts/init-env.py}
 
@@ -57,6 +57,8 @@ services:
 
   relational-database-server:
     image: mcr.microsoft.com/mssql/server:2022-CU22-ubuntu-22.04
+    # SQL Server chỉ có image amd64; trên Mac Apple Silicon Docker chạy qua Rosetta.
+    platform: linux/amd64
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_PID: Developer

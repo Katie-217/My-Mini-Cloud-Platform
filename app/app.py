@@ -133,7 +133,22 @@ def list_students():
 @app.get('/students-db/<int:student_id>')
 def get_student(student_id):
     result = query_one(student_id)
-    return jsonify(result) if result else (jsonify(error='Không tìm thấy sinh viên.'), 404)
+    if not result:
+        return jsonify(error='Không tìm thấy sinh viên.'), 404
+    if result.get('avatar_key'):
+        from integrations import get_public_url, is_object_public, storage_client
+        try:
+            client = storage_client()
+            is_pub = is_object_public(client, 'profile-pics', result['avatar_key'])
+            result['avatar_is_public'] = is_pub
+            result['avatar_public_url'] = get_public_url('profile-pics', result['avatar_key']) if is_pub else None
+        except Exception:
+            result['avatar_is_public'] = False
+            result['avatar_public_url'] = None
+    else:
+        result['avatar_is_public'] = False
+        result['avatar_public_url'] = None
+    return jsonify(result)
 
 
 @app.route('/students-db', methods=['POST'])

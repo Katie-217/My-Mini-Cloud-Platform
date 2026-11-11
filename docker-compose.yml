@@ -57,6 +57,8 @@ services:
 
   relational-database-server:
     image: mcr.microsoft.com/mssql/server:2022-CU22-ubuntu-22.04
+    # SQL Server chỉ có image amd64; trên Mac Apple Silicon Docker chạy qua Rosetta.
+    platform: linux/amd64
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_PID: Developer

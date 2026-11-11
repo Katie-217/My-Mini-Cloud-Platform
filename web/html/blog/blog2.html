@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Docker &amp; Containers: Ảo Hóa Tầng OS &amp; Microservices - MyMiniCloud Blog</title>
+  <title>Docker &amp; Containers: Ảo hóa tầng OS &amp; Microservices - MyMiniCloud Blog</title>
   <link rel="icon" href="/assets/images/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/css/common.css">
   <link rel="stylesheet" href="/assets/css/blog.css">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <script src="/assets/js/theme.js"></script>
 </head>
 <body class="blog-page">
 
@@ -33,7 +35,7 @@
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
             <polyline points="9 22 9 12 15 12 15 22"></polyline>
           </svg>
-          <span>Home (Giới Thiệu)</span>
+          <span>Home (Giới thiệu)</span>
         </a>
 
         <a href="/blog/#articles" class="blog-nav-tab-btn active">
@@ -41,7 +43,7 @@
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
           </svg>
-          <span>Blog (Danh Sách Bài Viết)</span>
+          <span>Blog (Danh sách bài viết)</span>
         </a>
       </nav>
 
@@ -66,7 +68,7 @@
           <span>Chuyên Đề 02 &bull; DevOps &amp; Containers</span>
         </div>
         <h1 class="blog-hero-title">
-          Docker &amp; Containers: Ảo Hóa Tầng Hệ Điều Hành &amp; Đóng Gói Microservices
+          Docker &amp; Containers: Ảo hóa tầng hệ điều hành &amp; đóng gói Microservices
         </h1>
         <p class="blog-hero-desc">
           Phân tích chi tiết cơ chế Namespaces, Cgroups, Union File System và cách thức đóng gói microservices đảm bảo tính toàn vẹn và độc lập trong cụm đám mây thu nhỏ.
@@ -74,7 +76,7 @@
       </div>
       <div>
         <a href="/blog/#articles" class="btn btn-secondary" style="background: rgba(255, 255, 255, 0.15); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); white-space: nowrap; font-weight: 600;">
-          &larr; Tất Cả Bài Viết
+          &larr; Tất cả bài viết
         </a>
       </div>
     </div>
@@ -103,7 +105,7 @@
       <header class="article-header">
         <span class="blog-category-badge cat-devops">DevOps &amp; Containers</span>
         <h2 class="article-title-big">
-          Docker &amp; Containers: Ảo Hóa Tầng Hệ Điều Hành &amp; Đóng Gói Microservices
+          Docker &amp; Containers: Ảo hóa tầng hệ điều hành &amp; đóng gói Microservices
         </h2>
 
         <div class="article-meta-row">
@@ -148,12 +150,12 @@
 
       <!-- Table of Contents -->
       <nav class="article-toc-box" aria-label="Mục lục bài viết">
-        <div class="article-toc-title">Mục Lục Chuyên Đề:</div>
+        <div class="article-toc-title">Mục lục chuyên đề:</div>
         <ul class="article-toc-list">
-          <li><a href="#so-sanh-vm-container">1. So Sánh Bản Chất: Virtual Machines (VMs) vs. Docker Containers</a></li>
-          <li><a href="#tru-cot-linux">2. Ba "Trụ Cột" Công Nghệ Của Linux Kernel Tạo Nên Docker</a></li>
-          <li><a href="#dong-goi-microservices">3. Đóng Gói Microservices: "Build Once, Run Anywhere"</a></li>
-          <li><a href="#bang-so-sanh-ky-thuat">4. Bảng So Sánh Chi Tiết Thông Số Kỹ Thuật</a></li>
+          <li><a href="#so-sanh-vm-container">1. So sánh bản chất: Virtual Machines (VMs) vs. Docker Containers</a></li>
+          <li><a href="#tru-cot-linux">2. Ba "Trụ cột" công nghệ của Linux Kernel tạo nên Docker</a></li>
+          <li><a href="#dong-goi-microservices">3. Đóng gói Microservices: "Build Once, Run Anywhere"</a></li>
+          <li><a href="#bang-so-sanh-ky-thuat">4. Bảng so sánh chi tiết thông số kỹ thuật</a></li>
         </ul>
       </nav>
 
@@ -164,7 +166,7 @@
           <strong>Giới thiệu chuyên đề:</strong> Containerization đã tạo ra cuộc cách mạng trong phương thức phát triển và phát hành phần mềm hiện đại. Thay vì mang theo cả một hệ điều hành khách (Guest OS) nặng nề hàng chục Gigabytes như máy ảo truyền thống, Docker tận dụng chung nhân hệ điều hành Linux (Host Kernel) để mang lại hiệu năng khởi động tức thì và mức tiêu thụ tài nguyên tối thiểu.
         </div>
 
-        <h2 id="so-sanh-vm-container">1. So Sánh Bản Chất: Virtual Machines (VMs) vs. Docker Containers</h2>
+        <h2 id="so-sanh-vm-container">1. So sánh bản chất: Virtual Machines (VMs) vs. Docker Containers</h2>
         <p>
           Để hiểu vì sao Docker lại trở thành tiêu chuẩn vàng trong triển khai microservices, chúng ta cần so sánh sự khác biệt căn bản về mặt kiến trúc ảo hóa:
         </p>
@@ -177,7 +179,7 @@
           </li>
         </ul>
 
-        <h2 id="tru-cot-linux">2. Ba "Trụ Cột" Công Nghệ Của Linux Kernel Tạo Nên Docker</h2>
+        <h2 id="tru-cot-linux">2. Ba "Trụ cột" công nghệ của Linux Kernel tạo nên Docker</h2>
         <p>
           Docker không phải là một công nghệ ảo hóa độc lập bí ẩn, mà là một lớp trừu tượng (abstraction layer) tinh vi tận dụng 3 tính năng cốt lõi của Linux Kernel:
         </p>
@@ -199,7 +201,7 @@
           </li>
         </ol>
 
-        <h2 id="dong-goi-microservices">3. Đóng Gói Microservices: "Build Once, Run Anywhere"</h2>
+        <h2 id="dong-goi-microservices">3. Đóng gói Microservices: "Build Once, Run Anywhere"</h2>
         <p>
           Trong mô hình MyMiniCloud, triết lý đóng gói container được áp dụng triệt để cho toàn bộ 9 nhóm dịch vụ:
         </p>
@@ -222,13 +224,13 @@ services:
           Nhờ cơ chế định danh mạng tĩnh thông qua dải subnet riêng <code class="inline-code">172.30.50.0/24</code>, các container có thể tìm thấy nhau qua tên FQDN nội bộ do Bind9 giải quyết mà không chịu bất kỳ sự xung đột môi trường nào với máy trạm Host.
         </p>
 
-        <h2 id="bang-so-sanh-ky-thuat">4. Bảng So Sánh Chi Tiết Thông Số Kỹ Thuật</h2>
+        <h2 id="bang-so-sanh-ky-thuat">4. Bảng so sánh chi tiết thông số kỹ thuật</h2>
         <div class="article-table-wrap">
           <table class="article-data-table">
             <thead>
               <tr>
-                <th>Thông Số Kỹ Thuật</th>
-                <th>Virtual Machine (Máy Ảo KVM/VMware)</th>
+                <th>Thông số kỹ thuật</th>
+                <th>Virtual Machine (Máy ảo KVM/VMware)</th>
                 <th>Docker Container (Containerization)</th>
               </tr>
             </thead>
@@ -254,7 +256,7 @@ services:
                 <td>Gần như bằng 0 (Native process execution trên Host)</td>
               </tr>
               <tr>
-                <td><strong>Đóng gói &amp; Phân phối</strong></td>
+                <td><strong>Đóng gói &amp; phân phối</strong></td>
                 <td>File OVA/VMDK cồng kềnh, khó tích hợp CI/CD tự động</td>
                 <td>Image chuẩn OCI, lưu trữ trên Docker Registry cực nhẹ</td>
               </tr>
@@ -274,7 +276,7 @@ services:
         </div>
         <div>
           <h4 style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0 0 0.35rem 0;">
-            Kỹ Sư DevOps &bull; MyMiniCloud Team
+            Kỹ sư DevOps &bull; MyMiniCloud Team
           </h4>
           <p style="font-size: 0.875rem; color: #64748b; margin: 0; line-height: 1.5;">
             Chuyên gia tự động hóa quy trình Containerization, tối ưu hóa kích thước Docker Image nhiều tầng (Multi-stage Build) và quản trị hạ tầng mạng cô lập trong môi trường Linux.
@@ -287,14 +289,14 @@ services:
         <a href="/blog/blog1.html" class="article-nav-tile">
           <div style="font-size: 0.775rem; font-weight: 700; color: #64748b; text-transform: uppercase;">&larr; Bài trước</div>
           <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-top: 0.35rem;">
-            Chuyên đề 01: Điện Toán Đám Mây &amp; Private Cloud
+            Chuyên đề 01: Điện toán đám mây &amp; Private Cloud
           </div>
         </a>
 
         <a href="/blog/blog3.html" class="article-nav-tile" style="text-align: right;">
           <div style="font-size: 0.775rem; font-weight: 700; color: #2563eb; text-transform: uppercase;">Bài tiếp theo &rarr;</div>
           <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-top: 0.35rem;">
-            Chuyên đề 03: Bên Trong MyMiniCloud 9 Dịch Vụ
+            Chuyên đề 03: Bên trong MyMiniCloud 9 dịch vụ
           </div>
         </a>
       </div>

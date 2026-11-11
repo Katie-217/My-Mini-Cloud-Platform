@@ -646,3 +646,21 @@ body.app-body {
     font-size: 1.4rem;
   }
 }
+
+/* Nút thao tác trong bảng: nhỏ gọn, nút Xóa dạng viền đỏ thay vì khối đỏ */
+#students-table-body .btn-sm {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.btn-row-danger {
+  color: #dc2626;
+  border-color: #fecaca;
+  background-color: #ffffff;
+}
+
+.btn-row-danger:hover {
+  color: #b91c1c;
+  border-color: #fca5a5;
+  background-color: #fef2f2;
+}

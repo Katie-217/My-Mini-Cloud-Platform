@@ -27,7 +27,7 @@ try {
         } while ($LASTEXITCODE -ne 0 -and [DateTime]::UtcNow -lt $taskDeadline)
         if ($LASTEXITCODE -ne 0) { throw 'Docker engine did not become ready. Open Docker Desktop and check WSL2.' }
     }
-    if ($taskPlatform -notmatch '^linux/(x86_64|amd64)$') { throw 'Select Docker Linux x86_64 containers for SQL Server.' }
+    if ($taskPlatform -notmatch '^linux/(x86_64|amd64|aarch64|arm64)$') { throw 'Select Docker Linux containers (x86_64, or ARM64 with Rosetta) for SQL Server.' }
     $taskStart = @{ RequireFrontend = $true }
     if ($NoBuild) { $taskStart.NoBuild = $true }
     & (Join-Path $PSScriptRoot 'start.ps1') @taskStart

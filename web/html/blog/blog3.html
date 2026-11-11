@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bên Trong MyMiniCloud: Vận Hành Hệ Thống 9 Dịch Vụ - MyMiniCloud Blog</title>
+  <title>Bên trong MyMiniCloud: Vận hành hệ thống 9 dịch vụ - MyMiniCloud Blog</title>
   <link rel="icon" href="/assets/images/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/css/common.css">
   <link rel="stylesheet" href="/assets/css/blog.css">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <script src="/assets/js/theme.js"></script>
 </head>
 <body class="blog-page">
 
@@ -33,7 +35,7 @@
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
             <polyline points="9 22 9 12 15 12 15 22"></polyline>
           </svg>
-          <span>Home (Giới Thiệu)</span>
+          <span>Home (Giới thiệu)</span>
         </a>
 
         <a href="/blog/#articles" class="blog-nav-tab-btn active">
@@ -41,7 +43,7 @@
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
           </svg>
-          <span>Blog (Danh Sách Bài Viết)</span>
+          <span>Blog (Danh sách bài viết)</span>
         </a>
       </nav>
 
@@ -63,10 +65,10 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
-          <span>Chuyên Đề 03 &bull; Distributed Systems</span>
+          <span>Chuyên đề 03 &bull; Distributed Systems</span>
         </div>
         <h1 class="blog-hero-title">
-          Bên Trong MyMiniCloud: Cách Một Hệ Thống 9 Dịch Vụ Vận Hành Thực Tế
+          Bên trong MyMiniCloud: Cách một hệ thống 9 dịch vụ vận hành thực tế
         </h1>
         <p class="blog-hero-desc">
           Khám phá chi tiết luồng xử lý end-to-end: Reverse Proxy cân bằng tải Round Robin, Flask REST API, SQL Server 2022, MinIO S3, Keycloak PKCE và chu trình giám sát Prometheus.
@@ -74,7 +76,7 @@
       </div>
       <div>
         <a href="/blog/#articles" class="btn btn-secondary" style="background: rgba(255, 255, 255, 0.15); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); white-space: nowrap; font-weight: 600;">
-          &larr; Tất Cả Bài Viết
+          &larr; Tất cả bài viết
         </a>
       </div>
     </div>
@@ -103,7 +105,7 @@
       <header class="article-header">
         <span class="blog-category-badge cat-sys">Distributed Systems</span>
         <h2 class="article-title-big">
-          Bên Trong MyMiniCloud: Cách Một Hệ Thống 9 Dịch Vụ Vận Hành Thực Tế
+          Bên trong MyMiniCloud: Cách một hệ thống 9 dịch vụ vận hành thực tế
         </h2>
 
         <div class="article-meta-row">
@@ -114,7 +116,7 @@
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
             </div>
-            <strong style="color: #0f172a;">Kiến trúc sư Hệ thống</strong>
+            <strong style="color: #0f172a;">Kiến trúc sư hệ thống</strong>
           </div>
 
           <div style="display: flex; align-items: center; gap: 0.35rem;">
@@ -136,7 +138,7 @@
           </div>
 
           <span style="background-color: #f1f5f9; color: #475569; padding: 0.15rem 0.55rem; border-radius: 4px; font-size: 0.775rem; font-weight: 600;">
-            Chuyên đề Hệ Thống Phân Tán &bull; Homelab
+            Chuyên đề hệ thống phân tán &bull; Homelab
           </span>
         </div>
       </header>
@@ -148,12 +150,12 @@
 
       <!-- Table of Contents -->
       <nav class="article-toc-box" aria-label="Mục lục bài viết">
-        <div class="article-toc-title">Mục Lục Chuyên Đề:</div>
+        <div class="article-toc-title">Mục lục chuyên đề:</div>
         <ul class="article-toc-list">
-          <li><a href="#kien-truc-tong-the">1. Kiến Trúc Tổng Thể &amp; Luồng Di Chuyển Của Request</a></li>
-          <li><a href="#can-bang-tai-round-robin">2. Cơ Chế Cân Bằng Tải Round Robin Giữa 2 Web Replicas</a></li>
-          <li><a href="#tich-hop-da-dich-vu">3. Tích Hợp Đa Dịch Vụ: SQL Server, MinIO S3, Keycloak PKCE &amp; Prometheus</a></li>
-          <li><a href="#bang-boc-tach-dich-vu">4. Bảng Bóc Tách Chi Tiết 9 Nhóm Dịch Vụ MyMiniCloud</a></li>
+          <li><a href="#kien-truc-tong-the">1. Kiến trúc tổng thể &amp; luồng di chuyển của Request</a></li>
+          <li><a href="#can-bang-tai-round-robin">2. Cơ chế cân bằng tải Round Robin giữa 2 Web Replicas</a></li>
+          <li><a href="#tich-hop-da-dich-vu">3. Tích hợp đa dịch vụ: SQL Server, MinIO S3, Keycloak PKCE &amp; Prometheus</a></li>
+          <li><a href="#bang-boc-tach-dich-vu">4. Bảng bóc tách chi tiết 9 nhóm dịch vụ MyMiniCloud</a></li>
         </ul>
       </nav>
 
@@ -164,18 +166,18 @@
           <strong>Giới thiệu chuyên đề:</strong> MyMiniCloud không phải là một ứng dụng nguyên khối (monolith) giả lập, mà là một hệ thống phân tán thực thụ gồm 9 nhóm dịch vụ container hóa độc lập. Mỗi dịch vụ đảm nhiệm một trách nhiệm chuyên biệt, được kết nối an toàn qua mạng bridge và được phối hợp nhịp nhàng thông qua Nginx Reverse Proxy.
         </div>
 
-        <h2 id="kien-truc-tong-the">1. Kiến Trúc Tổng Thể &amp; Luồng Di Chuyển Của Request</h2>
+        <h2 id="kien-truc-tong-the">1. Kiến trúc tổng thể &amp; luồng di chuyển của Request</h2>
         <p>
           Điểm cốt lõi trong thiết kế của MyMiniCloud là mô hình Single Point of Entry (Cổng tiếp nhận duy nhất). Người dùng từ trình duyệt bên ngoài chỉ cần truy cập vào cổng 80 của máy chủ Host. Tất cả các dịch vụ nội bộ khác (Flask API :8081, SQL Server :1433, Keycloak :8080) đều được ẩn sau mạng <code class="inline-code">cloud-net</code> và không cần phơi bày cổng ra Internet:
         </p>
         <ul>
           <li><strong>Truy cập Portal (<code class="inline-code">/</code>) và Blog (<code class="inline-code">/blog/</code>):</strong> Proxy chuyển hướng tới một trong hai máy chủ web Nginx (<code class="inline-code">web-frontend-server1</code> hoặc <code class="inline-code">web-frontend-server2</code>) theo thuật toán xoay vòng Round Robin.</li>
-          <li><strong>Truy cập ứng dụng Quản lý Sinh viên (<code class="inline-code">/app/</code>):</strong> Proxy phục vụ tệp HTML/CSS/JavaScript tĩnh từ web server; sau đó trình duyệt của người dùng gửi các lời gọi AJAX tới đường dẫn <code class="inline-code">/api/*</code>.</li>
+          <li><strong>Truy cập ứng dụng quản lý sinh viên (<code class="inline-code">/app/</code>):</strong> Proxy phục vụ tệp HTML/CSS/JavaScript tĩnh từ web server; sau đó trình duyệt của người dùng gửi các lời gọi AJAX tới đường dẫn <code class="inline-code">/api/*</code>.</li>
           <li><strong>Gọi REST API (<code class="inline-code">/api/*</code>):</strong> Proxy tiến hành loại bỏ (strip) tiền tố <code class="inline-code">/api/</code> và chuyển tiếp nguyên vẹn method và payload JSON tới container <code class="inline-code">application-backend-server:8081</code>.</li>
           <li><strong>Xác thực danh tính (<code class="inline-code">/auth/*</code>):</strong> Proxy giữ nguyên đường dẫn và forwarded headers chuyển tiếp đến <code class="inline-code">authentication-identity-server:8080</code> (Keycloak).</li>
         </ul>
 
-        <h2 id="can-bang-tai-round-robin">2. Cơ Chế Cân Bằng Tải Round Robin Giữa 2 Web Replicas</h2>
+        <h2 id="can-bang-tai-round-robin">2. Cơ chế cân bằng tải Round Robin giữa 2 Web Replicas</h2>
         <p>
           Nhằm mô phỏng tính sẵn sàng cao (High Availability), hệ thống khởi chạy hai bản sao máy chủ web tĩnh độc lập:
         </p>
@@ -190,7 +192,7 @@ upstream web_pool {
           Khi người dùng nhấn Reload hoặc chạy thử nghiệm tải trong Portal Control, Nginx phân phối luân phiên từng request đến Server 1 rồi đến Server 2 với tỷ lệ cân bằng 50/50 hoàn hảo.
         </p>
 
-        <h2 id="tich-hop-da-dich-vu">3. Tích Hợp Đa Dịch Vụ: SQL Server, MinIO S3, Keycloak PKCE &amp; Prometheus</h2>
+        <h2 id="tich-hop-da-dich-vu">3. Tích hợp đa dịch vụ: SQL Server, MinIO S3, Keycloak PKCE &amp; Prometheus</h2>
         <p>
           Khác với các đồ án đơn lẻ, MyMiniCloud chứng minh khả năng liên kết sâu giữa các thành phần doanh nghiệp:
         </p>
@@ -201,16 +203,16 @@ upstream web_pool {
           <li><strong>Giám sát hạ tầng (Observability):</strong> Bộ đôi Prometheus (:9090) và Grafana (:3000) tự động cào metrics từ cAdvisor và Node Exporter, vẽ biểu đồ CPU, RAM, Network I/O thời gian thực.</li>
         </ol>
 
-        <h2 id="bang-boc-tach-dich-vu">4. Bảng Bóc Tách Chi Tiết 9 Nhóm Dịch Vụ MyMiniCloud</h2>
+        <h2 id="bang-boc-tach-dich-vu">4. Bảng bóc tách chi tiết 9 nhóm dịch vụ MyMiniCloud</h2>
         <div class="article-table-wrap">
           <table class="article-data-table">
             <thead>
               <tr>
-                <th>Nhóm Dịch Vụ</th>
+                <th>Nhóm dịch vụ</th>
                 <th>Container Service</th>
-                <th>FQDN Nội Bộ</th>
-                <th>Cổng Nội Bộ</th>
-                <th>Vai Trò Kiến Trúc</th>
+                <th>FQDN nội bộ</th>
+                <th>Cổng nội bộ</th>
+                <th>Vai trò kiến trúc</th>
               </tr>
             </thead>
             <tbody>
@@ -293,7 +295,7 @@ upstream web_pool {
         </div>
         <div>
           <h4 style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0 0 0.35rem 0;">
-            Kiến Trúc Sư Hệ Thống &bull; MyMiniCloud Team
+            Kiến trúc sư hệ thống &bull; MyMiniCloud Team
           </h4>
           <p style="font-size: 0.875rem; color: #64748b; margin: 0; line-height: 1.5;">
             Trưởng nhóm thiết kế kiến trúc phân tán cho MyMiniCloud, chịu trách nhiệm thiết kế mạng riêng ảo, tối ưu định tuyến Gateway và kiểm thử khả năng chịu lỗi của cụm dịch vụ.
@@ -313,7 +315,7 @@ upstream web_pool {
         <a href="/blog/#articles" class="article-nav-tile" style="text-align: right;">
           <div style="font-size: 0.775rem; font-weight: 700; color: #2563eb; text-transform: uppercase;">Quay lại &rarr;</div>
           <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-top: 0.35rem;">
-            Danh Sách Tất Cả Bài Viết Blog
+            Danh sách tất cả bài viết Blog
           </div>
         </a>
       </div>

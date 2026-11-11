@@ -28,11 +28,11 @@
   }
 
   function formatFileSize(bytes) {
-    if (bytes === 0 || !bytes) return '0.00 B';
+    if (bytes === 0 || !bytes) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+    return (i === 0 ? bytes : (bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
 
   function formatDate(isoStr) {
@@ -120,6 +120,7 @@
 
       const students = await res.json();
       AppState.students = Array.isArray(students) ? students : [];
+      setApiStatusPill(true);
 
       // Cập nhật thống kê Dashboard
       updateDashboardStats(AppState.students);
@@ -129,6 +130,7 @@
 
     } catch (err) {
       console.warn('Lỗi tải sinh viên:', err);
+      setApiStatusPill(false);
       if (tableBody) {
         tableBody.innerHTML = `
           <tr>
@@ -169,10 +171,10 @@
 
     if (activePercentEl) {
       const pct = total > 0 ? ((active / total) * 100).toFixed(2) : '0.00';
-      activePercentEl.textContent = `${pct}% of total`;
+      activePercentEl.textContent = `${pct}% tổng số`;
     }
 
-    if (majorsEl) majorsEl.textContent = majors.size || 5;
+    if (majorsEl) majorsEl.textContent = majors.size;
   }
 
   function renderStudentsTable(students) {
@@ -222,7 +224,7 @@
           <button type="button" class="btn btn-secondary btn-sm" data-action="edit" data-id="${escapeHtml(s.id)}" title="Chỉnh sửa">
             Sửa
           </button>
-          <button type="button" class="btn btn-danger btn-sm" data-action="delete" data-id="${escapeHtml(s.id)}" data-name="${escapeHtml(s.fullname)}" data-code="${escapeHtml(s.student_id)}" title="Xóa">
+          <button type="button" class="btn btn-secondary btn-sm btn-row-danger" data-action="delete" data-id="${escapeHtml(s.id)}" data-name="${escapeHtml(s.fullname)}" data-code="${escapeHtml(s.student_id)}" title="Xóa">
             Xóa
           </button>
         </td>
@@ -279,12 +281,12 @@
 
       <table class="data-table" style="margin-bottom: 0;">
         <tbody>
-          <tr><th>ID Hệ Thống:</th><td><code>#${escapeHtml(s.id)}</code></td></tr>
-          <tr><th>Ngày Sinh:</th><td>${formatDate(s.dob)}</td></tr>
-          <tr><th>Chuyên Ngành:</th><td>${escapeHtml(s.major)}</td></tr>
+          <tr><th>ID hệ thống:</th><td><code>#${escapeHtml(s.id)}</code></td></tr>
+          <tr><th>Ngày sinh:</th><td>${formatDate(s.dob)}</td></tr>
+          <tr><th>Chuyên ngành:</th><td>${escapeHtml(s.major)}</td></tr>
           <tr><th>Điểm GPA:</th><td><span class="gpa-badge ${getGpaBadgeClass(s.gpa)}">${formatGpa(s.gpa)}</span> / 4.00</td></tr>
-          <tr><th>Ảnh Thẻ (S3 Key):</th><td><code>${escapeHtml(s.avatar_key || 'Chưa cập nhật')}</code></td></tr>
-          <tr><th>Thời Điểm Tạo:</th><td>${formatDateTime(s.created_at)}</td></tr>
+          <tr><th>Ảnh thẻ (S3 Key):</th><td><code>${escapeHtml(s.avatar_key || 'Chưa cập nhật')}</code></td></tr>
+          <tr><th>Thời điểm tạo:</th><td>${formatDateTime(s.created_at)}</td></tr>
         </tbody>
       </table>
     `;
@@ -446,7 +448,9 @@
       const res = await fetch('/api/files?bucket=documents', { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const files = await res.json();
+      // API trả { bucket, files: [{ key, size, last_modified, download_url }] }
+      const data = await res.json();
+      const files = Array.isArray(data) ? data : (data.files || []);
 
       if (!tbody) return;
       tbody.innerHTML = '';
@@ -466,7 +470,8 @@
         const tr = document.createElement('tr');
         const sizeFormatted = formatFileSize(f.size);
         const timeFormatted = formatDateTime(f.last_modified);
-        const downloadUrl = `/api/files/documents/${encodeURIComponent(f.name)}`;
+        const fileKey = f.key || f.name || '';
+        const downloadUrl = f.download_url || `/api/files/documents/${encodeURIComponent(fileKey)}`;
 
         tr.innerHTML = `
           <td>
@@ -475,7 +480,7 @@
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
               </svg>
-              <strong style="color: #0f172a;">${escapeHtml(f.name)}</strong>
+              <strong style="color: #0f172a;">${escapeHtml(fileKey)}</strong>
             </div>
           </td>
           <td><code>${sizeFormatted}</code></td>
@@ -583,7 +588,71 @@
   // =========================================================================
   // Khởi tạo sự kiện DOM
   // =========================================================================
-  document.addEventListener('DOMContentLoaded', () => {
+  // Nhãn trạng thái API trên topbar phản ánh lần gọi /api/students-db gần nhất
+  function setApiStatusPill(ok) {
+    const pill = document.getElementById('topbar-status-pill');
+    if (!pill) return;
+    pill.textContent = ok ? 'API Connected' : 'API lỗi';
+    pill.className = ok ? 'badge badge-healthy' : 'badge badge-unhealthy';
+  }
+
+  // Callback OIDC cho nút "Đăng Nhập Keycloak SSO" ở Portal (redirect URI hợp lệ là /app/*).
+  // Chỉ xử lý khi chính tab này đã bắt đầu đăng nhập (có pkce_state), sau đó quay về /#auth.
+  async function completePortalOidcCallback() {
+    // Quay về Portal sau khi Keycloak đăng xuất (post_logout_redirect_uri = /app/)
+    if (sessionStorage.getItem('mycloud_logout_return')) {
+      sessionStorage.removeItem('mycloud_logout_return');
+      sessionStorage.setItem('mycloud_logout_done', '1');
+      window.location.replace('/#auth');
+      return true;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const savedState = sessionStorage.getItem('pkce_state');
+    if (!savedState || !(params.has('code') || params.has('error'))) return false;
+
+    const codeVerifier = sessionStorage.getItem('pkce_code_verifier');
+    sessionStorage.removeItem('pkce_state');
+    sessionStorage.removeItem('pkce_code_verifier');
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    try {
+      if (params.get('error')) throw new Error(params.get('error_description') || params.get('error'));
+      if (params.get('state') !== savedState) throw new Error('State không khớp hoặc phiên đăng nhập đã hết hạn.');
+      if (!codeVerifier) throw new Error('Thiếu code_verifier trong phiên.');
+
+      const configRes = await fetch('/api/auth/config', { cache: 'no-store' });
+      if (!configRes.ok) throw new Error(`Không đọc được /api/auth/config (HTTP ${configRes.status})`);
+      const config = await configRes.json();
+
+      const body = new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: config.client_id || 'flask-app',
+        code: params.get('code'),
+        redirect_uri: window.location.origin + '/app/',
+        code_verifier: codeVerifier
+      });
+      const tokenRes = await fetch(config.token_endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString()
+      });
+      const tokenData = await tokenRes.json().catch(() => ({}));
+      if (!tokenRes.ok || !tokenData.access_token) {
+        throw new Error(tokenData.error_description || tokenData.error || `Lỗi đổi token (HTTP ${tokenRes.status})`);
+      }
+      sessionStorage.setItem('mycloud_access_token', tokenData.access_token);
+      if (tokenData.id_token) sessionStorage.setItem('mycloud_id_token', tokenData.id_token);
+    } catch (err) {
+      sessionStorage.setItem('mycloud_auth_error', err.message);
+    }
+    window.location.replace('/#auth');
+    return true;
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (await completePortalOidcCallback()) return;
+
     // 1. Tab Navigation
     document.querySelectorAll('.top-tab-btn[data-tab], .quick-action-card[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -664,20 +733,21 @@
         const alertBox = document.getElementById('edit-student-alert');
 
         try {
-          let avatar_key = undefined;
+          // PUT ghi đè cả bản ghi: phải gửi student_id và giữ avatar cũ nếu không chọn ảnh mới.
+          const current = AppState.students.find(item => String(item.id) === String(id)) || {};
+          const student_id = document.getElementById('edit-student-id').value.trim();
+          let avatar_key = current.avatar_key || null;
           if (avatarInput && avatarInput.files && avatarInput.files[0]) {
             const formData = new FormData();
             formData.append('file', avatarInput.files[0]);
             formData.append('bucket', 'profile-pics');
             const fileRes = await fetch('/api/files', { method: 'POST', body: formData });
-            if (fileRes.ok) {
-              const fileData = await fileRes.json();
-              avatar_key = fileData.key;
-            }
+            const fileData = await fileRes.json().catch(() => ({}));
+            if (!fileRes.ok) throw new Error(`Upload avatar thất bại: ${fileData.error || `HTTP ${fileRes.status}`}`);
+            avatar_key = fileData.key;
           }
 
-          const payload = { fullname, dob, major, gpa: parseFloat(gpa.toFixed(2)) };
-          if (avatar_key !== undefined) payload.avatar_key = avatar_key;
+          const payload = { student_id, fullname, dob, major, gpa: parseFloat(gpa.toFixed(2)), avatar_key };
 
           const res = await fetch(`/api/students-db/${id}`, {
             method: 'PUT',
@@ -685,7 +755,10 @@
             body: JSON.stringify(payload)
           });
 
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `HTTP ${res.status}`);
+          }
 
           closeModals();
           loadStudents();

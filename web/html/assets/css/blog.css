@@ -327,7 +327,8 @@ body.blog-page {
   margin: 0 0 0.25rem 0;
 }
 
-.blog-author-title {
+.blog-author-title,
+.blog-author-role {
   font-size: 0.875rem;
   font-weight: 600;
   color: #2563eb;
@@ -347,7 +348,8 @@ body.blog-page {
   gap: 0.45rem;
 }
 
-.blog-skill-tag {
+.blog-skill-tag,
+.blog-tag-pill {
   background-color: #f1f5f9;
   color: #334155;
   font-size: 0.75rem;
@@ -365,7 +367,8 @@ body.blog-page {
   margin-bottom: 2.5rem;
 }
 
-.blog-action-card {
+.blog-action-card,
+.blog-action-item {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
@@ -378,13 +381,15 @@ body.blog-page {
   justify-content: space-between;
 }
 
-.blog-action-card:hover {
+.blog-action-card:hover,
+.blog-action-item:hover {
   transform: translateY(-3px);
   border-color: #93c5fd;
   box-shadow: 0 8px 16px -4px rgba(37, 99, 235, 0.1);
 }
 
-.blog-action-title {
+.blog-action-title,
+.blog-action-name {
   font-size: 1.05rem;
   font-weight: 700;
   color: #0f172a;
@@ -447,7 +452,8 @@ body.blog-page {
 }
 
 /* Cards List */
-.blog-cards-stack {
+.blog-cards-stack,
+.blog-cards-list {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -482,7 +488,8 @@ body.blog-page {
   min-width: 0;
 }
 
-.blog-card-meta {
+.blog-card-meta,
+.blog-card-top-meta {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -491,7 +498,8 @@ body.blog-page {
   color: #64748b;
 }
 
-.blog-cat-badge {
+.blog-cat-badge,
+.blog-category-badge {
   font-size: 0.75rem;
   font-weight: 700;
   padding: 0.25rem 0.65rem;
@@ -511,13 +519,15 @@ body.blog-page {
   border: 1px solid #bbf7d0;
 }
 
-.cat-distributed {
+.cat-distributed,
+.cat-sys {
   background-color: #faf5ff;
   color: #9333ea;
   border: 1px solid #e9d5ff;
 }
 
-.blog-card-title {
+.blog-card-title,
+.blog-card-title-text {
   font-size: 1.35rem;
   font-weight: 800;
   color: #0f172a;
@@ -526,7 +536,8 @@ body.blog-page {
   transition: color var(--transition-fast);
 }
 
-.personal-blog-card:hover .blog-card-title {
+.personal-blog-card:hover .blog-card-title,
+.personal-blog-card:hover .blog-card-title-text {
   color: #2563eb;
 }
 
@@ -602,6 +613,84 @@ body.blog-page {
   transform: scale(1.05);
 }
 
+/* Class mới trong HTML blog (đồng bộ style với các card ở trên) */
+.blog-card-link-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.25rem;
+  width: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.blog-card-link-wrapper:hover,
+.blog-card-link-wrapper:focus {
+  text-decoration: none;
+}
+
+.blog-card-top-meta {
+  flex-wrap: wrap;
+}
+
+.blog-category-badge {
+  display: inline-block;
+}
+
+.blog-meta-item {
+  color: #64748b;
+}
+
+.blog-articles-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.blog-actions-section {
+  margin-bottom: 2.5rem;
+}
+
+.blog-actions-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 1rem 0;
+}
+
+.blog-actions-section .blog-actions-grid {
+  margin-bottom: 0;
+}
+
+.blog-action-item {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 1rem;
+  cursor: pointer;
+}
+
+.blog-action-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.blog-action-name {
+  margin: 0 0 0.3rem 0;
+}
+
+.article-header .blog-category-badge {
+  margin-bottom: 0.85rem;
+}
+
 /* ==========================================================================
    TRANG BÀI VIẾT CHI TIẾT (ARTICLE DETAIL PAGE)
    ========================================================================== */
@@ -609,6 +698,10 @@ body.blog-page {
   max-width: 1200px;
   margin: 1.75rem auto 4rem;
   padding: 0 1.5rem;
+  /* body là flex column + margin auto: không ép width thì khung co theo bảng/ảnh rộng và tràn mobile */
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .article-top-bar {
@@ -686,6 +779,8 @@ body.blog-page {
   max-width: 100%;
   max-height: 320px;
   object-fit: contain;
+  min-width: 0;
+  height: auto;
 }
 
 /* Table of Contents Box */
@@ -866,6 +961,11 @@ body.blog-page {
   .personal-blog-card {
     flex-direction: column-reverse;
   }
+  .blog-card-link-wrapper {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 1.25rem;
+  }
   .blog-card-right {
     width: 100%;
     height: 200px;
@@ -906,5 +1006,42 @@ body.blog-page {
   }
   .article-nav-row {
     flex-direction: column;
+  }
+  /* Header blog xuống dòng trên điện thoại, không tràn ngang */
+  .blog-nav-inner {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+  .blog-nav-inner > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .blog-header-nav {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+  }
+  .blog-nav-tab-btn {
+    flex: 0 0 auto;
+    padding: 0.4rem 0.8rem;
+  }
+  .blog-hero-title,
+  .article-title-big {
+    overflow-wrap: anywhere;
+  }
+  /* Trang bài viết trên điện thoại */
+  .article-detail-wrap {
+    padding: 0 1rem;
+  }
+  .article-top-bar {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .article-main-card {
+    padding: 1.25rem;
+  }
+  .article-hero-img-box {
+    padding: 1rem;
   }
 }

@@ -1,135 +1,152 @@
 <#
 .SYNOPSIS
-    Script build, tag, push và verify các custom image Docker Hub cho MyMiniCloud.
-.DESCRIPTION
-    Script này hỗ trợ build cho Linux amd64, tag theo namespace
-    và version chỉ định, push lên Docker Hub, inspect manifest SHA256 digest, pull lại
-    và chạy smoke test độc lập.
-    Không lưu hay in mật khẩu/token ra màn hình.
-.PARAMETER Namespace
-    Docker Hub username hoặc organization namespace (bắt buộc).
-.PARAMETER Version
-    Phiên bản tag phát hành (mặc định: 1.0.0).
+Build, publish and verify the MyMiniCloud images. See docs/docker-hub.md.
+.PARAMETER VerifyOnly
+Pull existing images by immutable digest and run smoke tests; no build or push.
 .PARAMETER SkipPush
-    Chỉ build và tag local, không thực hiện docker push (dùng để kiểm tra trước).
-.PARAMETER SkipSmokeTest
-    Bỏ qua bước smoke test container tạm thời sau khi pull.
+Build and smoke test local images only; no registry verification.
 #>
 [CmdletBinding()]
-param (
+param(
     [Parameter(Mandatory = $true, Position = 0)]
-    [ValidateNotNullOrEmpty()]
+    [ValidatePattern('^[a-z0-9][a-z0-9_-]*$')]
     [string]$Namespace,
-
-    [Parameter(Mandatory = $false, Position = 1)]
-    [string]$Version = "1.0.0",
-
-    [Parameter(Mandatory = $false)]
+    [ValidatePattern('^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$')]
+    [string]$Version = '1.0.0',
     [switch]$SkipPush,
-
-    [Parameter(Mandatory = $false)]
-    [switch]$SkipSmokeTest
+    [switch]$SkipSmokeTest,
+    [switch]$VerifyOnly
 )
-
 $ErrorActionPreference = 'Stop'
-[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
+$repoRoot = Split-Path -Parent $PSScriptRoot
+if ($SkipPush -and $VerifyOnly) { throw 'Choose SkipPush or VerifyOnly, not both.' }
 
-$scriptRoot = $PSScriptRoot
-$repoRoot = Split-Path -Parent $scriptRoot
-
-Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "  MyMiniCloud - Phat Hanh Docker Hub Custom Images" -ForegroundColor Cyan
-Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "Repo Root: $repoRoot"
-Write-Host "Namespace: $Namespace"
-Write-Host "Version  : $Version"
-Write-Host ""
-
-# 1. Kiem tra xac thuc Docker neu khong SkipPush
-if (-not $SkipPush) {
-    Write-Host "[1/6] Kiem tra trang thai dang nhap Docker..." -ForegroundColor Yellow
-    try {
-        $null = docker info --format '{{json .RegistryConfig.IndexConfigs}}' 2>&1
-    } catch {
-        throw "Khong the ket noi den Docker daemon. Vui long dam bao Docker Desktop dang chay."
-    }
+function Invoke-Docker {
+    param([string[]]$Arguments)
+    & docker @Arguments
+    if ($LASTEXITCODE -ne 0) { throw "Docker command failed: $($Arguments[0])" }
 }
 
-# 2. Build local images tu source moi nhat (target linux/amd64)
-Write-Host "[2/6] Build cac custom image tu source (linux/amd64)..." -ForegroundColor Yellow
-
-# Web Frontend Image
-$webTag = "$Namespace/mycloud-web:$Version"
-Write-Host "-> Building Web Frontend: $webTag"
-docker build --platform linux/amd64 -t $webTag -t "mycloud-web:$Version" -f (Join-Path $repoRoot "web/Dockerfile") (Join-Path $repoRoot "web")
-if ($LASTEXITCODE -ne 0) { throw "Build image web that bai." }
-
-# App Backend Image
-$appTag = "$Namespace/mycloud-app:$Version"
-Write-Host "-> Building App Backend: $appTag"
-docker build --platform linux/amd64 -t $appTag -t "mycloud-app:$Version" -f (Join-Path $repoRoot "app/Dockerfile") (Join-Path $repoRoot "app")
-if ($LASTEXITCODE -ne 0) { throw "Build image app that bai." }
-
-Write-Host "PASS: Build thanh cong ca 2 image local." -ForegroundColor Green
-
-# 3. Push len Docker Hub (neu khong SkipPush)
-if (-not $SkipPush) {
-    Write-Host "[3/6] Push image len Docker Hub..." -ForegroundColor Yellow
-    
-    Write-Host "-> Pushing $webTag..."
-    docker push $webTag
-    if ($LASTEXITCODE -ne 0) { throw "Push image $webTag that bai. Hay chac chan da chay 'docker login' thanh cong." }
-    
-    Write-Host "-> Pushing $appTag..."
-    docker push $appTag
-    if ($LASTEXITCODE -ne 0) { throw "Push image $appTag that bai. Hay chac chan da chay 'docker login' thanh cong." }
-    
-    Write-Host "PASS: Push thanh cong 2 image len Docker Hub." -ForegroundColor Green
-
-    # 4. Kiem tra manifest va digest
-    Write-Host "[4/6] Kiem tra manifest va digest..." -ForegroundColor Yellow
-    Write-Host "Manifest Web:"
-    docker manifest inspect $webTag
-    Write-Host "Manifest App:"
-    docker manifest inspect $appTag
-
-    # 5. Pull lai theo tag de xac minh
-    Write-Host "[5/6] Pull lai image tu Docker Hub..." -ForegroundColor Yellow
-    docker pull $webTag
-    if ($LASTEXITCODE -ne 0) { throw "Pull lai image $webTag that bai." }
-    docker pull $appTag
-    if ($LASTEXITCODE -ne 0) { throw "Pull lai image $appTag that bai." }
-} else {
-    Write-Host "[INFO] Bo qua buoc push theo tham so -SkipPush." -ForegroundColor Cyan
+function Test-RemoteTag {
+    param([string]$Tag)
+    $savedPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $output = (& docker manifest inspect $Tag 2>&1 | Out-String)
+        $code = $LASTEXITCODE
+    } finally { $ErrorActionPreference = $savedPreference }
+    if ($code -eq 0) { return $true }
+    if ($output -match '(?i)manifest unknown|no such manifest|manifest_unknown') { return $false }
+    throw "Cannot verify whether $Tag exists. Check network/authentication before publishing."
 }
 
-# 6. Smoke test tren image
-if (-not $SkipSmokeTest) {
-    Write-Host "[6/6] Thuc hien Smoke Test tren image..." -ForegroundColor Yellow
-    
-    # Test Web Image: Chay container tam thoi, kiem tra HTTP 200 tra ve Portal
-    $testWebContainer = "test-smoke-web-" + [guid]::NewGuid().ToString().Substring(0, 8)
-    Write-Host "-> Khoi dong container test Web: $testWebContainer"
-    docker run -d --name $testWebContainer -p 18080:80 $webTag
+function Get-RegistryDigest {
+    param([string]$Tag)
+    $description = (Invoke-Docker -Arguments @('buildx', 'imagetools', 'inspect', $Tag)) -join "`n"
+    $match = [regex]::Match($description, '(?m)^Digest:\s+(sha256:[0-9a-f]{64})\s*$')
+    if (-not $match.Success) { throw "Registry did not return an immutable digest for $Tag." }
+    return $match.Groups[1].Value
+}
+
+function Test-HttpImage {
+    param([string]$Reference, [string]$Kind)
+    $port = if ($Kind -eq 'web') { 80 } else { 8081 }
+    $name = 'mycloud-hub-' + $Kind + '-' + [guid]::NewGuid().ToString('N').Substring(0, 12)
+    $id = $null
     try {
-        Start-Sleep -Seconds 2
-        $resp = Invoke-WebRequest -Uri "http://localhost:18080/" -UseBasicParsing -TimeoutSec 5
-        if ($resp.StatusCode -ne 200) { throw "Web container tra ve ma $($resp.StatusCode)" }
-        Write-Host "PASS: Smoke test Web container HTTP 200 OK." -ForegroundColor Green
+        $id = (Invoke-Docker -Arguments @('run', '-d', '--name', $name,
+            '--label', 'com.docker.compose.project=mycloud', '--label', 'mycloud.role=hub-smoke',
+            '-p', "127.0.0.1::${port}", $Reference) | Select-Object -Last 1).Trim()
+        $binding = (Invoke-Docker -Arguments @('port', $id, "$port/tcp")) -join ''
+        if ($binding -notmatch '^127\.0\.0\.1:(\d+)\s*$') { throw 'Expected a temporary loopback port.' }
+        $base = 'http://127.0.0.1:' + $Matches[1]
+        $paths = if ($Kind -eq 'web') {
+            @('/', '/blog/', '/app/', '/blog/blog1.html', '/blog/blog2.html', '/blog/blog3.html')
+        } else { @('/hello', '/student') }
+        foreach ($path in $paths) {
+            $response = $null
+            $deadline = [DateTime]::UtcNow.AddSeconds(30)
+            do {
+                try { $response = Invoke-WebRequest -UseBasicParsing -Uri ($base + $path) -TimeoutSec 3 } catch { $response = $null }
+                if ($null -eq $response -or $response.StatusCode -ne 200) { Start-Sleep -Milliseconds 400 }
+            } while (($null -eq $response -or $response.StatusCode -ne 200) -and [DateTime]::UtcNow -lt $deadline)
+            if ($null -eq $response -or $response.StatusCode -ne 200) { throw "$Kind smoke test failed: $path" }
+            if ($Kind -eq 'web' -and $response.Content -notmatch '(?i)<html') { throw 'Expected an HTML page.' }
+            if ($Kind -eq 'app') {
+                $data = $response.Content | ConvertFrom-Json
+                if ($path -eq '/hello' -and $data.message -ne 'Hello from App Server!') { throw 'Unexpected hello response.' }
+                if ($path -eq '/student' -and @($data).Count -ne 5) { throw 'Expected five JSON students.' }
+            }
+            Write-Host "PASS: $Kind $path HTTP 200"
+        }
     } finally {
-        docker rm -f $testWebContainer | Out-Null
+        if ($id) {
+            $labels = (Invoke-Docker -Arguments @('inspect', $id, '--format', '{{json .Config.Labels}}')) | ConvertFrom-Json
+            if ($labels.'com.docker.compose.project' -ne 'mycloud' -or $labels.'mycloud.role' -ne 'hub-smoke') {
+                throw 'Refusing to remove a container without matching smoke-test labels.'
+            }
+            Invoke-Docker -Arguments @('rm', '-f', $id) | Out-Null
+        }
     }
-
-    # Test App Image: Chay lenh kiem tra cu phap Python va import dependencies
-    Write-Host "-> Kiem tra dependencies Backend trong App container..."
-    $appTestOutput = docker run --rm $appTag python -c "import flask, pyodbc, jwt, minio, dns, gunicorn; print('IMPORTS_OK')"
-    if ($LASTEXITCODE -ne 0 -or $appTestOutput -notmatch "IMPORTS_OK") { throw "App container thieu dependencies hoac import loi." }
-    Write-Host "PASS: Smoke test App container imports OK." -ForegroundColor Green
 }
 
-Write-Host ""
-Write-Host "==========================================================" -ForegroundColor Green
-Write-Host "  Hoan tat quy trinh kiem thu Docker Hub custom images!" -ForegroundColor Green
-Write-Host "  Web Tag: $webTag"
-Write-Host "  App Tag: $appTag"
-Write-Host "==========================================================" -ForegroundColor Green
+Push-Location -LiteralPath $repoRoot
+try {
+    Invoke-Docker -Arguments @('info', '--format', '{{.OSType}}/{{.Architecture}}')
+    $revision = (& git rev-parse HEAD).Trim()
+    if ($LASTEXITCODE -ne 0) { throw 'Cannot identify source revision.' }
+    $source = 'https://github.com/Katie-217/My-Mini-Cloud-Platform'
+    if (-not $VerifyOnly -and -not $SkipPush) {
+        $dirty = & git status --porcelain
+        if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Publish from a clean committed worktree.' }
+        foreach ($kind in @('web', 'app')) {
+            $tag = "$Namespace/mycloud-${kind}:$Version"
+            if (Test-RemoteTag -Tag $tag) { throw "Tag $tag already exists. Choose a new version; existing tags are preserved." }
+        }
+    }
+    if (-not $VerifyOnly) {
+        foreach ($kind in @('web', 'app')) {
+            $tag = "$Namespace/mycloud-${kind}:$Version"
+            Invoke-Docker -Arguments @('build', '--platform', 'linux/amd64', '-t', $tag,
+                '--label', "org.opencontainers.image.revision=$revision",
+                '--label', "org.opencontainers.image.source=$source",
+                '-f', (Join-Path $repoRoot "$kind/Dockerfile"), (Join-Path $repoRoot $kind))
+        }
+        if (-not $SkipPush) {
+            foreach ($kind in @('web', 'app')) { Invoke-Docker -Arguments @('push', "$Namespace/mycloud-${kind}:$Version") }
+        }
+    }
+    $results = @()
+    foreach ($kind in @('web', 'app')) {
+        $repository = "$Namespace/mycloud-$kind"
+        $tag = "${repository}:$Version"
+        $digest = if ($SkipPush) { $null } else { Get-RegistryDigest -Tag $tag }
+        $reference = if ($digest) { "$repository@$digest" } else { $tag }
+        if (-not $SkipPush) { Invoke-Docker -Arguments @('pull', '--platform', 'linux/amd64', $reference) }
+        $metadata = (Invoke-Docker -Arguments @('image', 'inspect', $reference)) | ConvertFrom-Json
+        $metadata = @($metadata)[0]
+        if ($metadata.Os -ne 'linux' -or $metadata.Architecture -ne 'amd64') { throw "Expected linux/amd64 for $tag." }
+        if (-not $SkipSmokeTest) {
+            if ($kind -eq 'app') {
+                Invoke-Docker -Arguments @('run', '--rm', '--label', 'com.docker.compose.project=mycloud',
+                    '--label', 'mycloud.role=hub-smoke', $reference, 'python', '-c',
+                    "import flask, pyodbc, jwt, minio, dns, gunicorn; assert 'ODBC Driver 18 for SQL Server' in pyodbc.drivers(); print('PASS: app imports and ODBC Driver 18')")
+            }
+            Test-HttpImage -Reference $reference -Kind $kind
+        }
+        $results += [pscustomobject]@{
+            tag = $tag; digest = $digest; image_id = $metadata.Id; platform = 'linux/amd64'
+            image_revision = $metadata.Config.Labels.'org.opencontainers.image.revision'
+            registry_verified = (-not $SkipPush); smoke_tested = (-not $SkipSmokeTest)
+        }
+        Write-Host "PASS: $tag | linux/amd64 | $digest"
+    }
+    $runtime = Join-Path $repoRoot '.runtime'
+    New-Item -ItemType Directory -Force -Path $runtime | Out-Null
+    [pscustomobject]@{ verification_source = $revision; verified_at = [DateTime]::UtcNow.ToString('o'); images = $results } |
+        ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $runtime 'docker-hub-release.json') -Encoding UTF8
+    if ($SkipPush) { Write-Host 'NOT TESTED: Docker Hub push/pull (SkipPush).' }
+    if ($SkipSmokeTest) { Write-Host 'NOT TESTED: Container smoke tests (SkipSmokeTest).' }
+    Write-Host 'NOT TESTED by this script: backend SQL/OIDC/storage integration; run the integration suite separately.'
+} finally { Pop-Location }

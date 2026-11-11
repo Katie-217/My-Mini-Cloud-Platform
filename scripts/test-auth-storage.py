@@ -12,7 +12,7 @@ from minio.error import S3Error
 from integrations import storage_client
 
 proxy_base = os.environ.get('TEST_PUBLIC_BASE', '').rstrip('/')
-api = proxy_base + '/api' if proxy_base else 'http://application-backend-server:8081'
+api = os.environ.get('TEST_API_BASE') or (proxy_base + '/api' if proxy_base else 'http://application-backend-server:8081')
 auth = proxy_base or 'http://authentication-identity-server:8080'
 realm = os.getenv('OIDC_REALM', 'MSSV_PLACEHOLDER')
 public = os.getenv('PUBLIC_URL', 'http://localhost').rstrip('/')

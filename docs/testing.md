@@ -1,6 +1,30 @@
 # Kết quả kiểm thử MyMiniCloud
 
-Ngày thực hiện: 10/11/2026. Đây là trạng thái hiện hành, sau các khảo sát ban đầu.
+## Nghiệm thu Docker Hub — 11/11/2026
+
+- PASS: hai repository `katie217/mycloud-web:1.0.0` và `katie217/mycloud-app:1.0.0`
+  đọc manifest được bằng token pull ẩn danh. SHA256 response khớp digest công bố,
+  có manifest Linux amd64. Đã pull và chạy theo digest bất biến.
+- PASS: Web có sáu route HTTP 200; 20 file frontend khớp source sau chuẩn hóa CRLF/LF.
+  App chạy Gunicorn, trả hello/student, có ODBC Driver 18 và chín file source khớp.
+- PASS: trên container mới từ image Docker Hub, 23 kiểm tra backend/SQL và 24
+  kiểm tra auth/storage thành công. Test xác định đúng API của container mới;
+  không dùng app local cũ thay cho image cần nghiệm thu.
+- PASS: mười kiểm tra image/source/config/dọn tài nguyên; năm trường hợp lỗi
+  của script được mô phỏng (daemon, tag tồn tại, registry, manifest, kiến trúc).
+  Kiểm tra tag `1.0.0` tồn tại trên registry thật cũng dừng trước build/push.
+- PASS: build local bằng script mới gắn đúng Git revision/source labels;
+  không phát hành lại hoặc ghi đè hai tag `1.0.0`. Container hiện có giữ nguyên ID.
+- AWS, URL public object MinIO và SSMS GUI vẫn NOT TESTED trong lượt này.
+
+Chi tiết image/digest/lệnh tại [docker-hub.md](docker-hub.md). Log/JSON chỉ lưu
+ở `.runtime` của worktree review, không commit. Đợt nghiệm thu local trước đó
+đã PASS 203 kiểm tra; đợt Docker Hub này kiểm tra riêng image đã phát hành.
+
+## Kết quả lịch sử local — 10/11/2026
+
+Các mục bên dưới giữ kết quả của thời điểm trước; trạng thái Docker Hub mới nhất
+là phần nghiệm thu ngày 11/11/2026 ở trên.
 
 ## Script setup và tài liệu bàn giao có ảnh
 

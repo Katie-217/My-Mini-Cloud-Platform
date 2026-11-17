@@ -90,13 +90,20 @@ thành 0. Giá trị 0 thật vẫn hiển thị. Ghi đúng phạm vi đo, refr
 
 | Method / URL | Yêu cầu và kết quả |
 | --- | --- |
-| GET `/api/files?bucket=documents` | `{ "bucket":"documents", "files":[{"key":"...","size":123,"last_modified":"...","download_url":"/api/files/documents/..."}] }` |
+| GET `/api/files?bucket=documents` | `{ "bucket":"documents", "files":[{"key":"...","size":123,"last_modified":"..." or null,"download_url":"/api/files/documents/..."}] }` |
 | POST `/api/files` | multipart `file` và `bucket`; 201 `{ "bucket", "key", "download_url" }` |
 | GET `/api/files/documents/<key>` | Binary file với Content-Disposition; 404 nếu thiếu |
 
 Bucket chỉ nhận `profile-pics` (PNG/JPEG) và `documents` (PDF), tối đa 10 MiB.
 Backend kiểm tra định dạng thực tế và tạo key an toàn; không tự gửi Content-Type
-khi frontend dùng `FormData`. Bucket MinIO private; download đi qua backend.
+khi frontend dùng `FormData`. Upload, list và download qua API backend.
+`last_modified` là `null` nếu MinIO không cung cấp thời điểm cập nhật; giao diện
+hiển thị `--` thay vì làm hỏng toàn bộ danh sách.
+PDF trong bucket `documents` có thể đọc công khai trực tiếp tại
+`http://localhost:9000/documents/<key>`; MinIO chỉ cho `GetObject`, không cho
+liệt kê bucket hoặc ghi/xóa ẩn danh. Bucket `profile-pics` vẫn private.
+Trong Compose local, cổng MinIO bind `127.0.0.1`; public-read áp dụng cho client
+có thể truy cập cổng này, không tự mở MinIO ra Internet.
 API file công khai trong demo local giống CRUD; tài liệu phải nêu giới hạn.
 
 ## URL giao diện quản trị local

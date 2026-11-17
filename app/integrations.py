@@ -59,8 +59,10 @@ def list_files():
     client = storage_client()
     files = []
     for obj in client.list_objects(bucket):
+        if obj.object_name.endswith('/'):
+            continue
         files.append({'key': obj.object_name, 'size': obj.size,
-                      'last_modified': obj.last_modified.isoformat(),
+                      'last_modified': obj.last_modified.isoformat() if obj.last_modified else None,
                       'download_url': f'/api/files/{bucket}/{quote(obj.object_name, safe="")}'})
         if len(files) >= 200:
             break

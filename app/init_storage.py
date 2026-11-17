@@ -1,3 +1,4 @@
+import json
 import time
 from integrations import storage_client
 
@@ -13,4 +14,13 @@ else:
 for bucket in ('profile-pics', 'documents'):
     if not client.bucket_exists(bucket):
         client.make_bucket(bucket)
-print('PASS: Hai bucket private đã sẵn sàng.')
+client.set_bucket_policy('documents', json.dumps({
+    'Version': '2012-10-17',
+    'Statement': [{
+        'Effect': 'Allow',
+        'Principal': {'AWS': ['*']},
+        'Action': ['s3:GetObject'],
+        'Resource': ['arn:aws:s3:::documents/*'],
+    }],
+}))
+print('PASS: documents cho phép đọc object công khai; profile-pics vẫn riêng tư.')

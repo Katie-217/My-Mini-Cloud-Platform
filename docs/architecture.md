@@ -5,7 +5,8 @@
 - SQL Server 2022 Developer, bảng `studentdb.dbo.students` dùng `IDENTITY`.
 - 9 nhóm dịch vụ dùng nhiều container: 2 web replica, exporter và init jobs phụ trợ.
 - HTTP exporter kiểm tra web; không scrape HTML cổng 80 như metrics.
-- File MinIO private, download qua backend.
+- PDF trong bucket MinIO `documents` cho phép đọc object ẩn danh; không cho list/write/delete.
+  Bucket `profile-pics` private; upload/download qua backend.
 - Dùng Grafana visualization + Compose logs; chưa triển khai log tập trung Loki.
 - Các script vận hành chỉ thao tác project mycloud.
 - Local trước; AWS và Docker Hub chỉ được PASS khi có kiểm thử thật.
@@ -35,8 +36,10 @@ flowchart LR
   → Flask `/students-db` → SQL Server → JSON. Các method ghi giữ nguyên khi proxy.
 - OIDC: frontend lấy config → Keycloak login PKCE → callback `/app/` → token;
   `/api/secure` được Flask xác minh RS256/JWKS, issuer public và audience `flask-app`.
-- Storage: browser multipart → Flask kiểm tra file → bucket private → trả object key;
-  đọc file đi qua Flask. Không lộ credential MinIO.
+- Storage: browser multipart → Flask kiểm tra file → MinIO. Bucket `documents`
+  chỉ cho phép đọc object ẩn danh để xem PDF; không cho liệt kê/ghi/xóa. Bucket
+  `profile-pics` vẫn private. Upload/list/download qua Flask; nút xem đọc PDF
+  trực tiếp từ MinIO. Không lộ credential MinIO; cổng MinIO trên host vẫn bind loopback.
 - Monitoring: Prometheus chủ động scrape Node Exporter và HTTP exporter;
   Grafana chủ động query Prometheus. Node Exporter ở Docker Desktop đo Linux VM,
   không tự nhận là tài nguyên Windows hoặc từng container.

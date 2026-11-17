@@ -66,14 +66,15 @@ kiểm tra hạ tầng độc lập bằng cách intercept callback.
 
 ## MinIO và file
 
-Console 9001 dùng credential root local trong `.env`. Hai bucket private:
-`profile-pics` nhận PNG/JPEG, `documents` nhận PDF; API giới hạn file 10 MiB.
-Upload trong Console hoặc Student App; list/download qua `/api/files`.
+Console 9001 dùng credential root local trong `.env`. `profile-pics` nhận
+PNG/JPEG và vẫn private; `documents` nhận PDF, cho phép đọc object ẩn danh
+nhưng không cho list/write/delete. API giới hạn file 10 MiB. Upload trong
+Student App; list/download qua `/api/files`, xem trực tiếp qua MinIO.
 Backend kiểm tra signature đầu file, không phải trình quét malware hoặc parser
-kiểm định toàn bộ tài liệu. Không tự đặt bucket public.
+kiểm định toàn bộ tài liệu. Cổng 9000 chỉ bind loopback trong Compose local.
 
 API CRUD/file công khai cho demo local; bảo vệ token được minh họa tại `/secure`.
-Không coi bucket private đồng nghĩa API đã có phân quyền production.
+Không dùng public-read của bucket làm phân quyền production.
 Xem [ngoại lệ build MinIO](minio-build-notes.md).
 
 ## DNS và monitoring

@@ -123,13 +123,14 @@ Chạy `docker compose run --rm --no-deps integration-check` sau khi `auth-init`
 và `storage-init` Exited (0). Test service thuộc profile `tools`, không phải server
 chạy lâu dài; có `PYTHONPATH=/app` để import module khi script nằm dưới `/checks`.
 
-24 checks đã PASS: hai user `sv01`, `sv02` đăng nhập Keycloak bằng form thật,
+28 checks đã PASS: hai user `sv01`, `sv02` đăng nhập Keycloak bằng form thật,
 trao đổi Authorization Code + PKCE, truy cập endpoint bảo vệ, chữ ký sai bị 401;
-upload/list/stat/download PDF và PNG qua API, byte roundtrip, bucket private,
-từ chối file giả PDF và bucket ngoài whitelist. Test xóa đúng object do nó tạo.
+upload/list/stat/download PDF và PNG qua API, byte roundtrip, PDF cho phép đọc
+công khai nhưng chặn liệt kê/ghi ẩn danh, profile-pics vẫn private, từ chối file
+giả PDF và bucket ngoài whitelist. Test xóa đúng object do nó tạo.
 Không lưu token hoặc credential vào output. API CRUD và file vẫn là demo local
-công khai qua backend; `/secure` là endpoint thực thi xác thực. Bucket private
-không đồng nghĩa backend API đã có phân quyền production.
+công khai qua backend; `/secure` là endpoint thực thi xác thực. MinIO chỉ cho
+đọc object `documents` ẩn danh; bucket policy không thay thế phân quyền API.
 
 MinIO build từ source chính thức vì hai registry upstream từ chối pull. Console
 HTML/S3 đã hoạt động thật; xem [minio-build-notes.md](minio-build-notes.md).

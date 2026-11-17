@@ -472,6 +472,7 @@
         const timeFormatted = formatDateTime(f.last_modified);
         const fileKey = f.key || f.name || '';
         const downloadUrl = f.download_url || `/api/files/documents/${encodeURIComponent(fileKey)}`;
+        const previewUrl = `${window.location.protocol}//${window.location.hostname}:9000/documents/${encodeURIComponent(fileKey)}`;
 
         tr.innerHTML = `
           <td>
@@ -486,6 +487,9 @@
           <td><code>${sizeFormatted}</code></td>
           <td>${timeFormatted}</td>
           <td style="text-align: right;">
+            <a href="${escapeHtml(previewUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
+              Xem
+            </a>
             <a href="${escapeHtml(downloadUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>

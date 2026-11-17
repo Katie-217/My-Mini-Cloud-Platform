@@ -23,7 +23,7 @@ và terminal; realm chung `521H0092-523H0065`, dashboard ghi cả hai MSSV.
 | 5 | 1,5 phút | Thêm, sửa, xem chi tiết và xóa record demo | Dữ liệu thật, validate/duplicate rõ ràng | API/UI CRUD PASS |
 | 6 | 1 phút | SSMS `127.0.0.1,1433`, SELECT bảng | Cùng dữ liệu với Student API | SQL PASS, SSMS GUI NOT TESTED |
 | 7 | 1 phút | Portal → Xác thực → Đăng nhập Keycloak SSO → gọi secure API → Đăng xuất / Xóa Token | PKCE, JWT/JWKS; không token 401, token đúng 200; logout kết thúc SSO | UI/callback/logout PASS |
-| 8 | 1 phút | Upload avatar/PDF, mở MinIO :9001 | Hai bucket private có object, download đúng file | API/Console/Student UI PASS |
+| 8 | 1 phút | Upload avatar/PDF, nút Xem PDF, mở MinIO :9001 | PDF xem trực tiếp; documents public-read, profile-pics private | API/Console/Student UI PASS |
 | 9 | 0,5 phút | DNS bằng dig hoặc test host | Bind9 authoritative records khớp service | PASS |
 | 10 | 0,5 phút | Prometheus :9090/targets | Node và web exporter targets UP, probe_success=1 | API PASS |
 | 11 | 1 phút | Grafana :3000/d/mycloud-system | Ba biểu đồ CPU/RAM/network có dữ liệu thật | GUI PASS |

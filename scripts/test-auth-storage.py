@@ -85,8 +85,20 @@ try:
         check(f'{bucket}: download giữ nguyên byte', downloaded.status_code == 200 and downloaded.content == data)
         listed = requests.get(api + '/files', params={'bucket': bucket}, timeout=10)
         check(f'{bucket}: list có object đã upload', any(obj['key'] == key for obj in listed.json()['files']))
-        anonymous = requests.get(f'http://object-storage-server:9000/{bucket}/{key}', timeout=10)
-        check(f'{bucket}: bucket private chặn anonymous', anonymous.status_code == 403)
+        check(f'{bucket}: list không hiển thị folder marker',
+              all(not obj['key'].endswith('/') for obj in listed.json()['files']))
+        anonymous_url = f'http://object-storage-server:9000/{bucket}/{key}'
+        anonymous = requests.get(anonymous_url, timeout=10)
+        if bucket == 'documents':
+            check('documents: đọc object công khai giữ nguyên byte',
+                  anonymous.status_code == 200 and anonymous.content == data)
+            anonymous_list = requests.get('http://object-storage-server:9000/documents',
+                                          params={'list-type': '2'}, timeout=10)
+            check('documents: chặn liệt kê bucket công khai', anonymous_list.status_code == 403)
+            anonymous_write = requests.put(anonymous_url, data=b'forbidden', timeout=10)
+            check('documents: chặn ghi object ẩn danh', anonymous_write.status_code == 403)
+        else:
+            check('profile-pics: bucket private chặn anonymous', anonymous.status_code == 403)
     invalid = requests.post(api + '/files', data={'bucket': 'documents'}, files={'file': ('fake.pdf', b'not-pdf', 'application/pdf')}, timeout=10)
     check('Từ chối file giả PDF', invalid.status_code == 415)
     check('Từ chối bucket ngoài whitelist', requests.get(api + '/files?bucket=secret', timeout=10).status_code == 400)

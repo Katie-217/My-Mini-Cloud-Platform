@@ -60,11 +60,15 @@ trên EC2. [Hướng dẫn triển khai](docs/deployment.md).
 | Replica nhận request | http://localhost/__replica | PASS: Round Robin |
 | Keycloak Admin | http://localhost/auth/admin/ | PASS: routing/login |
 | MinIO Console | http://localhost:9001 | PASS: GUI |
-| MinIO S3 API | http://localhost:9000 | PASS: private buckets |
+| MinIO S3 API | http://localhost:9000 | PASS: documents public read; profile-pics private |
 | Prometheus Targets | http://localhost:9090/targets | PASS: API targets |
 | Grafana Dashboard | http://localhost:3000/d/mycloud-system | PASS: GUI có data |
 | SQL Server / SSMS | `127.0.0.1,1433` | PASS: API/SQL, SSMS GUI chưa test |
 | Bind9 | `127.0.0.1:1053` UDP/TCP | PASS |
+
+Trong Student App, nút **Xem** mở PDF từ bucket `documents` bằng MinIO
+(`application/pdf`); bucket chỉ cho đọc object ẩn danh. Cổng MinIO bind loopback,
+nên thay đổi này không tự công khai dịch vụ ra Internet.
 
 Chỉ gateway publish `80:80`. Cổng quản trị/SQL/DNS bind loopback; các web replica,
 Flask và exporter chỉ dùng mạng nội bộ `cloud-net`.
